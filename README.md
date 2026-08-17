@@ -41,7 +41,7 @@ Prices are approximate retail prices observed in August 2026. Availability and r
 | [DJI Mic Mini 2, 1 transmitter + mobile USB-C receiver](https://store.dji.com/fr/product/dji-mic-mini-2-1tx-1-mobile-rx-charging-case) | Captures speech and connects to the computer | about $69 / EUR 59 |
 | [Brainwavz oval memory-foam earpads](https://www.brainwavzaudio.com/collections/accessories/brainwavz-hm5) | Mouth seal and comfort, 110 x 90 mm outside, 70 x 50 mm opening | $23-30 per pair |
 | [12.7 mm open-cell foam](https://www.amazon.com/dp/B0FFBG6ZZZ) | Internal absorption | $10-15 |
-| 4 x M3 x 16 mm screws, 4 nuts, 8 washers | Joins the upper cup and handle | $3 loose or [$10 kit](https://www.amazon.com/dp/B0FGV5FCBN) |
+| 4 x M3 x 6 mm countersunk screws, 4 nuts | Hidden joint between the upper cup and handle | $3 loose or [$10 kit](https://www.amazon.com/dp/B0FGV5FCBN) |
 | [30 mm adhesive steel discs](https://www.amazon.com/dp/B0DYNS2CXR) | Passive magnetic mounting surfaces | about $8 |
 | [8 x 1 mm adhesive neodymium magnet](https://www.amazon.com/dp/B0BJQ918KX) | Retains the USB-C receiver for storage | about $8 |
 | 1 mm EVA, TPU, or rubber sheet | Joint gasket | about $5 |
@@ -52,13 +52,16 @@ Prices are approximate retail prices observed in August 2026. Availability and r
 ## Files
 
 - [`cad/whisper_mask_v2_screwed.py`](cad/whisper_mask_v2_screwed.py): final two-part parametric model and geometry checks.
+- [`cad/whisper_mask_v2_compact.py`](cad/whisper_mask_v2_compact.py): shorter, more angled variant with a deeper air-path divider.
 - [`cad/whisper_mask_v0.py`](cad/whisper_mask_v0.py): reusable upper cup, component layout, and cushion interface.
 - [`cad/out/v2-screwed/whisper-mask-v2-screwed-print-plate.stl`](cad/out/v2-screwed/whisper-mask-v2-screwed-print-plate.stl): both printed parts arranged for a 180 x 180 mm bed.
+- [`cad/out/v2-compact/whisper-mask-v2-compact-print-plate.stl`](cad/out/v2-compact/whisper-mask-v2-compact-print-plate.stl): compact variant arranged for the same bed.
 - [`cad/out/v2-screwed/whisper-mask-v2-screwed-upper.stl`](cad/out/v2-screwed/whisper-mask-v2-screwed-upper.stl): mouth cup.
 - [`cad/out/v2-screwed/whisper-mask-v2-screwed-lower.stl`](cad/out/v2-screwed/whisper-mask-v2-screwed-lower.stl): baffled handle.
 - [`cad/out/v2-screwed/whisper-mask-v2-screwed-technical.step`](cad/out/v2-screwed/whisper-mask-v2-screwed-technical.step): full technical assembly.
 - [`cad/out/v2-screwed/silent-mic-v2-simple.FCStd`](cad/out/v2-screwed/silent-mic-v2-simple.FCStd): simple FreeCAD view with the two printed parts.
 - [`cad/out/v2-screwed/silent-mic-v2-technical-flat.FCStd`](cad/out/v2-screwed/silent-mic-v2-technical-flat.FCStd): flat FreeCAD document with the internal references.
+- [`cad/out/v2-screwed/silent-mic-v2-technical-vertical.FCStd`](cad/out/v2-screwed/silent-mic-v2-technical-vertical.FCStd): color-coded FreeCAD inspection view with the vertical baffle and two handle-foam blocks.
 
 The remaining STEP files in [`cad/out/v2-screwed`](cad/out/v2-screwed) expose the gasket, foam, baffle, air path, fasteners, cushion, microphone, and receiver as separate inspection objects.
 
@@ -80,13 +83,13 @@ Recommended starting settings:
 - no supports
 - PLA for a fast prototype, PETG for better heat and impact resistance
 
-The arranged plate is approximately 115 x 169 x 116 mm and fits a Bambu A1 mini build volume.
+The standard arranged plate is approximately 115 x 169 x 116 mm. The compact plate is approximately 160 x 160 x 95 mm. Both fit a Bambu A1 mini build volume.
 
 ### 3. Prepare the soft parts
 
 1. Cut the 1 mm gasket using `whisper-mask-v2-screwed-gasket.step` as the template.
 2. Cut the main cup foam around the microphone and receiver volumes. Never cover the microphone grille.
-3. Cut two removable strips for the handle using `whisper-mask-v2-screwed-handle-foam.step` as a guide.
+3. Cut two removable strips for the handle using the left and right handle-foam STEP files as guides.
 4. Keep both exhaust ports completely open for the first airflow test.
 
 ### 4. Install the electronics
@@ -98,9 +101,9 @@ The arranged plate is approximately 115 x 169 x 116 mm and fits a Bambu A1 mini 
 
 ### 5. Close the enclosure
 
-1. Place the 1 mm gasket between the upper cup and lower handle.
-2. Insert four M3 x 16 mm screws with washers.
-3. Seat the four M3 nuts in the captive pockets.
+1. Press the four M3 nuts into the captive pockets from inside the lower handle. A tiny drop of CA glue can retain them during assembly.
+2. Place the 1 mm gasket and upper cup on the lower handle.
+3. Tighten four M3 x 6 mm countersunk screws from inside the upper cup, then cover their flush heads with the removable cup foam.
 4. Tighten evenly until the gasket is compressed. Do not crush the printed flange.
 
 ### 6. Connect and test
@@ -118,6 +121,7 @@ With Python 3.11+:
 ```bash
 python -m pip install -r requirements.txt
 python cad/whisper_mask_v2_screwed.py
+python cad/whisper_mask_v2_compact.py
 ```
 
 The model contains assertions for solid validity, component collisions, a continuous air path, baffle clearance, and 180 mm print-bed fit.
