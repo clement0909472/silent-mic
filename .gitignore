@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *.FCStd1
+*.FCBak
 .venv/
 
 # Local repair artifacts from the earlier FreeCAD inspection session.
