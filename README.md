@@ -5,7 +5,7 @@
 
 **Speak to your AI without broadcasting your prompt.**
 
-![Clément using the Silent Mic in an open office](images/silent-mic-in-use.png)
+![A startup professional using the Silent Mic in an open office](images/silent-mic-in-use.png)
 
 *AI-generated concept image. It is not evidence of a tested physical prototype.*
 
@@ -139,4 +139,3 @@ Do not treat Silent Mic as hearing protection, respiratory protection, or a cert
 Hardware source, CAD, exports, and documentation are released under the [CERN Open Hardware Licence Version 2 - Strongly Reciprocal](LICENSE). `SPDX-License-Identifier: CERN-OHL-S-2.0`.
 
 DJI and Brainwavz are trademarks of their respective owners. This independent project is not affiliated with or endorsed by either company.
-

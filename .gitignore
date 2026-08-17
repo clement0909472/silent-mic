@@ -6,5 +6,5 @@ __pycache__/
 
 # Local repair artifacts from the earlier FreeCAD inspection session.
 /build_freecad_flat.py
+/verify_freecad_visibility.py
 /out/
-
