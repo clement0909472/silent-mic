@@ -1,0 +1,10 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+*.FCStd1
+.venv/
+
+# Local repair artifacts from the earlier FreeCAD inspection session.
+/build_freecad_flat.py
+/out/
+
