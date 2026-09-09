@@ -49,19 +49,18 @@ HANDLE_INNER_SECTIONS = (
 )
 INLET_CENTER = (-18.0, -8.0, 10.5)
 INLET_SIZE = (16.0, 10.0, 12.0)
+INLET_WALL = 2.0
 EXHAUST_DIAMETER = 12.0
 EXHAUST_X = 9.0
 EXHAUST_Y = 7.0
 HANDLE_BOTTOM_Y = HANDLE_OUTER_SECTIONS[0][3]
 HANDLE_BOTTOM_Z = HANDLE_OUTER_SECTIONS[0][2]
-EXHAUST_ORIGIN_Z = HANDLE_BOTTOM_Z - 3.0
 SOLE_CLEARANCE = 4.0
 SOLE_OVERLAP = 0.8
 SOLE_HEIGHT = SOLE_CLEARANCE + SOLE_OVERLAP
 SOLE_BASE_Z = HANDLE_BOTTOM_Z - SOLE_CLEARANCE
+EXHAUST_ORIGIN_Z = SOLE_BASE_Z
 SOLE_OUTER_MARGIN = 4.0
-SOLE_RING_WIDTH = 8.0
-SOLE_VENT_WIDTH = 20.0
 LOWER_PRINT_LIFT = -SOLE_BASE_Z
 PRINT_UPPER_XY = (0.0, -40.0)
 PRINT_LOWER_XY = (0.0, 45.0)
@@ -120,6 +119,21 @@ def build_inlet():
     )
 
 
+def build_inlet_duct():
+    bottom = INLET_CENTER[2] - INLET_SIZE[2] / 2
+    return (
+        cq.Workplane("XY", origin=(*INLET_CENTER[:2], bottom))
+        .box(
+            INLET_SIZE[0] + 2 * INLET_WALL,
+            INLET_SIZE[1] + 2 * INLET_WALL,
+            JOIN_Z - bottom,
+            centered=(True, True, False),
+        )
+        .cut(build_inlet().translate((0.0, 0.0, -0.1)))
+        .clean()
+    )
+
+
 def build_exhaust_ports():
     ports = None
     for y in (-EXHAUST_Y, EXHAUST_Y):
@@ -145,61 +159,20 @@ def build_divider():
 
 def sole_dimensions():
     bottom_width, bottom_height = HANDLE_OUTER_SECTIONS[0][:2]
-    outer = (
+    return (
         bottom_width + SOLE_OUTER_MARGIN,
         bottom_height + SOLE_OUTER_MARGIN,
     )
-    inner = tuple(size - 2 * SOLE_RING_WIDTH for size in outer)
-    return outer, inner
 
 
 def build_sole():
-    outer, inner = sole_dimensions()
-    envelope = (
+    outer = sole_dimensions()
+    return (
         cq.Workplane("XY", origin=(0.0, HANDLE_BOTTOM_Y, SOLE_BASE_Z))
         .ellipse(outer[0] / 2, outer[1] / 2)
         .extrude(SOLE_HEIGHT)
+        .clean()
     )
-    opening = (
-        cq.Workplane("XY", origin=(0.0, HANDLE_BOTTOM_Y, SOLE_BASE_Z - 0.1))
-        .ellipse(inner[0] / 2, inner[1] / 2)
-        .extrude(SOLE_HEIGHT + 0.2)
-    )
-    side_vents = (
-        cq.Workplane("XY", origin=(0.0, HANDLE_BOTTOM_Y, SOLE_BASE_Z - 0.1))
-        .box(
-            outer[0] + 2.0,
-            SOLE_VENT_WIDTH,
-            SOLE_HEIGHT + 0.2,
-            centered=(True, True, False),
-        )
-    )
-    return envelope.cut(opening).cut(side_vents).clean()
-
-
-def build_sole_air_path():
-    outer, inner = sole_dimensions()
-    envelope = (
-        cq.Workplane("XY", origin=(0.0, HANDLE_BOTTOM_Y, SOLE_BASE_Z))
-        .ellipse(outer[0] / 2, outer[1] / 2)
-        .extrude(SOLE_CLEARANCE + 0.1)
-    )
-    opening = (
-        cq.Workplane("XY", origin=(0.0, HANDLE_BOTTOM_Y, SOLE_BASE_Z))
-        .ellipse(inner[0] / 2, inner[1] / 2)
-        .extrude(SOLE_CLEARANCE + 0.1)
-    )
-    side_vents = (
-        cq.Workplane("XY", origin=(0.0, HANDLE_BOTTOM_Y, SOLE_BASE_Z))
-        .box(
-            outer[0] + 2.0,
-            SOLE_VENT_WIDTH,
-            SOLE_CLEARANCE + 0.1,
-            centered=(True, True, False),
-        )
-        .intersect(envelope)
-    )
-    return opening.union(side_vents).clean()
 
 
 def build_screw_holes():
@@ -268,6 +241,7 @@ def build_lower():
     return (
         build_handle_outer()
         .cut(build_handle_inner())
+        .union(build_inlet_duct())
         .union(flange)
         .union(build_sole())
         .cut(build_exhaust_ports())
@@ -330,7 +304,6 @@ def build_air_path():
         .union(build_inlet())
         .union(build_handle_inner())
         .union(build_exhaust_ports())
-        .union(build_sole_air_path())
         .cut(build_divider())
         .clean()
     )
@@ -377,7 +350,10 @@ def check(upper, lower, air_path, handle_foam):
     assert upper.intersect(lower).val().Volume() < 1e-6
     assert handle_foam.intersect(upper.union(lower)).val().Volume() < 1e-6
     assert air_path.cut(handle_foam).clean().solids().size() == 1
-    assert DIVIDER_TOP_Z <= -10.0, "Le passage au-dessus de la paroi est trop petit"
+    # The colored air reference includes internal supports; check the actual void too.
+    free_air = air_path.cut(upper.union(lower)).cut(handle_foam).clean()
+    assert free_air.solids().size() == 1 and free_air.val().isValid()
+    assert JOIN_Z - DIVIDER_TOP_Z >= 10.0, "Le passage au-dessus de la paroi est trop petit"
     assert abs(build_divider().val().Center().x - DIVIDER_X) < 1e-6
     assert build_divider().intersect(build_exhaust_ports()).val().Volume() < 1e-6
     assert 2 * EXHAUST_Y > EXHAUST_DIAMETER
@@ -388,7 +364,7 @@ def check(upper, lower, air_path, handle_foam):
     assert build_divider().intersect(floor).val().Volume() > 0
     assert upper.intersect(build_nut_pockets()).val().Volume() < 1e-6
     assert lower.intersect(build_countersinks()).val().Volume() < 1e-6
-    assert 2 * SOLE_VENT_WIDTH * SOLE_CLEARANCE >= INLET_SIZE[0] * INLET_SIZE[1]
+    assert build_exhaust_ports().val().BoundingBox().zmin == SOLE_BASE_Z
 
 
 def export(output_subdir="v2-screwed", filename_stem="whisper-mask-v2-screwed"):
@@ -402,6 +378,7 @@ def export(output_subdir="v2-screwed", filename_stem="whisper-mask-v2-screwed"):
     bolts, nuts = build_fastener_references()
     refs = list(v1.build_references(upper))
     refs[-1] = refs[-1].cut(build_inlet())
+    v1.check_layout(upper, *refs[:5], refs[-1])
     check(upper, lower, air_path, handle_foam)
 
     output = HERE / "out" / output_subdir
@@ -476,7 +453,7 @@ def export(output_subdir="v2-screwed", filename_stem="whisper-mask-v2-screwed"):
     exhaust_area = 2 * math.pi * (EXHAUST_DIAMETER / 2) ** 2
     print(f"OK: deux pieces valides, entree {inlet_area:.0f} mm2, sorties {exhaust_area:.0f} mm2")
     print(f"OK: paroi verticale fixee au fond, passage superieur {JOIN_Z - DIVIDER_TOP_Z:.1f} mm")
-    print(f"OK: vis M3 par-dessous, ecrous captifs par-dessus, semelle laterale {2 * SOLE_VENT_WIDTH * SOLE_CLEARANCE:.0f} mm2")
+    print("OK: vis M3 par-dessous, ecrous captifs par-dessus, semelle plate percee")
     print(f"OK: plateau A1 mini {plate_box.xlen:.1f} x {plate_box.ylen:.1f} x {plate_box.zlen:.1f} mm")
     print(f"Exports: {output}")
     return upper, lower, air_path, divider, handle_foam, gasket, bolts, nuts, refs

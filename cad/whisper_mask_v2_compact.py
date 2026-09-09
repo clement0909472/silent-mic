@@ -1,9 +1,12 @@
 # SPDX-License-Identifier: CERN-OHL-S-2.0
 # Copyright 2026 Clement Barberousse
 
+import importlib
 import math
 
 import whisper_mask_v2_screwed as model
+
+model = importlib.reload(model)
 
 
 # Variante ergonomique: manche plus court, un peu plus large et davantage coude.
@@ -29,12 +32,12 @@ HANDLE_INNER_SECTIONS = (
 def configure():
     model.HANDLE_OUTER_SECTIONS = HANDLE_OUTER_SECTIONS
     model.HANDLE_INNER_SECTIONS = HANDLE_INNER_SECTIONS
-    model.INLET_CENTER = (-18.0, -8.0, 3.25)
-    model.INLET_SIZE = (16.0, 10.0, 26.5)
+    model.INLET_CENTER = (-18.0, -8.0, 6.25)
+    model.INLET_SIZE = (16.0, 10.0, 20.5)
     model.HANDLE_BOTTOM_Y = HANDLE_OUTER_SECTIONS[0][3]
     model.HANDLE_BOTTOM_Z = HANDLE_OUTER_SECTIONS[0][2]
-    model.EXHAUST_ORIGIN_Z = model.HANDLE_BOTTOM_Z - 3.0
     model.SOLE_BASE_Z = model.HANDLE_BOTTOM_Z - model.SOLE_CLEARANCE
+    model.EXHAUST_ORIGIN_Z = model.SOLE_BASE_Z
     model.LOWER_PRINT_LIFT = -model.SOLE_BASE_Z
     # Disposition diagonale sans collision sur le plateau 180 x 180 mm.
     model.PRINT_UPPER_XY = (-22.6, 30.9)
@@ -45,7 +48,7 @@ def configure():
     model.HANDLE_FOAM_BOTTOM_Z = -69.0
     model.HANDLE_FOAM_HEIGHT = 51.0
     model.DIVIDER_BOTTOM_Z = -82.0
-    model.DIVIDER_TOP_Z = -10.0
+    model.DIVIDER_TOP_Z = -4.0
 
 
 def main():
