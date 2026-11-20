@@ -23,7 +23,9 @@ python bench/record.py --inside "DJI" --outside "Yeti" --device-name v2 --sessio
 python bench/analyze.py bench/sessions/v2-$(date +%Y%m%d)
 ```
 
-Le script guide : 15 s de silence (bruit de fond), puis 5 paires sans / avec appareil à voix normale, puis 5 à voix douce, en lisant `bench/texte.md`. Environ 20 minutes. Une session interrompue reprend où elle s'était arrêtée.
+Le script guide : 15 s de silence (bruit de fond), puis 3 paires sans / avec appareil à voix normale, douce et très douce, en lisant `bench/texte.md`, plus deux prises nez pincé. Environ 15 minutes. Une session interrompue reprend où elle s'était arrêtée.
+
+Les prises nez pincé disent ce que le nez laisse sortir quand la bouche est couverte : c'est le plafond d'un appareil qui laisse le nez libre.
 
 ## Lire le résultat
 
@@ -41,3 +43,14 @@ Le script guide : 15 s de silence (bruit de fond), puis 5 paires sans / avec app
 - Parler plus fort dans l'appareil : garder le même effort, c'est pour ça que les prises alternent.
 - Les sons qui passent par le nez ne sont pas arrêtés par l'appareil : c'est normal, ils limitent le résultat sur une vraie personne.
 - Les deux micros ont chacun leur horloge : les niveaux restent justes, mais ne pas comparer les signaux échantillon par échantillon.
+
+## Test du capot d'essai : quel col choisir
+
+But : mesurer sur ton visage quelle hauteur de col (3, 10 ou 16 mm) laisse le moins sortir le son, avant d'imprimer le corps.
+
+1. `python bench/cap_test.py --make-noise` écrit `bench/bruit-rose.wav`. Le jouer en boucle dans un écouteur sans fil, à volume fixe et modéré.
+2. Mettre l'écouteur et l'émetteur DJI dans le capot, boucher le passage de câble avec de la pâte adhésive, monter le coussin.
+3. `python bench/cap_test.py --inside "DJI" --outside "Yeti" --session capot-$(date +%Y%m%d)` : le script demande chaque col trois fois, 12 s par pose, capot plaqué sur le visage, bouche fermée. Environ 10 minutes.
+4. `python bench/cap_test.py --report bench/sessions/capot-AAAAMMJJ` donne la fuite par col.
+
+La fuite est le niveau dehors moins le niveau dedans : elle ne dépend pas du volume de l'écouteur. Plus elle est basse, mieux le col isole. Le modèle prévoit environ 12 dB(A) d'écart entre le col de 3 mm et celui de 16 mm. Un écart nul voudrait dire que le flanc du coussin n'est pas le chemin de fuite principal.

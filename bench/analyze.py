@@ -97,7 +97,7 @@ def analyze(folder: Path, stt: bool):
     floor_a = laeq(load("fond", "outside"), rate)
     report = {"device": meta["device"], "floor_dba_fs": floor_a, "efforts": {}}
     ref = reference_text() if stt else ""
-    for effort in ("normal", "doux"):
+    for effort in ("normal", "doux", "tres-doux"):
         takes = [t["take"] for t in meta["takes"] if t["effort"] == effort]
         if not takes:
             continue
@@ -114,6 +114,9 @@ def analyze(folder: Path, stt: bool):
             "bands_il": il.round(1).tolist(), "bands_reliable": (above >= 6).tolist(),
             "dji_peak_dbfs": float(max(peaks)), "dji_clipped_takes": clipped,
         }
+        nez = [t for t in takes if t.endswith("nez")]
+        if nez:   # ecart avec les prises "avec" = part du son qui sortait par le nez
+            res["attenuation_nez_pince_dba"] = float(np.mean(la["sans"]) - np.mean([laeq(load(t, "outside"), rate) for t in nez]))
         if stt:
             res["wer_inside_avec"] = float(np.mean([wer(ref, transcribe(folder / f"{t}.inside.wav")) for t in rows["avec"]]))
             res["wer_inside_sans"] = float(np.mean([wer(ref, transcribe(folder / f"{t}.inside.wav")) for t in rows["sans"]]))
@@ -124,6 +127,8 @@ def analyze(folder: Path, stt: bool):
         report["efforts"][effort] = res
         print(f"\n## Voix {effort} ({meta['device']}, {len(rows['avec'])} paires)")
         print(f"Attenuation au micro exterieur : {res['attenuation_dba']:.1f} dB(A) (ecart-type {res['attenuation_sd']:.1f})")
+        if nez:
+            print(f"Nez pince : {res['attenuation_nez_pince_dba']:.1f} dB(A), soit {res['attenuation_nez_pince_dba'] - res['attenuation_dba']:+.1f} dB par rapport au nez libre")
         print(f"Crete DJI : {res['dji_peak_dbfs']:.1f} dBFS, prises ecretees : {clipped or 'aucune'}")
         if stt:
             print(f"Erreurs de transcription : dedans avec {res['wer_inside_avec']:.0%}, dedans sans {res['wer_inside_sans']:.0%}, "
