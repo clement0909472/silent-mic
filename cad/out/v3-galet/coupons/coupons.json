@@ -1,0 +1,53 @@
+{
+  "gasket_compression_mm": 0.5499999999999998,
+  "parts": {
+    "pad-test-cap-collar-3mm": {
+      "volume_cm3": 82.22,
+      "size_mm": [
+        105.2,
+        85.2,
+        34.8
+      ]
+    },
+    "pad-test-cap-collar-10mm": {
+      "volume_cm3": 84.59,
+      "size_mm": [
+        105.2,
+        85.2,
+        41.7
+      ]
+    },
+    "pad-test-cap-collar-16mm": {
+      "volume_cm3": 86.62,
+      "size_mm": [
+        105.2,
+        85.2,
+        47.7
+      ]
+    },
+    "joint-coupon-front": {
+      "volume_cm3": 3.75,
+      "size_mm": [
+        40.0,
+        18.0,
+        6.0
+      ]
+    },
+    "joint-coupon-rear": {
+      "volume_cm3": 3.93,
+      "size_mm": [
+        40.0,
+        18.0,
+        8.0
+      ]
+    },
+    "light-coupon-petg": {
+      "volume_cm3": 0.96,
+      "size_mm": [
+        50.0,
+        12.0,
+        2.4
+      ]
+    }
+  }
+}
