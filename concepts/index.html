@@ -1,0 +1,462 @@
+<meta charset="utf-8">
+<title>Silent Mic v3</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Studio produit sombre : grande scène 3D a gauche, fiche technique a droite (empilées sur téléphone). Ambiance unique et sombre, choisie. */
+:root {
+  --bg: #0b0c0e;
+  --panel: #131418;
+  --line: #24262c;
+  --fg: #e8eaee;
+  --muted: #8b909b;
+  --led: #3d8bff;
+  --led-soft: rgba(61, 139, 255, 0.14);
+  --good: #4fd18b;
+  --warn: #f0b04a;
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 14px; line-height: 1.5; }
+.app { display: grid; grid-template-columns: minmax(0, 1fr) 380px; align-items: start; min-height: 100%; }
+.stage { position: sticky; top: 0; height: 100vh; min-height: 480px; border-right: 1px solid var(--line); }
+#view { position: absolute; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; }
+.hud { position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); right: 16px; top: 16px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; pointer-events: none; }
+.hud > * { pointer-events: auto; }
+.brand { font-family: var(--display); font-weight: 800; font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; margin-right: 12px; }
+.brand span { color: var(--led); }
+.tabs, .toggles { display: flex; gap: 6px; flex-wrap: wrap; }
+button { font: 500 13px var(--body); color: var(--fg); background: rgba(28, 30, 35, 0.9); border: 1px solid #3a3d45; border-radius: 999px; padding: 7px 13px; cursor: pointer; backdrop-filter: blur(6px); }
+button:hover { border-color: #3a3d45; }
+button:focus-visible { outline: 2px solid var(--led); outline-offset: 2px; }
+button[aria-pressed="true"] { border-color: var(--led); background: var(--led-soft); color: #cfe0ff; }
+.tabs button { font-family: var(--display); font-weight: 700; letter-spacing: 0.02em; }
+.toggles { position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); bottom: 16px; right: 16px; }
+.legend { position: absolute; right: 16px; top: 64px; font: 12px var(--mono); color: var(--muted); text-align: right; pointer-events: none; }
+aside { padding-block: 24px 40px; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 22px; background: var(--panel); min-width: 0; }
+h1 { font: 800 30px/1.05 var(--display); letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.tagline { color: var(--muted); margin: 6px 0 0; }
+h2 { font: 700 12px var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+.specs { display: grid; grid-template-columns: auto 1fr auto; gap: 6px 14px; align-items: baseline; font-variant-numeric: tabular-nums; }
+.specs dt { color: var(--muted); }
+.specs dd { margin: 0; font: 500 14px var(--mono); }
+.specs .was { font: 12px var(--mono); color: #5e636d; text-align: right; }
+.pill { display: inline-block; font: 500 11px var(--mono); padding: 1px 7px; border-radius: 999px; border: 1px solid currentColor; margin-left: 6px; vertical-align: 1px; }
+.pill.ok { color: var(--good); } .pill.risk { color: var(--warn); }
+ul.parts { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+ul.parts li { display: grid; grid-template-columns: 12px minmax(0, 1fr); gap: 10px; align-items: start; }
+.sw { width: 12px; height: 12px; border-radius: 3px; margin-top: 4px; border: 1px solid #3a3d45; }
+.sw.black { background: #16171a; } .sw.clear { background: #9cc4ff; box-shadow: 0 0 8px var(--led); } .sw.soft { background: #3b3e45; } .sw.foam { background: #6f7d74; }
+ul.parts b { font-weight: 600; }
+ul.parts small { display: block; color: var(--muted); font-size: 12.5px; }
+.verdict { display: grid; gap: 6px; }
+.verdict p { margin: 0; }
+.note { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; margin: 0; }
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  .stage { position: relative; min-height: 0; height: 62vh; max-height: 560px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .legend { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="app">
+  <section class="stage" aria-label="Vue 3D du concept">
+    <canvas id="view"></canvas>
+    <div class="hud">
+      <div class="brand">Silent Mic <span>v3</span></div>
+      <div class="tabs" role="group" aria-label="Concept">
+        <button id="tab-A" data-concept="A" aria-pressed="true">A · Micro</button>
+        <button id="tab-B" data-concept="B" aria-pressed="false">B · Galet</button>
+        <button id="tab-C" data-concept="C" aria-pressed="false">C · Coudé</button>
+      </div>
+    </div>
+    <div class="legend">grille 10 mm<br>glisser pour tourner</div>
+    <div class="toggles" role="group" aria-label="Affichage">
+      <button id="t-cut" aria-pressed="false">Coupe</button>
+      <button id="t-explode" aria-pressed="false">Éclaté</button>
+      <button id="t-v2" aria-pressed="true">Comparer au v2</button>
+      <button id="t-led" aria-pressed="true">LED</button>
+      <button id="t-spin" aria-pressed="true">Rotation</button>
+    </div>
+  </section>
+
+  <aside>
+    <div>
+      <h1 id="c-name">Micro</h1>
+      <p class="tagline" id="c-tag"></p>
+    </div>
+
+    <div>
+      <h2>Cotes et acoustique</h2>
+      <dl class="specs" id="c-specs"></dl>
+    </div>
+
+    <div>
+      <h2>Pièces à imprimer</h2>
+      <ul class="parts" id="c-parts"></ul>
+    </div>
+
+    <div class="verdict">
+      <h2>Pour et contre</h2>
+      <div id="c-verdict"></div>
+    </div>
+
+    <p class="note">Cœur acoustique commun aux trois : cavité de 130 cm³, conduit d'évent hélicoïdal de 48 mm² sur 200 mm, joint ferme. Atténuation et perte de charge : modèle 1D (<code>acoustics/tmm.py</code>), pas encore simulé en 3D ni mesuré. Le v2 est affiché en filaire, à la même échelle.</p>
+  </aside>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(() => {
+  const FACE_R = 105; // rayon du visage autour de la bouche (headforms NIOSH), mm
+  const WALL = 2.6;
+
+  // ---------- données des concepts ----------
+  // sections : [y, demi-largeur x, demi-profondeur z, décalage z du centre]
+  const CONCEPTS = {
+    A: {
+      name: "Micro", tag: "Corps droit tenu comme un micro de reportage. Le plus proche des visuels publiés, le plus simple à imprimer.",
+      outer: [[0, 19, 17, 0], [8, 20.5, 18.5, 0], [40, 21, 19, 0], [80, 22.5, 20, 0], [100, 25, 22, 0], [118, 31, 25.5, 0], [136, 35, 27.5, 0], [150, 36, 28, 0]],
+      joint: 100, base: 14, rimBlend: 22,
+      helix: { y0: 30, r: 12.5, turns: 2.6, pitch: 12.5 },
+      slots: { y: 22, n: 6 }, mic: { y: 124 }, foam: { y: 101 },
+      dims: { L: "156 mm", mouth: "72 × 56 mm", grip: "42 × 38 mm", mass: "≈ 150 g" },
+      parts: [
+        ["black", "Coque avant", "PLA noir mat, bouche vers le haut, sans support."],
+        ["clear", "Anneau lumineux", "PETG translucide, 4 mm de haut, imprimé à plat."],
+        ["black", "Corps", "PLA noir mat, debout. Filetage femelle en tête, baïonnette en pied."],
+        ["black", "Cartouche d'évent", "Hélice amovible et lavable, glissée par le bas."],
+        ["black", "Bouchon de base", "Batterie, port USB-C et interrupteur, clipsé en baïonnette."],
+        ["soft", "Joint de bouche", "Mousse fermée ferme 5 mm, collée dans la jupe rigide."],
+      ],
+      pros: ["Prise en main évidente, un seul axe.", "Impression debout sans support, couture cachée dans l'anneau.", "Hélice centrée : conduit le plus régulier."],
+      cons: ["Silhouette proche du cornet que certains n'aiment pas.", "156 mm : se range moins facilement."],
+    },
+    B: {
+      name: "Galet", tag: "Coque courte tenue dans la paume, comme une souris posée contre la bouche. La moins « micro » des trois.",
+      outer: [[0, 17, 14, 0], [6, 30, 25, 0], [18, 38, 31, 0], [38, 41, 33, 0], [58, 40, 32, 0], [72, 37, 29.5, 0], [84, 36, 28, 0], [92, 36, 28, 0]],
+      joint: 58, base: 10, rimBlend: 18,
+      helix: { y0: 16, r: 27, turns: 1.15, pitch: 12.5 },
+      slots: { y: 9, n: 8 }, mic: { y: 74 }, foam: { y: 59 },
+      dims: { L: "98 mm", mouth: "72 × 56 mm", grip: "82 × 66 mm", mass: "≈ 140 g" },
+      parts: [
+        ["black", "Capot avant", "PLA noir mat, bouche vers le haut, sans support."],
+        ["clear", "Anneau lumineux", "PETG translucide, ceinture du galet, imprimé à plat."],
+        ["black", "Coque arrière", "PLA noir mat. Hélice large intégrée, sortie sous le galet."],
+        ["black", "Trappe batterie", "Clipsée sous le galet, port USB-C."],
+        ["soft", "Joint de bouche", "Mousse fermée ferme 5 mm, collée dans la jupe rigide."],
+      ],
+      pros: ["Le plus court : 98 mm, tient dans une poche de veste.", "Ne ressemble ni à un micro ni à un cornet.", "Repose à plat sur le bureau, sorties dégagées."],
+      cons: ["Corps large (82 mm) : moins naturel pour une petite main.", "Hélice d'un seul tour et demi : conduit plus difficile à nettoyer.", "Coque arrière plus longue à imprimer (dôme)."],
+    },
+    C: {
+      name: "Coudé", tag: "Coupelle de face et poignée courte inclinée de 15° vers le bas, pour garder le poignet naturel.",
+      outer: [[0, 20, 18, 17], [8, 21.5, 19.5, 15], [35, 22.5, 20, 9], [62, 25, 22, 2.5], [76, 27, 23.5, 0], [96, 33, 26.5, 0], [114, 35.5, 27.8, 0], [126, 36, 28, 0]],
+      joint: 76, base: 12, rimBlend: 20,
+      helix: { y0: 22, r: 12.5, turns: 2.2, pitch: 12.5 },
+      slots: { y: 18, n: 6 }, mic: { y: 100 }, foam: { y: 77 },
+      dims: { L: "132 mm", mouth: "72 × 56 mm", grip: "43 × 39 mm", mass: "≈ 145 g" },
+      parts: [
+        ["black", "Coque avant", "PLA noir mat, bouche vers le haut, sans support."],
+        ["clear", "Anneau lumineux", "PETG translucide, imprimé à plat."],
+        ["black", "Poignée coudée", "PLA noir mat, couchée sur le flanc. Supports légers dans le coude."],
+        ["black", "Cartouche d'évent", "Hélice amovible, glissée par le bas."],
+        ["black", "Bouchon de base", "Batterie, port USB-C et interrupteur."],
+        ["soft", "Joint de bouche", "Mousse fermée ferme 5 mm, collée dans la jupe rigide."],
+      ],
+      pros: ["Poignet droit en position de dictée.", "Compromis de taille : 132 mm.", "Garde l'esprit du v2, sans le cornet évasé."],
+      cons: ["Coude à imprimer couché : un plan de couture visible sur la poignée.", "Cartouche d'évent plus courte : conduit un peu moins long."],
+    },
+  };
+  const SHARED_SPECS = [
+    ["Section bouche", c => c.dims.mouth, "110 × 92"],
+    ["Longueur totale", c => c.dims.L, "≈ 175"],
+    ["Prise en main", c => c.dims.grip, "72 × 54"],
+    ["Masse estimée", c => c.dims.mass, "—"],
+    ["Volume de la cavité", () => "130 cm³", "260"],
+    ["Atténuation (modèle)", () => "20,8 dB(A)", "6,6"],
+    ["Perte de charge 0,2 L/s", () => "46 Pa", "2"],
+    ["Vis visibles", () => "0", "4"],
+  ];
+
+  // ---------- outils géométriques ----------
+  const hermite = (pts, y) => {
+    // interpolation Catmull-Rom des colonnes 1..3 en fonction de y (colonne 0)
+    let i = 0;
+    while (i < pts.length - 2 && y > pts[i + 1][0]) i++;
+    const p0 = pts[Math.max(i - 1, 0)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(i + 2, pts.length - 1)];
+    const t = Math.min(Math.max((y - p1[0]) / (p2[0] - p1[0]), 0), 1);
+    const t2 = t * t, t3 = t2 * t;
+    return [1, 2, 3].map(k => 0.5 * ((2 * p1[k]) + (-p0[k] + p2[k]) * t + (2 * p0[k] - 5 * p1[k] + 4 * p2[k] - p3[k]) * t2 + (-p0[k] + 3 * p1[k] - 3 * p2[k] + p3[k]) * t3));
+  };
+
+  function profile(c, inset = 0) {
+    return y => { const [rx, rz, cz] = hermite(c.outer, y); return [rx - inset, rz - inset, cz]; };
+  }
+
+  // creux de la jupe : les bords latéraux avancent vers les joues (rayon du visage)
+  function rimLift(c, y, x) {
+    const top = c.outer[c.outer.length - 1][0];
+    const w = Math.min(Math.max((y - (top - c.rimBlend)) / c.rimBlend, 0), 1);
+    return w * w * (x * x) / (2 * FACE_R);
+  }
+
+  function loft(prof, y0, y1, step, opts = {}) {
+    const seg = 72, rows = [];
+    for (let y = y0; y < y1 - 1e-6; y += step) rows.push(y);
+    rows.push(y1);
+    const pos = [], idx = [];
+    rows.forEach(y => {
+      const [rx, rz, cz] = prof(y);
+      for (let s = 0; s <= seg; s++) {
+        const a = (s / seg) * Math.PI * 2, x = Math.cos(a) * rx, z = Math.sin(a) * rz + cz;
+        pos.push(x, y + (opts.lift ? opts.lift(y, x) : 0), z);
+      }
+    });
+    for (let r = 0; r < rows.length - 1; r++) for (let s = 0; s < seg; s++) {
+      const a = r * (seg + 1) + s, b = a + seg + 1;
+      if (opts.flip) idx.push(a, a + 1, b, b, a + 1, b + 1); else idx.push(a, b, a + 1, b, b + 1, a + 1);
+    }
+    if (opts.capBottom) {
+      const [, , cz] = prof(y0), ci = pos.length / 3;
+      pos.push(0, y0, cz);
+      for (let s = 0; s < seg; s++) idx.push(ci, s + 1, s);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    return g;
+  }
+
+  class Loop3 extends THREE.Curve {
+    constructor(fn) { super(); this.fn = fn; }
+    getPoint(t, out = new THREE.Vector3()) { return out.copy(this.fn(t)); }
+  }
+  class Helix extends THREE.Curve {
+    constructor(h, cz) { super(); this.h = h; this.cz = cz; }
+    getPoint(t, out = new THREE.Vector3()) {
+      const a = t * this.h.turns * Math.PI * 2, y = this.h.y0 + t * this.h.turns * this.h.pitch;
+      return out.set(Math.cos(a) * this.h.r, y, Math.sin(a) * this.h.r + this.cz(y));
+    }
+  }
+
+  // ---------- matériaux ----------
+  // coupe : on retire la moitié tournée vers la caméra (z > 0)
+  const clip = [new THREE.Plane(new THREE.Vector3(0, 0, -1), 0)];
+  const M = {
+    black: new THREE.MeshStandardMaterial({ color: 0x0c0d0f, roughness: 0.72, metalness: 0.0, side: THREE.DoubleSide }),
+    inner: new THREE.MeshStandardMaterial({ color: 0x2a2c31, roughness: 0.95, side: THREE.DoubleSide }),
+    soft: new THREE.MeshStandardMaterial({ color: 0x34373d, roughness: 0.98 }),
+    led: new THREE.MeshStandardMaterial({ color: 0x9cc4ff, emissive: 0x2f7dff, emissiveIntensity: 2.0, roughness: 0.35, transparent: true, opacity: 0.92 }),
+    halo: new THREE.MeshBasicMaterial({ color: 0x3d8bff, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false }),
+    foam: new THREE.MeshStandardMaterial({ color: 0x6f7d74, roughness: 1.0 }),
+    mic: new THREE.MeshStandardMaterial({ color: 0x8a8f99, roughness: 0.5, metalness: 0.2 }),
+    air: new THREE.MeshStandardMaterial({ color: 0x5aa2ff, emissive: 0x123a7a, roughness: 0.4, transparent: true, opacity: 0.85 }),
+    batt: new THREE.MeshStandardMaterial({ color: 0x5b6070, roughness: 0.6 }),
+    ghost: new THREE.MeshBasicMaterial({ color: 0xc9d2e3, wireframe: true, transparent: true, opacity: 0.12 }),
+  };
+  const CLIPPED = ["black", "inner", "soft", "led", "halo", "foam", "mic", "air", "batt"];
+
+  // ---------- scène ----------
+  const canvas = document.getElementById("view");
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.localClippingEnabled = true;
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0b0c0e);
+  const camera = new THREE.PerspectiveCamera(32, 1, 1, 5000);
+  const controls = new THREE.OrbitControls(camera, canvas);
+  controls.enableDamping = true;
+  controls.minDistance = 150; controls.maxDistance = 900;
+
+  scene.add(new THREE.HemisphereLight(0xdfe6f5, 0x0b0c0e, 0.4));
+  const key = new THREE.DirectionalLight(0xffffff, 1.25); key.position.set(180, 260, 220); scene.add(key);
+  const rim = new THREE.DirectionalLight(0x6fa4ff, 1.1); rim.position.set(-220, 120, -200); scene.add(rim);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.35); fill.position.set(-120, -40, 200); scene.add(fill);
+
+  const grid = new THREE.GridHelper(400, 40, 0x2a2d35, 0x1a1c21);
+  grid.position.y = -0.5; scene.add(grid);
+  const shadowTex = (() => {
+    const cv = document.createElement("canvas"); cv.width = cv.height = 128;
+    const g = cv.getContext("2d"), gr = g.createRadialGradient(64, 64, 4, 64, 64, 64);
+    gr.addColorStop(0, "rgba(0,0,0,0.75)"); gr.addColorStop(1, "rgba(0,0,0,0)");
+    g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+    return new THREE.CanvasTexture(cv);
+  })();
+  const shadow = new THREE.Mesh(new THREE.PlaneGeometry(150, 150), new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false }));
+  shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.2; scene.add(shadow);
+
+  // ---------- construction d'un concept ----------
+  function build(c) {
+    const root = new THREE.Group(), parts = {};
+    const outer = profile(c), inner = profile(c, WALL);
+    const top = c.outer[c.outer.length - 1][0];
+    const lift = (y, x) => rimLift(c, y, x);
+    const add = (name, mesh, dy) => { (parts[name] = parts[name] || new THREE.Group()).add(mesh); parts[name].userData.dy = dy; };
+
+    // coque avant (au-dessus de la jonction) et corps (en dessous)
+    add("cup", new THREE.Mesh(loft(outer, c.joint + 2, top, 2, { lift }), M.black), 26);
+    add("cup", new THREE.Mesh(loft(inner, c.joint + 2, top, 2, { lift, flip: true }), M.inner), 26);
+    add("body", new THREE.Mesh(loft(outer, c.base, c.joint - 2, 2), M.black), 0);
+    add("body", new THREE.Mesh(loft(inner, c.base, c.joint - 2, 2, { flip: true }), M.inner), 0);
+    add("base", new THREE.Mesh(loft(outer, 0, c.base, 1, { capBottom: true }), M.black), -26);
+
+    // anneau lumineux : bande translucide de 4 mm pincée entre coque et corps
+    const ringProf = y => { const [rx, rz, cz] = outer(y); return [rx + 0.15, rz + 0.15, cz]; };
+    add("led", new THREE.Mesh(loft(ringProf, c.joint - 2, c.joint + 2, 1), M.led), 13);
+    const haloProf = y => { const [rx, rz, cz] = outer(c.joint); return [rx + 2.2, rz + 2.2, cz]; };
+    add("led", new THREE.Mesh(loft(haloProf, c.joint - 4, c.joint + 4, 2), M.halo), 13);
+    // témoin de charge sur le bouchon
+    const [bx, bz, bcz] = outer(c.base * 0.5);
+    const dot = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 1, 20), M.led);
+    dot.rotation.x = Math.PI / 2; dot.position.set(0, c.base * 0.5, bz + bcz + 0.2); add("base", dot, -26);
+
+    // joint de bouche ferme dans la jupe
+    const sealPath = new Loop3(t => {
+      const a = t * Math.PI * 2, [rx, rz, cz] = outer(top), x = Math.cos(a) * (rx - 3);
+      return new THREE.Vector3(x, top + 2 + rimLift(c, top, x), Math.sin(a) * (rz - 3) + cz);
+    });
+    const seal = new THREE.Mesh(new THREE.TubeGeometry(sealPath, 160, 3.4, 14, true), M.soft);
+    seal.scale.set(1, 0.8, 1); add("seal", seal, 46);
+
+    // intérieur : mousse, micro, conduit hélicoïdal, sorties, batterie
+    const [frx, frz] = inner(c.foam.y + 5);
+    const foam = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 10, 48), M.foam);
+    foam.scale.set(frx - 1, 1, frz - 1); foam.position.set(0, c.foam.y + 5, 0); add("cup", foam, 26);
+    const [, mrz] = inner(c.mic.y);
+    const mic = new THREE.Mesh(new THREE.BoxGeometry(28.6, 28, 13.5), M.mic);
+    mic.position.set(0, c.mic.y, -(mrz - 7.5)); add("cup", mic, 26);
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(15, 15, 0.6, 40), M.inner);
+    disc.rotation.x = Math.PI / 2; disc.position.set(0, c.mic.y, -(mrz - 0.6)); add("cup", disc, 26);
+
+    const czf = y => outer(y)[2];
+    const helix = new Helix(c.helix, czf);
+    const h0 = helix.getPoint(0), h1 = helix.getPoint(1);
+    const riser = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0, c.foam.y + 2, czf(c.foam.y)), new THREE.Vector3(0, c.joint - 8, czf(c.joint - 8)),
+      new THREE.Vector3(h1.x * 0.6, h1.y + 6, h1.z * 0.6), h1,
+    ]);
+    const duct = new THREE.Group();
+    duct.add(new THREE.Mesh(new THREE.TubeGeometry(helix, 220, 3.3, 10, false), M.air));
+    duct.add(new THREE.Mesh(new THREE.TubeGeometry(riser, 40, 3.3, 10, false), M.air));
+    const [srx, srz, scz] = outer(c.slots.y);
+    const outlet = new THREE.CatmullRomCurve3([h0, new THREE.Vector3(h0.x * 1.1, c.slots.y + 2, h0.z * 1.1), new THREE.Vector3(srx * 0.9, c.slots.y, scz)]);
+    duct.add(new THREE.Mesh(new THREE.TubeGeometry(outlet, 30, 3.3, 10, false), M.air));
+    add("duct", duct, -10);
+    for (let i = 0; i < c.slots.n; i++) {
+      const a = (i / c.slots.n) * Math.PI * 2 + Math.PI / c.slots.n;
+      const slot = new THREE.Mesh(new THREE.BoxGeometry(2.2, 7, 6), new THREE.MeshBasicMaterial({ color: 0x050506 }));
+      slot.position.set(Math.cos(a) * (srx + 0.2), c.slots.y, Math.sin(a) * (srz + 0.2) + scz);
+      slot.lookAt(slot.position.x * 2, c.slots.y, (slot.position.z - scz) * 2 + scz);
+      add("body", slot, 0);
+    }
+    const batt = new THREE.Mesh(new THREE.BoxGeometry(30, 4.2, 20), M.batt);
+    batt.position.set(0, c.base * 0.55, bcz); add("base", batt, -26);
+
+    Object.values(parts).forEach(g => root.add(g));
+    root.userData.parts = parts;
+    return root;
+  }
+
+  // v2-compact en filaire (cotes de cad/whisper_mask_v0.py et v2_compact.py)
+  function buildV2() {
+    const g = new THREE.Group();
+    const handle = [[0, 23, 17.5, -42], [6, 25, 19, -39], [24, 27, 20.5, -31], [48, 30.5, 23, -19], [72, 33.5, 25, -6], [84, 34.5, 26, -2], [91, 36, 27, 0]];
+    const cup = [[91, 36, 27, 0], [102, 46, 36, 0], [130, 52, 43, 0], [158, 55, 46, 0]];
+    const hp = y => hermite(handle, y), cp = y => hermite(cup, y);
+    g.add(new THREE.Mesh(loft(hp, 0, 91, 3, { capBottom: true }), M.ghost));
+    g.add(new THREE.Mesh(loft(cp, 91, 158, 3), M.ghost));
+    const pad = new Loop3(t => { const a = t * Math.PI * 2; return new THREE.Vector3(Math.cos(a) * 45, 173, Math.sin(a) * 35); });
+    g.add(new THREE.Mesh(new THREE.TubeGeometry(pad, 90, 15, 10, true), M.ghost));
+    return g;
+  }
+
+  // ---------- état et interface ----------
+  const state = { concept: "A", cut: false, explode: false, v2: true, led: true, spin: true, t: 0 };
+  const models = {}; Object.keys(CONCEPTS).forEach(k => { models[k] = build(CONCEPTS[k]); scene.add(models[k]); });
+  const v2 = buildV2(); scene.add(v2);
+
+  function setMaterialsClip(on) { CLIPPED.forEach(k => { M[k].clippingPlanes = on ? clip : []; M[k].needsUpdate = true; }); }
+
+  function frame() {
+    const c = CONCEPTS[state.concept];
+    const H = c.outer[c.outer.length - 1][0];
+    const offset = state.v2 ? -55 : 0;
+    Object.entries(models).forEach(([k, m]) => { m.visible = k === state.concept; m.position.x = offset; });
+    v2.visible = state.v2; v2.position.x = 70;
+    const ty = Math.max(H, state.v2 ? 175 : 0) / 2;
+    controls.target.set(state.v2 ? 8 : 0, ty, 0);
+    // recul pour que la hauteur et la largeur tiennent dans le cadre, quel que soit son format
+    const W = state.v2 ? 250 : 110, Hs = Math.max(H, state.v2 ? 190 : 0) + 20, tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    const d = 1.15 * Math.max(Hs / 2 / tan, W / 2 / (tan * camera.aspect)) + 60;
+    const dir = new THREE.Vector3(0.55, 0.3, 0.78).normalize();
+    camera.position.copy(controls.target).addScaledVector(dir, d);
+    controls.update();
+  }
+
+  function renderPanel() {
+    const c = CONCEPTS[state.concept];
+    document.getElementById("c-name").textContent = c.name;
+    document.getElementById("c-tag").textContent = c.tag;
+    const specs = document.getElementById("c-specs");
+    specs.innerHTML = '<dt></dt><dd style="color:var(--muted);font:12px var(--mono)">v3</dd><span class="was">v2</span>' +
+      SHARED_SPECS.map(([k, f, was]) => `<dt>${k}</dt><dd>${f(c)}</dd><span class="was">${was}</span>`).join("");
+    document.getElementById("c-parts").innerHTML = c.parts.map(([sw, n, d]) =>
+      `<li><span class="sw ${sw}"></span><div><b>${n}</b><small>${d}</small></div></li>`).join("") +
+      '<li><span class="sw foam"></span><div><b>Mousse acoustique</b><small>Disque amovible au fond de la cavité, lavable.</small></div></li>';
+    document.getElementById("c-verdict").innerHTML =
+      c.pros.map(p => `<p>${p}<span class="pill ok">pour</span></p>`).join("") +
+      c.cons.map(p => `<p>${p}<span class="pill risk">contre</span></p>`).join("");
+  }
+
+  function press(id, on) { document.getElementById(id).setAttribute("aria-pressed", String(on)); }
+
+  document.querySelectorAll("[data-concept]").forEach(b => b.addEventListener("click", () => {
+    state.concept = b.dataset.concept;
+    document.querySelectorAll("[data-concept]").forEach(x => press(x.id, x === b));
+    try { localStorage.setItem("silentmic-concept", state.concept); } catch (e) {}
+    renderPanel(); frame();
+  }));
+  const toggle = (id, key, fn) => document.getElementById(id).addEventListener("click", () => { state[key] = !state[key]; press(id, state[key]); fn && fn(); });
+  toggle("t-cut", "cut", () => setMaterialsClip(state.cut));
+  toggle("t-explode", "explode");
+  toggle("t-v2", "v2", frame);
+  toggle("t-led", "led", () => { M.led.emissiveIntensity = state.led ? 2.0 : 0.0; M.halo.visible = state.led; M.led.opacity = state.led ? 0.92 : 0.55; });
+  toggle("t-spin", "spin");
+
+  try { const saved = localStorage.getItem("silentmic-concept"); if (saved && CONCEPTS[saved]) document.getElementById("tab-" + saved).click(); } catch (e) {}
+
+  function resize() {
+    const r = canvas.parentElement.getBoundingClientRect();
+    renderer.setSize(r.width, r.height, false);
+    camera.aspect = r.width / Math.max(r.height, 1); camera.updateProjectionMatrix();
+    frame();
+  }
+  new ResizeObserver(resize).observe(canvas.parentElement);
+
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduced) { state.spin = false; press("t-spin", false); }
+  let last = performance.now();
+  function tick(now) {
+    const dt = Math.min((now - last) / 1000, 0.05); last = now;
+    const m = models[state.concept];
+    if (state.spin) { m.rotation.y += dt * 0.35; v2.rotation.y = m.rotation.y; }
+    state.t += ((state.explode ? 1 : 0) - state.t) * Math.min(dt * 6, 1);
+    Object.values(m.userData.parts).forEach(g => { g.position.y = g.userData.dy * state.t; });
+    if (state.led) M.led.emissiveIntensity = 1.8 + 0.25 * Math.sin(now / 900);
+    controls.update();
+    renderer.render(scene, camera);
+    requestAnimationFrame(tick);
+  }
+  renderPanel(); resize(); requestAnimationFrame(tick);
+})();
+</script>
