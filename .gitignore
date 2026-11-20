@@ -1,13 +1,15 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+*.FCStd1
+*.FCBak
+.venv/
 
 # Local repair artifacts from the earlier FreeCAD inspection session.
-*.FCBak
-*.FCStd1
-*.py[cod]
-.DS_Store
-.venv/
 /build_freecad_flat.py
-/out/
 /verify_freecad_visibility.py
-__pycache__/
-acoustics/fem/work/
+/out/
+
+# Sorties regenerables du modele acoustique
 acoustics/out/
+acoustics/fem/work/
