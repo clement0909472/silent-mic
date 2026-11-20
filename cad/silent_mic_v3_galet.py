@@ -90,6 +90,7 @@ COLLAR_HEIGHT = 14.0
 COLLAR_INNER = cp.collar_inner()
 LEDGE = 1.5  # appui de la bride du collier (seul porte-a-faux au-dessus du plateau)
 SEAT_OPENING = tuple(f - 2 * LEDGE for f in cp.flange_outer())
+OPENING_CHAMFER = (2.5, 1.0)  # largeur, hauteur : sous le bord de l'ouverture, face au plateau en impression (pente libre)
 
 # ---------- conduit annulaire ----------
 DUCT = (4.6, 9.1)  # offsets radiaux : 4.5 mm
@@ -133,7 +134,15 @@ MIC_PRESETS = {"evase": (0.25, -12.25, 20.0), "oeuf": (-2.5, -21.0, 20.2)}
 MIC_XC, MIC_YC, MIC_ZC = MIC_PRESETS[PROFILE]
 MIC_CLEARANCE = 1.0
 WINDSCREEN_T = 5.0
+WINDSCREEN_GAP = 0.5  # la bonnette, collee au manchon, effleure la grille quand le capot est ferme
 STEM_R = 4.0
+# Nid du micro : 4 butees basses, une par face, sur la tete du pied. Le micro se pose et se retire
+# en translation selon +z ; au-dessus des butees, ses 4 faces restent libres pour les doigts.
+NEST_GAP, NEST_H, NEST_T = 0.45, 4.0, 1.2
+NEST_STEEP = 2.5  # dessous des butees a 22 deg : a 38 deg Orca supporte encore ces petits porte-a-faux
+NEST_STOP = 1.8  # longueur de chaque butee, de part et d'autre du milieu de la face
+MIC_STACK_EXTRA = float(os.environ.get("SILENT_MIC_STACK_EXTRA", 0.0))  # clip ou aimant sous le boitier, a mesurer
+FINGER = 15.0  # largeur de doigt controlee de chaque cote du micro, capot avant retire
 CONE_DEG, CONE_HARD = 15.0, 12.0  # 15 = regle (WARN en dessous), 12 = refus
 MOUTH_ABOVE_SEAT = 20.0  # coussin de 30 mm comprime : hypothese
 BREATH_Y = 10.0
@@ -283,7 +292,12 @@ def front_cavity_tool():
     z_low = Z_SEAT - STEEP * (top[0] - SEAT_OPENING[0]) / 2
     opening = eprism(*SEAT_OPENING, Z_SEAT - SEAT_PLATE - 1.0, z_low)
     cone_ = wp(cq.Solid.makeLoft([ell(*SEAT_OPENING, z_low), ell(*top, Z_SEAT), ell(top[0] + 0.02, top[1] + 0.02, Z_SEAT + 1)], True))
-    return joint.union(corbel).union(main).union(opening).union(cone_)
+    # chanfrein sous le bord de l'ouverture : le coin haut du micro voyait l'arete de la plaque a 1.25 mm
+    zp = Z_SEAT - SEAT_PLATE
+    cw, ch = OPENING_CHAMFER
+    chamfer = wp(cq.Solid.makeLoft([ell(SEAT_OPENING[0] + 2 * cw, SEAT_OPENING[1] + 2 * cw, zp - 0.01),
+                                    ell(*SEAT_OPENING, zp + ch)], True))
+    return joint.union(corbel).union(main).union(opening).union(cone_).union(chamfer)
 
 
 def section_point(t, d, z):
@@ -560,9 +574,46 @@ def collar_insert_placed():
 MIC_DISC_TOP = MIC_ZC - v0.MIC_SIZE[2] / 2 - v0.MIC_STEEL_DISC_THICKNESS
 
 
-def mic_box():
+MIC_BOTTOM = MIC_DISC_TOP + v0.MIC_STEEL_DISC_THICKNESS
+
+
+def mic_box(extra=None):
+    """Boitier DJI (cotes de la fiche officielle) pose sur le disque ; extra = epaisseur d'un clip
+    ou d'un aimant entre disque et boitier, qui souleve le micro."""
+    e = MIC_STACK_EXTRA if extra is None else extra
     return box(MIC_XC - v0.MIC_SIZE[0] / 2, MIC_XC + v0.MIC_SIZE[0] / 2, MIC_YC - v0.MIC_SIZE[1] / 2,
-               MIC_YC + v0.MIC_SIZE[1] / 2, MIC_ZC - v0.MIC_SIZE[2] / 2, MIC_ZC + v0.MIC_SIZE[2] / 2)
+               MIC_YC + v0.MIC_SIZE[1] / 2, MIC_BOTTOM + e, MIC_BOTTOM + e + v0.MIC_SIZE[2])
+
+
+def build_mic_nest():
+    """8 butees de 4 mm, deux par face, a 0.45 mm du boitier : position et orientation indexees,
+    pose et retrait en translation pure. Elles evitent le milieu des faces, ou le disque de 30 mm
+    deborde du boitier. Chaque butee est un seul profil : dessous a 38 deg ancre dans le flanc de la
+    tete du pied a 22 deg (coque imprimee z vers le haut), partie interieure sous le niveau du micro."""
+    r_head = v0.MIC_STEEL_DISC_DIAMETER / 2 + 0.5
+    r_disc = v0.MIC_STEEL_DISC_DIAMETER / 2 + 0.2
+    zs = MIC_DISC_TOP - 1.5 + 0.06  # bas du flanc vertical de la tete
+    z1 = MIC_BOTTOM + NEST_H
+    zin = MIC_BOTTOM - NEST_GAP  # dessus de la partie interieure, sous le boitier
+    out = []
+    for axis, half in (("x", v0.MIC_SIZE[0] / 2 + NEST_GAP), ("y", v0.MIC_SIZE[1] / 2 + NEST_GAP)):
+        u0, u1 = half, half + NEST_T
+        t0 = math.sqrt(r_disc ** 2 - u0 ** 2) + 0.1
+        t1 = t0 + NEST_STOP
+        ui = math.sqrt(r_head ** 2 - t1 ** 2) - 0.05  # sur le flanc vertical de la tete, meme a l'extremite
+        assert zs + NEST_STEEP * (u0 - ui) <= zin - 0.02, "profil de butee qui se recoupe"
+        prof = [(ui, zs), (u1, zs + NEST_STEEP * (u1 - ui)), (u1, z1), (u0, z1), (u0, zin), (ui, zin)]
+        for sgn in (-1, 1):
+            for tsg in (-1, 1):
+                a, b = sorted((tsg * t0, tsg * t1))
+                if axis == "x":
+                    solid = (cq.Workplane("XZ", origin=(0, MIC_YC + b, 0))
+                             .polyline([(MIC_XC + sgn * u, z) for u, z in prof]).close().extrude(b - a))
+                else:
+                    solid = (cq.Workplane("YZ", origin=(MIC_XC + a, 0, 0))
+                             .polyline([(MIC_YC + sgn * u, z) for u, z in prof]).close().extrude(b - a))
+                out.append(solid)
+    return union_all(out)
 
 
 def mic_disc():
@@ -586,13 +637,38 @@ def build_mic_pedestal():
     web = (cq.Workplane("YZ", origin=(MIC_XC - 2.0, 0, 0))
            .polyline([(y_wall, z_base - STEEP * (STEM_R + MIC_YC - y_wall)), (MIC_YC, z_base - STEEP * STEM_R), (MIC_YC, -0.5),
                       (y_wall, -0.5)]).close().extrude(4.0))
-    return union_all([head, stem, foot, web])
+    return union_all([head, stem, foot, web, build_mic_nest()])
 
 
 def build_windscreen():
-    """Bonnette de mousse ouverte sur la grille, retaillee sous la plaque d'appui."""
+    """Bonnette de 5 mm au-dessus de la grille, collee au manchon du capot avant (elle part avec
+    lui) ; retaillee ensuite contre le capot et le col."""
     bb = mic_box().val().BoundingBox()
-    return box(bb.xmin - 1, bb.xmax + 1, bb.ymin - 1, bb.ymax + 1, bb.zmax, bb.zmax + WINDSCREEN_T)
+    z0 = bb.zmax + WINDSCREEN_GAP
+    # empreinte micro + 2 mm : elle rejoint le bord de la decoupe du manchon, ou elle est collee
+    return box(bb.xmin - 2, bb.xmax + 2, bb.ymin - 2, bb.ymax + 2, z0, z0 + WINDSCREEN_T)
+
+
+def windscreen_room(steps=25):
+    """Epaisseur de mousse disponible au-dessus de la grille (sans contact avec une piece rigide),
+    en grille sur l'empreinte du micro : sous la plaque d'appui, sous la bride du col, sous l'ouverture du col."""
+    bb = mic_box().val().BoundingBox()
+    z0 = bb.zmax + WINDSCREEN_GAP
+    inside = lambda x, y, w, h: (x / (w / 2)) ** 2 + (y / (h / 2)) ** 2 <= 1
+    zones = {"sous_plaque": [], "sous_bride_du_col": [], "sous_ouverture_du_col": []}
+    for i in range(steps + 1):
+        for j in range(steps + 1):
+            x = bb.xmin + (bb.xmax - bb.xmin) * i / steps
+            y = bb.ymin + (bb.ymax - bb.ymin) * j / steps
+            if not inside(x, y, *SEAT_OPENING):
+                zones["sous_plaque"].append(Z_SEAT - SEAT_PLATE - z0)
+            elif not inside(x, y, *COLLAR_INNER):
+                zones["sous_bride_du_col"].append(Z_SEAT - cp.FLANGE_T - 0.1 - z0)
+            else:
+                zones["sous_ouverture_du_col"].append(WINDSCREEN_T)
+    n = sum(len(v) for v in zones.values())
+    return {k: {"part_de_la_face_pct": round(100 * len(v) / n), "epaisseur_mm": round(min(min(v), WINDSCREEN_T), 2)}
+            for k, v in zones.items() if v}
 
 
 def build_liner():
@@ -720,6 +796,8 @@ def cone_angle():
 
 
 def min_distance(a, b):
+    if hasattr(b, "solids") and b.solids().size() == 0:
+        return float("inf")
     return a.val().distance(b.val()) if hasattr(a, "val") else a.distance(b)
 
 
@@ -773,7 +851,10 @@ def export():
         assert p.val().isValid() and p.solids().size() == 1, n
     t = time.perf_counter()
     refs = build_refs()
-    ws = build_windscreen().cut(front).cut(insert).intersect(box(-70, 70, -70, 70, -60, Z_SEAT - 0.2))
+    ws = build_windscreen().cut(grow(front.intersect(box(-70, 70, -70, 70, Z_SEAT - SEAT_PLATE - 0.01, Z_SEAT + 1)), 0.0)).cut(front).cut(insert)
+
+    # au-dessus de l'appui, la bonnette ne reste que dans l'ouverture du col (pas dans le coussin)
+    ws = ws.intersect(box(-70, 70, -70, 70, -60, Z_SEAT - 0.1).union(eprism(*COLLAR_INNER, Z_SEAT - 1, Z_SEAT + COLLAR_HEIGHT)))
     refs["windscreen"] = ws
     refs["foam-disc"] = build_foam_disc(rear)
     refs["foam-liner-rear"] = build_rear_liner(rear)
@@ -858,13 +939,39 @@ def export():
     t = time.perf_counter()
     ang = cone_angle()
     mic = refs["mic"]
+    # zone d'appui : les butees et le plateau de 1.5 mm de la tete qui porte le disque
+    seat_disc = wp(cq.Solid.makeCylinder(v0.MIC_STEEL_DISC_DIAMETER / 2 + 0.6, 1.62,
+                                         cq.Vector(MIC_XC, MIC_YC, MIC_DISC_TOP - 1.6), cq.Vector(0, 0, 1)))
+    nest_zone = grow(build_mic_nest(), 0.01).union(seat_disc)
     clear = {"front": min_distance(mic, front), "insert": min_distance(mic, insert),
-             "rear_except_disc": min_distance(mic, rear.cut(grow(refs["mic-disc"], 0.01))) if False else min_distance(mic, rear),
+             "rear_hors_nid_et_disque": min_distance(mic, rear.cut(nest_zone)),
+             "nid": min_distance(mic, build_mic_nest()), "disque": min_distance(mic, refs["mic-disc"]),
              "liner": min_distance(mic, refs["foam-liner"])}
+    # surepaisseur admissible sous le boitier (clip, aimant) avant de passer sous 1.0 mm d'une piece imprimee
+    lo, hi = 0.0, 6.0
+    for _ in range(9):
+        mid = (lo + hi) / 2
+        mb = mic_box(MIC_STACK_EXTRA + mid)
+        ok = min(min_distance(mb, front), min_distance(mb, insert), min_distance(mb, rear.cut(nest_zone))) >= MIC_CLEARANCE
+        lo, hi = (mid, hi) if ok else (lo, mid)
+    # doigts : de chaque cote, une bande de 15 mm au-dessus des butees jusqu'au haut du boitier, capot avant retire
+    bbm = mic.val().BoundingBox()
+    zf0 = MIC_BOTTOM + NEST_H
+    sides = {"-x": box(bbm.xmin - FINGER, bbm.xmin - 0.01, bbm.ymin, bbm.ymax, zf0, bbm.zmax),
+             "+x": box(bbm.xmax + 0.01, bbm.xmax + FINGER, bbm.ymin, bbm.ymax, zf0, bbm.zmax),
+             "-y": box(bbm.xmin, bbm.xmax, bbm.ymin - FINGER, bbm.ymin - 0.01, zf0, bbm.zmax),
+             "+y": box(bbm.xmin, bbm.xmax, bbm.ymax + 0.01, bbm.ymax + FINGER, zf0, bbm.zmax)}
+    fingers = {k: {"hauteur_libre_mm": round(bbm.zmax - zf0, 1), "obstacle_mm3": round(vol(b.intersect(rear.union(ring_))), 1)}
+               for k, b in sides.items()}
     m["mic"] = {"centre": [MIC_XC, MIC_YC, MIC_ZC], "cone_min_deg": round(ang, 1), "clearance_mm": {k: round(v, 2) for k, v in clear.items()},
-                "mouth_assumed_above_seat_mm": MOUTH_ABOVE_SEAT}
+                "mouth_assumed_above_seat_mm": MOUTH_ABOVE_SEAT, "stack_extra_mm": MIC_STACK_EXTRA,
+                "stack_extra_max_mm": round(lo, 2), "nest": {"jeu_par_cote_mm": NEST_GAP, "hauteur_butees_mm": NEST_H},
+                "acces_doigts_capot_retire": fingers, "bonnette_disponible": windscreen_room(),
+                "bonnette_volume_cm3": round(vol(ws) / 1000, 2)}
     assert clear["front"] >= MIC_CLEARANCE - 0.01 and clear["insert"] >= MIC_CLEARANCE - 0.01, clear
-    assert clear["rear_except_disc"] >= v0.MIC_STEEL_DISC_THICKNESS - 0.01, clear
+    assert clear["rear_hors_nid_et_disque"] >= MIC_CLEARANCE - 0.01, clear
+    assert NEST_GAP - 0.01 <= clear["nid"] <= 0.5 + 0.01, clear
+    assert all(f["obstacle_mm3"] < 0.01 and f["hauteur_libre_mm"] >= 9.0 for f in fingers.values()), fingers
     if ang < CONE_HARD:
         fail.append(f"micro dans le cone : {ang:.1f} deg < {CONE_HARD}")
     elif ang < CONE_DEG:
