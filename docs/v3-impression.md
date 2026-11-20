@@ -26,7 +26,7 @@ Grammes calculés par Bambu Studio avec la densité réelle du filament (1,32) :
 | 3 | Coque arrière, face arrière sur le plateau | `silent-mic-v3-galet-rear.stl` | 4 h 44 | 70 g |
 | 3 | Trappe, col de 14 mm, anneau (PETG) | `-cover.stl`, `-collar-insert-14mm.stl`, `-ring.stl` | 32, 33 et 21 min | 17 g |
 
-Temps et masses du corps : OrcaSlicer, densité 1,24. Le corps ne s'imprime qu'après le test des cols (`bench/README.md`) et l'essai des éprouvettes de joint. Les seuls supports du corps sont dans la baie de la coque arrière, cachée par la trappe.
+Temps et masses du corps : OrcaSlicer, densité 1,24. Le corps ne s'imprime qu'après le test des cols (`bench/README.md`) et l'essai des éprouvettes de joint. Les seuls supports du corps sont dans la baie de la coque arrière, cachée par la trappe. Pour la coque arrière, régler les supports sur « Sur plateau uniquement » : en automatique, le trancheur monte en plus une tour de support dans la cavité, sous les butées du nid du micro (vérifié : supports de 0,2 à 10,4 mm seulement avec ce réglage, 4 h 46, 69,9 g).
 
 ## Montage
 

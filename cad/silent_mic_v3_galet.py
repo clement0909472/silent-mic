@@ -1061,7 +1061,7 @@ def export():
              "earpad": ("Coussin Brainwavz", "soft", (0, 0, 175)), "gasket": ("Joint mousse 3 x 2", "soft", (0, 0, 128)),
              "led-filament": ("Filament LED", "electronics", (0, 0, 5)), "foam-disc": ("Fond de mousse, 2 couches de 10 mm", "foam", (0, 0, 45)),
              "foam-liner": ("Manchon de mousse 10 mm", "foam", (0, 0, 100)), "foam-liner-rear": ("Mousse des flancs arriere 8 mm", "foam", (0, 0, 58)),
-             "windscreen": ("Bonnette 5 mm, collee au manchon", "foam", (0, 0, 72)),
+             "windscreen": ("Bonnette 5 mm, collee au manchon", "foam", (0, 0, 104)),
              "battery": ("LiPo 30 x 20 x 5", "electronics", (0, 0, -26)), "charger": ("Chargeur USB-C TP4056", "electronics", (0, 0, -44)),
              "switch": ("Interrupteur", "electronics", (0, 0, -44)), "joint-magnets": ("Aimants du joint 6 x 2", "metal", (0, 0, 3)),
              "joint-steel-discs": ("Pastilles acier du joint", "metal", (0, 0, 131)), "cover-magnets": ("Aimants du couvercle", "metal", (0, 0, -5)),
