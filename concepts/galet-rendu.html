@@ -78,14 +78,14 @@ button[aria-pressed="true"] { background: var(--led); color: #06101f; }
   // ---------- formes : demi-axes (largeur, hauteur) le long de l'axe ----------
   const FORMS = {
     evase: {
-      ring: 54, dims: "coussin 110 × 90 mm<br>corps 84 × 66 mm<br>longueur 116 mm",
+      ring: 61, dims: "coussin 110 × 90 mm<br>corps 84 × 66 mm<br>longueur 116 mm",
       r(s) {
         if (s < 60) { const k = 1 - smooth((s - SEAT) / 18); return [42 + 10 * k, 33 + 9 * k]; }
         const f = Math.pow(1 - Math.pow((s - 60) / 61.3, 2.4), 1 / 2.2); return [42 * f, 33 * f];
       },
     },
     oeuf: {
-      ring: 58, dims: "coussin 110 × 90 mm<br>corps 89 × 72 mm au milieu<br>longueur 116 mm",
+      ring: 61, dims: "coussin 110 × 90 mm<br>corps 89 × 72 mm au milieu<br>longueur 116 mm",
       r(s) { const u = 0.88 * (s - SEAT) / (REAR - SEAT), f = Math.pow(1 - Math.pow(u, 1.8), 0.6); return [52 * f, 42 * f]; },
     },
   };
