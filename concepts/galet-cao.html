@@ -31,8 +31,11 @@ button:hover { border-color: var(--ui-line); }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--led); outline-offset: 1px; }
 button[aria-pressed="true"] { background: var(--led); color: #06101f; }
 input[type="range"] { width: 130px; accent-color: var(--led); }
+.legend { margin: 12px 0 0; padding: 10px 12px 10px 30px; max-width: 33ch; background: var(--ui); border: 1px solid var(--ui-line); border-radius: 12px; font-size: 12.5px; line-height: 1.4; backdrop-filter: blur(8px); }
+.legend li { margin: 3px 0; }
+.legend li::marker { color: var(--led); font: 800 12px var(--display); }
 #status { position: absolute; left: 0; right: 0; top: 46%; text-align: center; color: var(--muted); pointer-events: none; }
-@media (max-width: 700px) { .parts { width: 168px; max-height: 38%; font-size: 12px; } .sub { display: none; } }
+@media (max-width: 700px) { .parts { width: 168px; max-height: 38%; font-size: 12px; } .sub { display: none; } .legend { max-width: none; margin-right: 16px; font-size: 12px; padding: 8px 10px 8px 26px; } .stage.air .parts { display: none; } }
 </style>
 
 <div class="stage" id="stage">
@@ -40,6 +43,12 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
   <div class="head">
     <div class="brand">Silent Mic <span>CAO</span></div>
     <p class="sub">Les vraies pièces à imprimer, avec les composants en place. Coupe et éclaté pour voir l'intérieur.</p>
+    <ol class="legend" id="legend">
+      <li>La bouche souffle dans la chambre garnie de mousse.</li>
+      <li>L'air entre dans le conduit par une ouverture en bas de la chambre.</li>
+      <li>Il fait un tour complet dans l'épaisseur de la coque : 15 cm de conduit étroit, qui laisse passer le souffle et freine la voix.</li>
+      <li>Il ressort par quatre fentes cachées dans la gorge, sous l'anneau lumineux.</li>
+    </ol>
   </div>
   <p id="status">Chargement des pièces…</p>
   <div class="parts" id="parts"><h2>Pièces</h2></div>
@@ -47,7 +56,7 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
     <div class="grp"><span>Éclaté</span><input id="explode" type="range" min="0" max="100" value="0" aria-label="Éclaté"></div>
     <div class="grp">
       <button id="t-cut" aria-pressed="false">Coupe</button>
-      <button id="t-air" aria-pressed="false">Trajet d'air</button>
+      <button id="t-air" aria-pressed="true">Trajet d'air</button>
       <button id="t-spin" aria-pressed="false">Rotation</button>
     </div>
     <div class="grp"><span>Vue</span>
@@ -87,14 +96,63 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
     foam: { label: "Mousse", color: "#6f9a82", o: { roughness: 1, envMapIntensity: 0.1 } },
     metal: { label: "Aimants et acier", color: "#d5d8de", o: { roughness: 0.3, metalness: 0.9, envMapIntensity: 0.8 } },
     electronics: { label: "Micro et électronique", color: "#e0a03c" },
-    air: { label: "Trajet d'air", color: "#59b0ff", o: { transparent: true, opacity: 0.4, depthWrite: false, side: THREE.DoubleSide } },
+    air: { label: "Trajet d'air", color: "#2f7dff", o: { transparent: true, opacity: 0.22, depthWrite: false, side: THREE.DoubleSide } },
   };
   // les quatre pieces imprimees en noir recoivent des teintes voisines, pour lire les jonctions
   const TINTS = { "front.stl": "#5d6a86", "rear.stl": "#46506a", "cover.stl": "#343c50", "collar-insert-14mm.stl": "#7b88a6" };
   const device = new THREE.Group(); scene.add(device);
   device.rotation.set(0, Math.PI / 2, 0);    // z du modele (vers le visage) a l'horizontale, y du modele en haut
   const parts = [];
-  const state = { cut: false, air: false, spin: false, t: 0 };
+  const state = { cut: false, air: true, spin: false, t: 0 };
+
+  // Trajet d'air : fleches animees, vues a travers la coque. Cotes recopiees de cad/silent_mic_v3_galet.py
+  // (section au milieu du conduit, offset du conduit, entree et fentes en abscisse depuis 6 h) : a recopier si elles changent.
+  const FLOW = { a: 41.6, b: 32.7, d: 6.85, z: -11.3, inlet: 9.5, slots: [-48.25, -35.75, -23.25, -10.75] };
+  const flow = new THREE.Group(); flow.position.z = -8; device.add(flow);
+  const off = (t, d, z) => { const nx = FLOW.b * Math.cos(t), ny = FLOW.a * Math.sin(t), k = Math.hypot(nx, ny); return new THREE.Vector3(FLOW.a * Math.cos(t) - d * nx / k, FLOW.b * Math.sin(t) - d * ny / k, z); };
+  const table = []; { let s = 0, prev; for (let i = 0; i <= 720; i++) { const t = -Math.PI / 2 + 2 * Math.PI * i / 720, p = off(t, FLOW.d, 0); if (prev) s += p.distanceTo(prev); table.push([s, t]); prev = p; } }
+  const LAP = table[720][0];
+  const tAt = s => { s = ((s % LAP) + LAP) % LAP; const i = Math.max(table.findIndex(r => r[0] >= s), 1), [s0, t0] = table[i - 1], [s1, t1] = table[i]; return t0 + (t1 - t0) * (s - s0) / (s1 - s0); };
+  const V = (x, y, z) => new THREE.Vector3(x, y, z), tIn = tAt(FLOW.inlet), loopPts = [];
+  for (let s = FLOW.inlet; s <= LAP + FLOW.slots[3]; s += 3) loopPts.push(off(tAt(s), FLOW.d, FLOW.z));
+  const curves = [
+    new THREE.CatmullRomCurve3([V(0, 8, 62), V(0, 7, 42), V(1, 5, 22), V(4, -4, 4), V(7, -16, -8), off(tIn, 10, -12), off(tIn, FLOW.d, FLOW.z)]),
+    new THREE.CatmullRomCurve3(loopPts),
+    ...FLOW.slots.map(s => new THREE.CatmullRomCurve3([off(tAt(s), FLOW.d, -14), off(tAt(s), 1.5, -7.3), off(tAt(s), -11, -2.5)])),
+  ];
+  const tubeMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(0xff7a1a).convertSRGBToLinear(), transparent: true, opacity: 0.95, depthTest: false, toneMapped: false });
+  const headMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, depthTest: false, toneMapped: false });
+  const headGeo = new THREE.ConeGeometry(3, 8, 16), heads = [], UP = V(0, 1, 0);
+  for (const c of curves) {
+    const len = c.getLength(), tube = new THREE.Mesh(new THREE.TubeGeometry(c, Math.ceil(len / 1.5), 1.1, 8), tubeMat); tube.renderOrder = 10; flow.add(tube);
+    for (let i = 0, n = Math.max(1, Math.round(len / 24)); i < n; i++) { const h = new THREE.Mesh(headGeo, headMat); h.renderOrder = 11; flow.add(h); heads.push({ h, c, len, u: i / n }); }
+  }
+  [[V(0, 8, 68)], [off(tIn, 15, -8)], [off(Math.PI / 2, -5, FLOW.z)], [off(tAt(-29.5), -16, -1)]].forEach(([p], i) => {
+    const cv = document.createElement("canvas"), x = cv.getContext("2d"); cv.width = cv.height = 64;
+    x.fillStyle = "#4d9bff"; x.beginPath(); x.arc(32, 32, 30, 0, 7); x.fill();
+    x.fillStyle = "#06101f"; x.font = "800 38px Arial"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(i + 1, 32, 35);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), depthTest: false, toneMapped: false })); sp.scale.setScalar(9); sp.position.copy(p); sp.renderOrder = 12; flow.add(sp);
+  });
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let flowT = 0;
+  function moveHeads(dt) {
+    if (!still) flowT += dt;
+    for (const a of heads) { const u = (a.u + flowT * 30 / a.len) % 1; a.h.position.copy(a.c.getPointAt(u)); a.h.quaternion.setFromUnitVectors(UP, a.c.getTangentAt(u)); }
+  }
+  // Avec le trajet d'air : coque, coussin et mousse en fantome, volume d'air en bleu, micro et anneau gardes comme reperes.
+  // En coupe, les pieces restent pleines : le conduit se lit dans la matiere tranchee.
+  const AIR_OPACITY = { black: 0.07, soft: 0.04, foam: 0.05 };
+  function applyAir() {
+    flow.visible = state.air; document.getElementById("legend").hidden = !state.air; stage.classList.toggle("air", state.air);
+    for (const p of parts) {
+      if (p.role === "air") { p.mesh.visible = state.air; continue; }
+      const [face, back] = p.mesh.children, m = face.material, o = AIR_OPACITY[p.role], ghost = state.air && !state.cut && o !== undefined;
+      const keep = !state.air || state.cut || ghost || p.role === "translucent" || p.file === "mic.stl";
+      m.userData.env ??= m.envMapIntensity;
+      Object.assign(m, { transparent: ghost, opacity: ghost ? o : 1, depthWrite: !ghost, envMapIntensity: ghost ? 0 : m.userData.env, needsUpdate: true });
+      face.visible = keep; back.visible = keep && !ghost;
+    }
+  }
 
   function ui() {
     const box = document.getElementById("parts");
@@ -107,10 +165,10 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
       l.append(c, s, document.createTextNode(p.label)); box.append(l);
     }
   }
-  function applyCut() { for (const m of mats) { m.clippingPlanes = state.cut ? [clip] : []; m.needsUpdate = true; } }
+  function applyCut() { for (const m of mats) { m.clippingPlanes = state.cut ? [clip] : []; m.needsUpdate = true; } applyAir(); }
   function view(name) {
-    const V = { avant: [0.78, 0.3, 0.55], profil: [0.02, 0.08, 1], dos: [-0.75, 0.3, -0.5] }[name];
-    const d = new THREE.Vector3(...V).normalize(), tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    const D = { air: [0.5, 0.26, 0.9], avant: [0.78, 0.3, 0.55], profil: [0.02, 0.08, 1], dos: [-0.75, 0.3, -0.5] }[name];
+    const d = new THREE.Vector3(...D).normalize(), tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     const span = 150 + 1.9 * state.t * 100, dist = 1.15 * Math.max(span / 2 / tan, span / 2 / (tan * camera.aspect)) + 60;
     controls.target.set(0, 0, 0); camera.position.copy(d.multiplyScalar(dist)); controls.update();
   }
@@ -126,16 +184,15 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
       mesh.add(new THREE.Mesh(g, mat(Object.assign({ color: new THREE.Color(hex) }, ROLES[role].o || {}))));
       if (role !== "air") mesh.add(new THREE.Mesh(g, cap(hex)));
       mesh.position.z = -8;   // recentre : le modele va de z = -55 (dos) a z = +61 (face du coussin)
-      if (role === "air") mesh.visible = false;
       device.add(mesh); parts.push({ ...p, role, mesh, base: mesh.position.clone(), explode: new THREE.Vector3(...p.explode) });
     }
-    status.hidden = true; ui(); applyCut(); view("avant");
+    status.hidden = true; ui(); applyCut(); view("air");
   }).catch(e => { status.textContent = "Les pièces n'ont pas pu être chargées (" + e.message + ")."; });
 
   const press = (el, on) => el.setAttribute("aria-pressed", String(on));
   const toggle = (id, k, fn) => document.getElementById(id).addEventListener("click", e => { state[k] = !state[k]; press(e.currentTarget, state[k]); fn && fn(); });
   toggle("t-cut", "cut", applyCut);
-  toggle("t-air", "air", () => parts.forEach(p => { if (p.role === "air") p.mesh.visible = state.air; }));
+  toggle("t-air", "air", applyAir);
   toggle("t-spin", "spin");
   document.getElementById("explode").addEventListener("input", e => { state.t = e.target.value / 100; parts.forEach(p => p.mesh.position.copy(p.base).addScaledVector(p.explode, state.t)); });
   document.querySelectorAll("[data-view]").forEach(b => b.addEventListener("click", () => { device.rotation.y = Math.PI / 2; view(b.dataset.view); }));
@@ -144,11 +201,12 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
   new ResizeObserver(resize).observe(stage);
   let last = performance.now();
   (function tick(now) {
-    const dt = Math.min((now - last) / 1000, 0.05); last = now;
+    const dt = Math.max(0, Math.min((now - last) / 1000, 0.05)); last = now;   // la premiere image peut etre datee avant le chargement
     if (state.spin) device.rotation.y += dt * 0.3;
+    if (state.air) moveHeads(dt);
     device.updateMatrixWorld(); clip.copy(localClip).applyMatrix4(device.matrixWorld);
     controls.update(); renderer.render(scene, camera); requestAnimationFrame(tick);
   })(last);
-  resize(); view("avant");
+  resize(); view("air");
 })();
 </script>
