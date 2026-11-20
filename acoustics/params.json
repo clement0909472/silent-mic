@@ -133,8 +133,11 @@
         "leak_width_mm": 30,
         "contact_depth_mm": 8,
         "soft_wall_area_mm2": 1139,
-        "soft_wall_stiffness_pa_per_m": 10000000.0,
-        "radiating_fraction": 1.0
+        "soft_wall_stiffness_pa_per_m": 1000000.0,
+        "radiating_fraction": 0.5,
+        "soft_wall_mass_kg_m2": 2.0,
+        "soft_wall_loss": 0.7,
+        "_stiffness": "estimation centrale ; plage plausible 2.5e5 a 4e6 Pa/m, masse 1 a 4 kg/m2"
       },
       "shell": {
         "wall_area_mm2": 26000,

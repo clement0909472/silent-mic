@@ -1,0 +1,155 @@
+<meta charset="utf-8">
+<title>Galet Silent Mic CAO</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Revue des vraies pieces de CAO : scene plein ecran, reglages en bas, liste des pieces a droite. Look unique et sombre, choisi. */
+:root {
+  --bg-a: #2a2d33; --bg-b: #0b0c0e; --ui: rgba(18, 19, 23, 0.86); --ui-line: #3a3d45; --fg: #e8eaee; --muted: #9aa0ab; --led: #4d9bff;
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif; --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif; --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: #0b0c0e; color: var(--fg); font-family: var(--body); font-size: 14px; overflow: hidden; }
+.stage { position: relative; height: 100%; background: radial-gradient(ellipse at 50% 38%, var(--bg-a), var(--bg-b) 72%); }
+#view { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.head { position: absolute; top: 16px; left: max(16px, env(safe-area-inset-left, 0px)); pointer-events: none; }
+.brand { font: 800 15px var(--display); letter-spacing: 0.08em; text-transform: uppercase; }
+.brand span { color: var(--led); }
+.sub { font-size: 12px; color: var(--muted); margin-top: 4px; max-width: 34ch; }
+.parts { position: absolute; top: 16px; right: max(12px, env(safe-area-inset-right, 0px)); width: 216px; max-height: calc(100% - 150px); overflow-y: auto; background: var(--ui); border: 1px solid var(--ui-line); border-radius: 12px; padding: 10px 12px; backdrop-filter: blur(8px); }
+.parts h2 { font: 600 11px var(--display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+.parts label { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 13px; cursor: pointer; }
+.parts input { accent-color: var(--led); }
+.sw { width: 10px; height: 10px; border-radius: 3px; flex: none; border: 1px solid #555a65; }
+.bar { position: absolute; left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); display: flex; flex-wrap: wrap; gap: 8px 14px; justify-content: center; align-items: center; }
+.grp { display: flex; align-items: center; gap: 6px; background: var(--ui); border: 1px solid var(--ui-line); border-radius: 999px; padding: 4px 6px; backdrop-filter: blur(8px); }
+.grp > span { font: 600 11px var(--display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 0 4px 0 8px; }
+button { font: 500 13px var(--body); color: var(--fg); background: transparent; border: 1px solid transparent; border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+button:hover { border-color: var(--ui-line); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--led); outline-offset: 1px; }
+button[aria-pressed="true"] { background: var(--led); color: #06101f; }
+input[type="range"] { width: 130px; accent-color: var(--led); }
+#status { position: absolute; left: 0; right: 0; top: 46%; text-align: center; color: var(--muted); pointer-events: none; }
+@media (max-width: 700px) { .parts { width: 168px; max-height: 38%; font-size: 12px; } .sub { display: none; } }
+</style>
+
+<div class="stage" id="stage">
+  <canvas id="view" aria-label="Vue 3D des pièces de CAO du galet, à faire tourner"></canvas>
+  <div class="head">
+    <div class="brand">Silent Mic <span>CAO</span></div>
+    <p class="sub">Les vraies pièces à imprimer, avec les composants en place. Coupe et éclaté pour voir l'intérieur.</p>
+  </div>
+  <p id="status">Chargement des pièces…</p>
+  <div class="parts" id="parts"><h2>Pièces</h2></div>
+  <div class="bar">
+    <div class="grp"><span>Éclaté</span><input id="explode" type="range" min="0" max="100" value="0" aria-label="Éclaté"></div>
+    <div class="grp">
+      <button id="t-cut" aria-pressed="false">Coupe</button>
+      <button id="t-air" aria-pressed="false">Trajet d'air</button>
+      <button id="t-spin" aria-pressed="false">Rotation</button>
+    </div>
+    <div class="grp"><span>Vue</span>
+      <button data-view="avant">Avant</button><button data-view="profil">Profil</button><button data-view="dos">Dos</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/STLLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/utils/BufferGeometryUtils.js"></script>
+<script>
+(() => {
+  const stage = document.getElementById("stage"), canvas = document.getElementById("view"), status = document.getElementById("status");
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.1;
+  renderer.localClippingEnabled = true;
+  const scene = new THREE.Scene();
+  scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new THREE.RoomEnvironment(), 0.04).texture;
+  const camera = new THREE.PerspectiveCamera(28, 1, 5, 6000);
+  const controls = new THREE.OrbitControls(camera, canvas); controls.enableDamping = true; controls.minDistance = 120; controls.maxDistance = 1500;
+  const key = new THREE.DirectionalLight(0xffffff, 0.9); key.position.set(160, 320, 240); scene.add(key);
+  const rim = new THREE.DirectionalLight(0xbcd4ff, 0.9); rim.position.set(-260, 140, -220); scene.add(rim);
+
+  // un materiau par role du manifeste ; la coupe retire la moitie x < 0 de l'appareil (celle tournee vers la vue de profil).
+  // Chaque piece a aussi une copie "dos" en aplat : a travers la coupe, elle remplit la matiere tranchee.
+  const clip = new THREE.Plane(), localClip = new THREE.Plane(new THREE.Vector3(1, 0, 0), 0), mats = [];
+  const reg = m => { mats.push(m); return m; };
+  const mat = (o) => reg(new THREE.MeshStandardMaterial(Object.assign({ roughness: 0.7, envMapIntensity: 0.45 }, o)));
+  const cap = (hex) => reg(new THREE.MeshBasicMaterial({ color: new THREE.Color(hex).multiplyScalar(0.55), side: THREE.BackSide }));
+  const ROLES = {
+    black: { label: "Coque imprimée", color: "#56607a" },
+    translucent: { label: "Anneau lumineux", color: "#4d9bff", o: { color: 0x8fc0ff, emissive: 0x2f7dff, emissiveIntensity: 1.6, roughness: 0.4 } },
+    soft: { label: "Coussin et joint", color: "#8c7f73" },
+    foam: { label: "Mousse", color: "#6f9a82", o: { roughness: 1, envMapIntensity: 0.1 } },
+    metal: { label: "Aimants et acier", color: "#d5d8de", o: { roughness: 0.3, metalness: 0.9, envMapIntensity: 0.8 } },
+    electronics: { label: "Micro et électronique", color: "#e0a03c" },
+    air: { label: "Trajet d'air", color: "#59b0ff", o: { transparent: true, opacity: 0.4, depthWrite: false, side: THREE.DoubleSide } },
+  };
+  // les quatre pieces imprimees en noir recoivent des teintes voisines, pour lire les jonctions
+  const TINTS = { "front.stl": "#5d6a86", "rear.stl": "#46506a", "cover.stl": "#343c50", "collar-insert-14mm.stl": "#7b88a6" };
+  const device = new THREE.Group(); scene.add(device);
+  device.rotation.set(0, Math.PI / 2, 0);    // z du modele (vers le visage) a l'horizontale, y du modele en haut
+  const parts = [];
+  const state = { cut: false, air: false, spin: false, t: 0 };
+
+  function ui() {
+    const box = document.getElementById("parts");
+    for (const p of parts) {
+      if (p.role === "air") continue;
+      const l = document.createElement("label"), c = document.createElement("input"), s = document.createElement("span");
+      c.type = "checkbox"; c.checked = true; c.id = "p-" + p.file.replace(/\W/g, "-");
+      c.addEventListener("change", () => { p.mesh.visible = c.checked; });
+      s.className = "sw"; s.style.background = TINTS[p.file] || ROLES[p.role].color;
+      l.append(c, s, document.createTextNode(p.label)); box.append(l);
+    }
+  }
+  function applyCut() { for (const m of mats) { m.clippingPlanes = state.cut ? [clip] : []; m.needsUpdate = true; } }
+  function view(name) {
+    const V = { avant: [0.78, 0.3, 0.55], profil: [0.02, 0.08, 1], dos: [-0.75, 0.3, -0.5] }[name];
+    const d = new THREE.Vector3(...V).normalize(), tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    const span = 150 + 1.9 * state.t * 100, dist = 1.15 * Math.max(span / 2 / tan, span / 2 / (tan * camera.aspect)) + 60;
+    controls.target.set(0, 0, 0); camera.position.copy(d.multiplyScalar(dist)); controls.update();
+  }
+
+  fetch("web/manifest.json").then(r => { if (!r.ok) throw new Error("manifeste introuvable"); return r.json(); }).then(async man => {
+    const loader = new THREE.STLLoader();
+    for (const p of man.parts) {
+      const role = ROLES[p.role] ? p.role : "black";
+      let g = await new Promise((ok, ko) => loader.load("web/" + p.file, ok, undefined, ko));
+      g.deleteAttribute("normal");
+      g = THREE.BufferGeometryUtils.toCreasedNormals(THREE.BufferGeometryUtils.mergeVertices(g, 1e-3), THREE.MathUtils.degToRad(38));
+      const hex = TINTS[p.file] || ROLES[role].color, mesh = new THREE.Group();
+      mesh.add(new THREE.Mesh(g, mat(Object.assign({ color: new THREE.Color(hex) }, ROLES[role].o || {}))));
+      if (role !== "air") mesh.add(new THREE.Mesh(g, cap(hex)));
+      mesh.position.z = -8;   // recentre : le modele va de z = -55 (dos) a z = +61 (face du coussin)
+      if (role === "air") mesh.visible = false;
+      device.add(mesh); parts.push({ ...p, role, mesh, base: mesh.position.clone(), explode: new THREE.Vector3(...p.explode) });
+    }
+    status.hidden = true; ui(); applyCut(); view("avant");
+  }).catch(e => { status.textContent = "Les pièces n'ont pas pu être chargées (" + e.message + ")."; });
+
+  const press = (el, on) => el.setAttribute("aria-pressed", String(on));
+  const toggle = (id, k, fn) => document.getElementById(id).addEventListener("click", e => { state[k] = !state[k]; press(e.currentTarget, state[k]); fn && fn(); });
+  toggle("t-cut", "cut", applyCut);
+  toggle("t-air", "air", () => parts.forEach(p => { if (p.role === "air") p.mesh.visible = state.air; }));
+  toggle("t-spin", "spin");
+  document.getElementById("explode").addEventListener("input", e => { state.t = e.target.value / 100; parts.forEach(p => p.mesh.position.copy(p.base).addScaledVector(p.explode, state.t)); });
+  document.querySelectorAll("[data-view]").forEach(b => b.addEventListener("click", () => { device.rotation.y = Math.PI / 2; view(b.dataset.view); }));
+
+  function resize() { const r = stage.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); camera.aspect = r.width / Math.max(r.height, 1); camera.updateProjectionMatrix(); }
+  new ResizeObserver(resize).observe(stage);
+  let last = performance.now();
+  (function tick(now) {
+    const dt = Math.min((now - last) / 1000, 0.05); last = now;
+    if (state.spin) device.rotation.y += dt * 0.3;
+    device.updateMatrixWorld(); clip.copy(localClip).applyMatrix4(device.matrixWorld);
+    controls.update(); renderer.render(scene, camera); requestAnimationFrame(tick);
+  })(last);
+  resize(); view("avant");
+})();
+</script>
