@@ -41,7 +41,7 @@ Trois coques s'empilent le long de l'axe, sans aucune vis : trappe, coque arriè
 5. Le ruban LED dans sa rainure, l'anneau translucide par-dessus.
 6. Le micro sur son pied : il tient par son aimant. Sa bonnette de mousse par-dessus.
 7. Le capot avant, garni de son manchon de mousse, se plaque sur la coque : la languette entre dans la rainure et écrase le joint.
-8. Le col de 14 mm se pose dans son logement, le coussin s'enfile dessus et le tient. Le voile de tissu du coussin est découpé avant.
+8. Le col de 14 mm se pose dans son logement. Le coussin, voile de tissu découpé, se colle autour sur son appui par un anneau continu de ruban double face : le ruban le tient et ferme le jour.
 
 Au quotidien, seul le capot avant s'ouvre : on le tire, on prend le micro pour le recharger, on referme.
 
@@ -53,6 +53,7 @@ Au quotidien, seul le capot avant s'ouvre : on le tire, on prend le micro pour l
 | Pastilles d'acier | disque 6 × 2 mm, ou 12 aimants de plus en respectant la polarité | 12 |
 | Bande de mousse autocollante | cellules fermées, 3 mm de large, 2 mm d'épaisseur | 25 cm |
 | Mousse acoustique | polyuréthane à cellules ouvertes, plaques de 10 mm et de 5 mm | une plaque A4 de chaque |
+| Ruban double face | mousse fine d'environ 1 mm, 10 à 12 mm de large | 40 cm par coussin |
 | PETG translucide | naturel ou transparent | 5 g |
 | Colle | cyanoacrylate | |
 
@@ -69,5 +70,5 @@ Pour la lumière, plus tard : batterie LiPo 502030 avec protection (5 × 20 × 3
 - **Longueur du filament LED non choisie.** Le tour de la rainure fait environ 21 cm.
 - **Levier de l'interrupteur** accessible par une fente de 4 × 2,2 mm sous la coque : à valider au doigt.
 - **Tenue des aimants contre le joint** : c'est l'objet des éprouvettes de joint.
-- **Accroche du coussin non dessinée.** Le prototype v2 le tient par du scratch, qui laisse un jour tout autour (calcul : de -3 à 11 dB(A) au lieu de 21). À remplacer par un anneau continu de ruban double face, ou par la lèvre élastique du coussin sur une gorge de la coque, à dessiner une fois le coussin mesuré.
+- **Accroche du coussin : ruban double face.** Décision de Clément du 20 novembre 2026. Le scratch du prototype v2 laisse un jour tout autour (calcul : de -3 à 11 dB(A) au lieu de 21). La lèvre élastique du coussin sur une gorge de la coque est réservée à une version de production : même étanchéité attendue, coussin plus simple à changer, mais gorge à ajuster au millimètre.
 - **Dessous du coussin** : seulement posé sur l'appui, étanche par la pression de la main. Une fente de 0,5 mm sur 3 cm fait tomber l'atténuation calculée de 21 à 12 dB(A). Un anneau de ruban double face est en réserve, à trancher au test du capot (`bench/README.md`, étape 6).
