@@ -163,9 +163,12 @@ def solve(design, freqs):
         y = 1 / z_slit(w, seal["gap_mm"], seal["leak_width_mm"], seal["contact_depth_mm"])
         y_total, paths["joint"] = y_total + y, y
 
-    # paroi souple du coussin : C = surface exposee / raideur surfacique
-    c_cush = seal["soft_wall_area_mm2"] * 1e-6 / seal["soft_wall_stiffness_pa_per_m"]
-    y = 1j * w * c_cush
+    # paroi souple du coussin : raideur surfacique, plus masse et amortissement si renseignes.
+    # Sans masse c'est un ressort pur (fuite egale a toutes les frequences) ; avec masse, le
+    # coussin bloque de mieux en mieux au-dessus de sa resonance, comme un coussin de casque.
+    z_wall = (1j * w * seal.get("soft_wall_mass_kg_m2", 0.0)
+              + seal["soft_wall_stiffness_pa_per_m"] * (1 + 1j * seal.get("soft_wall_loss", 0.0)) / (1j * w))
+    y = seal["soft_wall_area_mm2"] * 1e-6 / z_wall
     y_total, paths["coussin"] = y_total + y, y * seal.get("radiating_fraction", 1.0)
 
     shell = design.get("shell", {})
