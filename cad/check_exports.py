@@ -11,7 +11,7 @@ import cadquery as cq
 
 
 SOURCES = ("whisper_mask_v0.py", "whisper_mask_v2_screwed.py", "whisper_mask_v2_compact.py",
-           "silent_mic_v3_coupons.py", "silent_mic_v3_galet.py", "guarded.sh")
+           "silent_mic_v3_coupons.py", "silent_mic_v3_galet.py", "foam_templates.py", "guarded.sh")
 
 
 def volume(shape):
@@ -54,12 +54,13 @@ def main():
             print(f"PASS {variant}: STEP metrics, exact printed geometry and deterministic STL exports")
         # v3 galet : sous le garde memoire/duree (un booleen OCCT qui degenere a deja sature la machine)
         guard = [str(isolated / "guarded.sh"), "-m", "6", "-t", "600", sys.executable]
-        for script in ("silent_mic_v3_coupons.py", "silent_mic_v3_galet.py"):
+        for script in ("silent_mic_v3_coupons.py", "silent_mic_v3_galet.py", "foam_templates.py"):
             subprocess.run(guard + [str(isolated / script)], check=True, stdout=subprocess.DEVNULL)
         for sub in ("v3-galet", "v3-galet/coupons"):
             compare_steps(source / "out" / sub, isolated / "out" / sub,
                           ("-front.step", "-rear.step", "-cover.step", "-ring.step", "-14mm.step", "cap.step"))
             compare_stls(source / "out" / sub, isolated / "out" / sub)
+        compare_stls(source / "out" / "v3-galet" / "foam", isolated / "out" / "v3-galet" / "foam")
         print("PASS v3-galet: assertions, STEP metrics, exact printed geometry and deterministic STL exports")
 
 

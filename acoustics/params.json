@@ -98,8 +98,8 @@
       "name": "v3-galet",
       "_source": "CAO cad/silent_mic_v3_galet.py (profil evase, joint s = 61, 20 nov. 2026) : cavite air + mousse mesuree jusqu'au sommet du collier, conduit annulaire d'un tour 4.5 x 12.1 mm (faite vif) (toit en pointe), longueur prise de l'entree au centre des fentes (le canal fait 182.2 mm de barrage a barrage), joint = coussin Brainwavz sur collier de 14 mm.",
       "cavity": {
-        "volume_cm3": 190.8,
-        "foam_cm3": 56.2,
+        "volume_cm3": 191.0,
+        "foam_cm3": 61.0,
         "foam_sigma": 12000
       },
       "vent": {

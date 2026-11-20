@@ -17,18 +17,17 @@
   ],
   "nose_clearance_ymax_mm": 42.0,
   "cavity_air_plus_foam_cm3": 191.0,
-  "cavity_air_only_cm3": 137.2,
+  "cavity_air_only_cm3": 123.5,
   "foam_cm3": {
-    "foam-disc": 30.4,
-    "foam-liner": 16.6,
-    "foam-liner-rear": 5.1,
+    "foam-disc": 35.3,
+    "foam-liner": 30.5,
     "windscreen": 1.7,
-    "total": 53.8
+    "total": 67.6
   },
   "pad_zone_above_collar_info_cm3": 49.2,
   "free_passage_min_mm2": {
-    "area": 1252,
-    "z": 4.8
+    "area": 1236,
+    "z": 18.3
   },
   "duct": {
     "section_mm2": 48.18,

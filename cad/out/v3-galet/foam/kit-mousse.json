@@ -1,0 +1,49 @@
+{
+  "fond": {
+    "plaque_mm": 10.0,
+    "quantite": 2,
+    "aire_mm2": 1764,
+    "volume_cm3": 35.3,
+    "gabarit_mm": [
+      59.9,
+      42.4
+    ],
+    "note": "plaque de 10 mm, deux couches identiques, encoche vers le bas (6 h)"
+  },
+  "manchon": {
+    "plaque_mm": 10.0,
+    "quantite": 1,
+    "aire_mm2": 2403,
+    "volume_cm3": 24.0,
+    "gabarit_mm": [
+      149.5,
+      58.0
+    ],
+    "note": "plaque de 10 mm, bord court (rayon interieur) vers le joint, ouverture au droit du micro",
+    "developpement": {
+      "rayons_developpes_mm": [
+        60.3,
+        77.4
+      ],
+      "angle_deg": 174.7,
+      "hauteur_bande_mm": 17.1,
+      "encoches": 8,
+      "encoche_mm": [
+        6.2,
+        11.3
+      ]
+    }
+  },
+  "bonnette": {
+    "plaque_mm": 5.0,
+    "quantite": 1,
+    "aire_mm2": 1044,
+    "volume_cm3": 5.2,
+    "gabarit_mm": [
+      32.6,
+      32.0
+    ],
+    "note": "plaque de 5 mm, collee sur les bords de la decoupe du manchon"
+  },
+  "total_volume_cm3": 64.5
+}

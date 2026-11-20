@@ -47,13 +47,31 @@ Trois coques s'empilent le long de l'axe, sans aucune vis : trappe, coque arriè
 
 **Par l'avant, le plan de joint (au niveau de l'anneau lumineux)**
 
-4. Le disque de mousse de 20 mm au fond, passé autour du pied du micro, puis la mousse des flancs.
+4. Les deux couches de mousse du fond (10 mm chacune), encoche vers le bas, autour du pied du micro. Le chanfrein sous le conduit les retient.
 5. Le ruban LED dans sa rainure, l'anneau translucide par-dessus.
-6. Le micro sur son pied : il tient par son aimant. Sa bonnette de mousse par-dessus.
-7. Le capot avant, garni de son manchon de mousse, se plaque sur la coque : la languette entre dans la rainure et écrase le joint.
+6. Le micro sur son pied, grille vers le haut : on le descend tout droit entre les 8 butées du nid (4 mm de haut, 0,45 mm de jeu par côté), il se pose sur le disque d'acier. Pas de bonnette sur lui : elle est collée au capot avant.
+7. Le capot avant, garni de son manchon de mousse et de la bonnette collée sur les bords de la découpe du manchon, se plaque sur la coque : la languette entre dans la rainure et écrase le joint. La bonnette vient alors à 0,5 mm au-dessus de la grille.
 8. Le col de 14 mm se pose dans son logement. Le coussin, voile de tissu découpé, se colle autour sur son appui par un anneau continu de ruban double face : le ruban le tient et ferme le jour.
 
-Au quotidien, seul le capot avant s'ouvre : on le tire, on prend le micro pour le recharger, on referme.
+Au quotidien, seul le capot avant s'ouvre : on le tire (la bonnette part avec lui), on pince le micro par deux faces opposées, libres sur 9.5 mm au-dessus des butées, on le sort tout droit, on le recharge, on le repose entre les butées, on referme.
+
+## Découper la mousse
+
+Trois pièces seulement, dans deux plaques de mousse polyuréthane à cellules ouvertes du commerce. Fichiers dans `cad/out/v3-galet/foam/` : un gabarit imprimable par pièce (`gabarit-*.stl`, plaque de 1,2 mm, nom gravé, à imprimer à plat sans support) et le même contour à l'échelle 1 (`contour-*.svg`, avec une barre de 50 mm à vérifier à la règle après impression papier). Régénération : `cad/guarded.sh -m 6 -t 600 .venv/bin/python cad/foam_templates.py`.
+
+| Ordre | Pièce | Plaque | Quantité | Contour |
+|---|---|---|---|---|
+| 1 | Fond | 10 mm | 2 | ellipse 60 × 42 mm, une encoche droite à 6 h |
+| 2 | Manchon avant | 10 mm | 1 | bande développée : secteur d'anneau de rayons 60 et 77 mm, 175°, 8 encoches de 6 × 11 mm côté joint |
+| 3 | Bonnette | 5 mm | 1 | rectangle 32,6 × 32,0 mm |
+
+1. Poser le gabarit sur la plaque, le tenir à plat d'une main.
+2. Couper au cutter à lame neuve de 18 mm, lame verticale, en plusieurs passes légères le long du gabarit. Les encoches d'abord, le contour ensuite.
+3. Fond : couper deux fois le même contour. Manchon : le rayon intérieur (bord court, côté encoches) va vers le plan de joint ; les deux extrémités de la bande viennent de part et d'autre du micro. Bonnette : la coller par ses bords sur ceux de la découpe du manchon, juste sous l'ouverture du col.
+
+Volumes découpés : fond 35,3 cm³, manchon 24,0 cm³, bonnette 5,2 cm³. Sous la bride du col, il ne reste que 2,44 mm au-dessus de la grille (22 % de sa surface) : la bonnette de 5 mm s'y écrase. Ailleurs, sous l'ouverture du col, elle garde ses 5 mm.
+
+Abandonnés par rapport à la version précédente, pour couper moins de pièces : la mousse des flancs arrière (6 encoches, 7 morceaux) et la couche du chanfrein du joint (8 encoches). Au modèle acoustique, retirer 9 cm³ de mousse coûte moins de 0,1 dB(A). Le manchon passe en revanche à une bande d'épaisseur constante de 10 mm (le passage d'air libre reste au-dessus de 1 200 mm²).
 
 ## À acheter
 
@@ -67,7 +85,7 @@ Au quotidien, seul le capot avant s'ouvre : on le tire, on prend le micro pour l
 | PETG translucide | naturel ou transparent | 5 g |
 | Colle | cyanoacrylate | |
 
-La mousse de 10 mm fait le disque du fond (deux couches) et le manchon avant. Les flancs arrière sont prévus à 8 mm : 5 mm à défaut. La bonnette prend la plaque de 5 mm.
+La plaque de 10 mm donne les deux couches du fond et le manchon avant, la plaque de 5 mm la bonnette (voir « Découper la mousse »).
 
 Déjà en main : coussin Brainwavz 110 × 90 × 30, disque d'acier de 30 mm, DJI Mic Mini 2, PLA noir mat.
 

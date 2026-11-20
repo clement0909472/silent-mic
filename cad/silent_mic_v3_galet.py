@@ -116,9 +116,9 @@ CORBEL_BOTTOM = CORBEL_TOP - CORBEL
 BAY_DEPTH = 10.5
 FLOOR_TOP = Z_RF + BAY_DEPTH + WALL
 FLOOR_RIB = 1.5
-FOAM_DISC_T = 20.0
+FOAM_LAYER = 10.0  # plaques du commerce : 10 mm (fond, manchon) et 5 mm (bonnette)
+FOAM_DISC_T = 2 * FOAM_LAYER
 LINER_T = 10.0
-REAR_LINER_T = 8.0
 MIN_PASSAGE = 1200.0  # section d'air libre le long de l'axe, de l'entree au coussin
 TUNNEL_D = 2.6
 TUNNEL_OFFSET = 3.8
@@ -678,14 +678,14 @@ def build_liner():
     zs = [s_of(z0)] + [s for s in FRONT_SMOOTH if z0 < z_of(s) < z1] + [s_of(z1)]
     outer = loft_ellipses(sections(sorted(zs, reverse=True), WALL + 0.2))
     inner = loft_ellipses(sections(sorted(zs, reverse=True), WALL + 0.2 + LINER_T))
-    liner = outer.cut(inner).cut(eprism(*SEAT_OPENING, z0 - 1, z1 + 1))
-    # couche de 5 mm sur le chanfrein du joint, sous le manchon (section encore large a cet endroit)
-    zl, zm, t = FLANGE_TOP + 0.2, FLANGE_TOP + CORBEL_FRONT + 0.3, 5.5
-    k = inset(s_of(FLANGE_TOP + CORBEL_FRONT), WALL)
-    a_ = wp(cq.Solid.makeLoft([sec_wire(FLANGE_TOP, CAV_JOINT + 0.2), sec_wire(FLANGE_TOP + CORBEL_FRONT, k + 0.2)], True))
-    b_ = wp(cq.Solid.makeLoft([sec_wire(FLANGE_TOP, CAV_JOINT + 0.2 + t), sec_wire(FLANGE_TOP + CORBEL_FRONT, k + 0.2 + t)], True))
-    liner = liner.union(a_.cut(b_).intersect(box(-70, 70, -70, 70, zl, zm)))
+    # bande d'epaisseur constante (une plaque de 10 mm), sans rognage a l'ouverture : le passage libre est controle
+    liner = outer.cut(inner)
+    # la couche de 5 mm sur le chanfrein du joint est abandonnee : 8 encoches pour 4 cm3 (0.05 dB(A) au modele)
     return liner.cut(grow(mic_box(), 2.0)).cut(build_front_bosses()).cut(grow(build_mic_pedestal(), 1.0))
+
+
+def liner_z():
+    return FLANGE_TOP + CORBEL_FRONT + 0.3, Z_SEAT - SEAT_PLATE - 0.3
 
 
 def inlet_notch():
@@ -693,24 +693,28 @@ def inlet_notch():
     return box(bb.xmin - 3, bb.xmax + 3, -60, bb.ymax + 4, DUCT_BOTTOM - 2, 1)
 
 
+def disc_layer_shape():
+    """Contour d'une couche du fond (decoupe dans une plaque de 10 mm) : ellipse de la cavite a la
+    jonction des deux couches, moins 0.5 mm, et une seule encoche droite a 6 h qui degage la nervure
+    du pied du micro, le tunnel des fils et l'entree du conduit. Les deux couches sont identiques."""
+    zj = FLOOR_TOP + FLOOR_RIB + FOAM_LAYER
+    a, b = cavity_half_axes(zj)
+    ib = build_inlet().val().BoundingBox()
+    notch = (-(TUNNEL_D / 2 + WALL) - 0.5, ib.xmax + 1.0, MIC_YC + STEM_R + 0.5)
+    return a - 0.5, b - 0.5, notch
+
+
+def disc_layer(z0, h=FOAM_LAYER):
+    a, b, (nx0, nx1, ny) = disc_layer_shape()
+    return eprism(2 * a, 2 * b, z0, z0 + h).cut(box(nx0, nx1, -60, ny, z0 - 1, z0 + h + 1))
+
+
 def build_foam_disc(rear=None):
-    """Disque de 20 mm qui epouse tout le fond de la cavite (retenu par le chanfrein sous le conduit),
-    entaille devant l'entree du conduit, autour du pied du micro et du tunnel des fils."""
+    """Fond en deux couches de 10 mm identiques ; le corps de reference est la forme posee
+    (retaillee par le chanfrein sous le conduit, qui la retient)."""
     z0 = FLOOR_TOP + FLOOR_RIB
-    disc = rear_cavity_tool().intersect(box(-70, 70, -70, 70, z0, z0 + FOAM_DISC_T))
-    if rear is not None:
-        disc = disc.cut(rear)
-    return disc.cut(build_tunnel_rib()).cut(grow(build_mic_pedestal(), 0.5)).cut(inlet_notch()).cut(
-        box(-0.9, 0.9, -45, 45, z0 - 1, z0 + 0.2)).cut(box(-45, 45, -0.9, 0.9, z0 - 1, z0 + 0.2))
-
-
-def build_rear_liner(rear=None):
-    """Pieces de 8 mm sur les flancs de la bande du conduit, posees sur le disque et tenues
-    sous les contreforts des aimants ; rien en bas (entree du conduit, pied du micro)."""
-    z0, z1 = FLOOR_TOP + FLOOR_RIB + FOAM_DISC_T, -MAG_POCKET[1] - 1.2 - 0.3
-    liner = ring(CAV_JOINT + 0.05, CAV_JOINT + REAR_LINER_T, z0, z1).intersect(box(-70, 70, -8.0, 70, z0, z1))
-    liner = liner.cut(build_rear_bosses()).cut(grow(build_mic_pedestal(), 1.0)).cut(inlet_notch())
-    return liner if rear is None else liner.cut(rear)
+    disc = disc_layer(z0).union(disc_layer(z0 + FOAM_LAYER)).intersect(rear_cavity_tool())
+    return disc if rear is None else disc.cut(rear)
 
 
 def build_refs():
@@ -722,7 +726,7 @@ def build_refs():
         "mic": mic_box(), "mic-disc": mic_disc(), "earpad": pad,
         "gasket": ring(GROOVE[0] + 0.1, GROOVE[1] - 0.1, TONGUE[2], GROOVE_DEPTH),
         "led-filament": ring(LED_CH[0] + 0.2, LED_CH[1] - 0.2, -LED_CH[2] + 0.1, -0.1),
-        "foam-disc": build_foam_disc(), "foam-liner": build_liner(), "foam-liner-rear": build_rear_liner(),
+        "foam-disc": build_foam_disc(), "foam-liner": build_liner(),
         "battery": lipo, "charger": charger, "switch": switch,
         "joint-magnets": mag_pockets_up(-MAGNET[1] - 0.1, MAGNET[1], MAGNET[0]),
         "joint-steel-discs": mag_pockets_up(0.1, MAGNET[1], MAGNET[0]),
@@ -857,7 +861,6 @@ def export():
     ws = ws.intersect(box(-70, 70, -70, 70, -60, Z_SEAT - 0.1).union(eprism(*COLLAR_INNER, Z_SEAT - 1, Z_SEAT + COLLAR_HEIGHT)))
     refs["windscreen"] = ws
     refs["foam-disc"] = build_foam_disc(rear)
-    refs["foam-liner-rear"] = build_rear_liner(rear)
     log("corps de reference", t)
 
     # --- enveloppe et longueur
@@ -880,7 +883,7 @@ def export():
     cav = cav.union(eprism(*COLLAR_INNER, Z_SEAT - cp.FLANGE_T - 0.2, Z_SEAT + COLLAR_HEIGHT))
     cav = cav.cut(front).cut(rear).cut(insert).cut(build_tunnel()).cut(refs["mic"]).cut(refs["mic-disc"])
     v_cav = vol(cav) / 1000
-    foam = {k: vol(refs[k]) / 1000 for k in ("foam-disc", "foam-liner", "foam-liner-rear", "windscreen")}
+    foam = {k: vol(refs[k]) / 1000 for k in ("foam-disc", "foam-liner", "windscreen")}
     v_foam = sum(foam.values())
     m["cavity_air_plus_foam_cm3"] = round(v_cav, 1)
     m["cavity_air_only_cm3"] = round(v_cav - v_foam, 1)
@@ -890,7 +893,7 @@ def export():
     assert v_cav >= 185.0, f"cavite {v_cav:.1f} cm3 < 185"
     assert cav.solids().size() >= 1
     # section d'air libre (sans mousse ni pieces) le long de l'axe, de l'entree du conduit au coussin
-    air = cav.cut(union_all([refs[k] for k in ("foam-disc", "foam-liner", "foam-liner-rear", "windscreen")]))
+    air = cav.cut(union_all([refs[k] for k in ("foam-disc", "foam-liner", "windscreen")]))
     z, passage = disc_top() + 0.3, []  # au-dessus du disque ; l'entree reste ouverte par l'entaille du disque
     while z < Z_SEAT - 4.0:
         area_ = 0.0
@@ -1056,9 +1059,9 @@ def export():
              "collar-insert-14mm": ("Collier amovible 14 mm", "black", (0, 0, 150)),
              "mic": ("DJI Mic Mini 2", "electronics", (0, 0, 66)), "mic-disc": ("Disque acier 30 mm", "metal", (0, 0, 62)),
              "earpad": ("Coussin Brainwavz", "soft", (0, 0, 175)), "gasket": ("Joint mousse 3 x 2", "soft", (0, 0, 128)),
-             "led-filament": ("Filament LED", "electronics", (0, 0, 5)), "foam-disc": ("Disque de mousse 20 mm", "foam", (0, 0, 45)),
-             "foam-liner": ("Manchon de mousse 9 mm", "foam", (0, 0, 100)), "foam-liner-rear": ("Mousse des flancs arriere 8 mm", "foam", (0, 0, 58)),
-             "windscreen": ("Bonnette 5 mm", "foam", (0, 0, 72)),
+             "led-filament": ("Filament LED", "electronics", (0, 0, 5)), "foam-disc": ("Fond de mousse, 2 couches de 10 mm", "foam", (0, 0, 45)),
+             "foam-liner": ("Manchon de mousse 10 mm", "foam", (0, 0, 100)), "foam-liner-rear": ("Mousse des flancs arriere 8 mm", "foam", (0, 0, 58)),
+             "windscreen": ("Bonnette 5 mm, collee au manchon", "foam", (0, 0, 72)),
              "battery": ("LiPo 30 x 20 x 5", "electronics", (0, 0, -26)), "charger": ("Chargeur USB-C TP4056", "electronics", (0, 0, -44)),
              "switch": ("Interrupteur", "electronics", (0, 0, -44)), "joint-magnets": ("Aimants du joint 6 x 2", "metal", (0, 0, 3)),
              "joint-steel-discs": ("Pastilles acier du joint", "metal", (0, 0, 131)), "cover-magnets": ("Aimants du couvercle", "metal", (0, 0, -5)),
