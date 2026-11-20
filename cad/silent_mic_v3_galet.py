@@ -80,8 +80,9 @@ GROOVE_DEPTH, MAGNET, MAG_POCKET, BOSS_R = cp.GROOVE_DEPTH, cp.MAGNET, cp.MAG_PO
 REBATE, MAG_OFFSET = cp.REBATE, cp.MAG_OFFSET
 FLANGE_TOP = GROOVE_DEPTH + 1.0
 CAV_JOINT = 10.7  # offset de la cavite au joint et dans la bande du conduit
-CORBEL = 7.4  # chanfrein a 45 deg qui porte la bride (capot imprime appui en bas)
-MAG_T_DEG = (25, 70, 115, 160, 205, 245, 295, 340)  # angles parametriques ; rien a 6 h (barrage, pied du micro)
+CORBEL = 9.5  # chanfrein sous le conduit (arriere) : 7.5 mm sur 9.5, 38 deg ; 45 deg pile est refuse par Orca
+CORBEL_FRONT = 8.0  # sous la bride du capot : 43 deg, compromis avec l'angle du micro
+MAG_T_DEG = (0, 36, 72, 108, 144, 180, 225, 315)  # angles parametriques ; rien en bas (micro, pied, barrage)
 
 # ---------- coussin et collier amovible ----------
 PAD = cp.PAD
@@ -92,10 +93,12 @@ SEAT_OPENING = tuple(f - 2 * LEDGE for f in cp.flange_outer())
 
 # ---------- conduit annulaire ----------
 DUCT = (4.6, 9.1)  # offsets radiaux : 4.5 mm
-DUCT_H = 10.7
+DUCT_H = 12.04  # 9.1 de flanc droit + toit en pointe 2.9 : 48 mm2, imprimable sans support
 DUCT_TOP = -5.2  # 3 mm sous la rainure LED (exterieur)
 DUCT_BOTTOM = DUCT_TOP - DUCT_H
-DUCT_CHAMFER = 1.0  # toit chanfreine a 45 deg, plat restant 2.5 mm
+DUCT_APEX = 0.3  # largeur au faite du toit
+STEEP = 1.3  # pente des surplombs internes : 1.3 en hauteur pour 1 en largeur (38 deg)
+DUCT_ROOF_H = STEEP * ((DUCT[1] - DUCT[0]) - DUCT_APEX) / 2
 DAM = 9.0  # barrage a 6 h, porte aussi le tunnel des fils
 INLET_D = 8.0
 INLET_Z = DUCT_BOTTOM + 1.85 + INLET_D / 2
@@ -122,7 +125,7 @@ SWITCH = (8.6, 3.6, 3.5)
 
 # ---------- micro : a plat sur un pied de la coque arriere, grille vers la cavite ----------
 # Position issue de la recherche du cone (cad/silent_mic_v3_galet.py ne la recalcule pas).
-MIC_PRESETS = {"evase": (0.25, -12.5, 20.0), "oeuf": (-2.5, -21.0, 20.2)}
+MIC_PRESETS = {"evase": (0.25, -12.25, 20.0), "oeuf": (-2.5, -21.0, 20.2)}
 MIC_XC, MIC_YC, MIC_ZC = MIC_PRESETS[PROFILE]
 MIC_CLEARANCE = 1.0
 WINDSCREEN_T = 5.0
@@ -263,25 +266,43 @@ def build_envelope():
 # ================= capot avant (imprime appui du coussin sur le plateau) =================
 
 def front_cavity_tool():
-    z_main = FLANGE_TOP + CORBEL
+    z_main = FLANGE_TOP + CORBEL_FRONT
     joint = band(CAV_JOINT, -0.5, FLANGE_TOP)
     a, b = outer_profile(s_of(z_main))
     k = inset(s_of(z_main), WALL)
-    corbel = wp(cq.Solid.makeLoft([sec_wire(FLANGE_TOP, CAV_JOINT), ell(2 * (a - k), 2 * (b - k), z_main)], True))
+    corbel = wp(cq.Solid.makeLoft([sec_wire(FLANGE_TOP, CAV_JOINT), sec_wire(z_main, k)], True))
     zs = [s for s in FRONT_SMOOTH + (54.0,) if z_main < z_of(s) < Z_SEAT - SEAT_PLATE]
     main = loft_ellipses(sections([s_of(z_main)] + sorted(zs, reverse=True) + [s_of(Z_SEAT - SEAT_PLATE)], WALL))
-    opening = eprism(*SEAT_OPENING, Z_SEAT - SEAT_PLATE - 0.5, Z_SEAT + 1)
-    return joint.union(corbel).union(main).union(opening).union(cp.seat_recess(Z_SEAT))
+    # siege conique a 38 deg de la bride biseautee du collier (pas de logement plat : capot imprime appui en bas)
+    top = tuple(f + 2 * cp.FLANGE_GAP for f in cp.flange_outer())
+    z_low = Z_SEAT - STEEP * (top[0] - SEAT_OPENING[0]) / 2
+    opening = eprism(*SEAT_OPENING, Z_SEAT - SEAT_PLATE - 1.0, z_low)
+    cone_ = wp(cq.Solid.makeLoft([ell(*SEAT_OPENING, z_low), ell(*top, Z_SEAT), ell(top[0] + 0.02, top[1] + 0.02, Z_SEAT + 1)], True))
+    return joint.union(corbel).union(main).union(opening).union(cone_)
+
+
+def section_point(t, d, z):
+    """Point a l'offset d de la section locale a z, angle parametrique t."""
+    a, b = outer_profile(s_of(z))
+    n = (b * math.cos(t), a * math.sin(t))
+    k = math.hypot(*n)
+    return a * math.cos(t) - d * n[0] / k, b * math.sin(t) - d * n[1] / k
 
 
 def build_front_bosses():
-    """Bossages des aimants sous le joint ; cone a 45 deg vers l'appui (imprime dessous)."""
+    """Bossages des aimants sous le joint, prolonges par un contrefort a 38 deg qui
+    rentre dans la paroi : aucune pointe pendante quand le capot est imprime appui en bas."""
     h = MAG_POCKET[1] + 1.2
+    r_end, d_end = 0.8, 1.5
+    z_end = h + STEEP * ((MAG_OFFSET + BOSS_R) - (d_end + r_end))
     out = []
-    for x, y in mag_xy():
+    for t in MAG_T_DEG:
+        x, y = eq_point(math.radians(t), MAG_OFFSET)[0]
+        xe, ye = section_point(math.radians(t), d_end, z_end)
         cyl = cq.Workplane("XY", origin=(x, y, 0)).circle(BOSS_R).extrude(h)
-        tip = wp(cq.Solid.makeCone(BOSS_R, 0.01, BOSS_R, cq.Vector(x, y, h), cq.Vector(0, 0, 1)))
-        out.append(cyl.union(tip))
+        but = wp(cq.Solid.makeLoft([cq.Workplane("XY", origin=(x, y, h)).circle(BOSS_R).wire().val(),
+                                    cq.Workplane("XY", origin=(xe, ye, z_end)).circle(r_end).wire().val()], True))
+        out.append(cyl.union(but))
     return union_all(out)
 
 
@@ -299,10 +320,11 @@ def build_front(front_env):
 # ================= conduit =================
 
 def build_duct():
-    z_flat = DUCT_TOP - DUCT_CHAMFER
+    z_flat = DUCT_TOP - DUCT_ROOF_H
+    mid = sum(DUCT) / 2
     body = ring(DUCT[0], DUCT[1], DUCT_BOTTOM, z_flat)
-    outer = wp(cq.Solid.makeLoft([sec_wire(z_flat, DUCT[0]), sec_wire(DUCT_TOP, DUCT[0] + DUCT_CHAMFER)], True))
-    inner = wp(cq.Solid.makeLoft([sec_wire(z_flat, DUCT[1]), sec_wire(DUCT_TOP, DUCT[1] - DUCT_CHAMFER)], True))
+    outer = wp(cq.Solid.makeLoft([sec_wire(z_flat, DUCT[0]), sec_wire(DUCT_TOP, mid - DUCT_APEX / 2)], True))
+    inner = wp(cq.Solid.makeLoft([sec_wire(z_flat, DUCT[1]), sec_wire(DUCT_TOP, mid + DUCT_APEX / 2)], True))
     return body.union(outer.cut(inner)).cut(box(-DAM / 2, DAM / 2, -60, -10, DUCT_BOTTOM - 2, 2))
 
 
@@ -311,13 +333,18 @@ SLOT_S = [-(DAM / 2 + 1.0 + SLOT_LEN / 2 + i * (SLOT_LEN + SLOT_GAP)) for i in r
 
 
 def build_inlet():
-    port = cq.Workplane("XZ", origin=(0, DUCT[1] - 0.6, INLET_Z)).circle(INLET_D / 2).extrude(-(CAV_JOINT - DUCT[1] + 1.2))
+    r = INLET_D / 2
+    k = r / math.sqrt(2)
+    # goutte : rond de 8 mm plus un toit a 45 deg (trou horizontal sans support)
+    port = (cq.Workplane("XZ", origin=(0, DUCT[1] - 0.6, INLET_Z)).moveTo(-k, k).lineTo(0, r * math.sqrt(2)).lineTo(k, k)
+            .threePointArc((r, 0), (k, -k)).threePointArc((0, -r), (-k, -k)).threePointArc((-r, 0), (-k, k)).close()
+            .extrude(-(CAV_JOINT - DUCT[1] + 1.2)))
     return place(port, t_at(CENTER_TABLE, INLET_S))
 
 
 def build_slots():
     r0, r1 = SHADOW_DEPTH - 0.5, DUCT[0] + 0.6
-    lo = lambda r: SLOT_WINDOW[0] - (r - SHADOW_DEPTH)
+    lo = lambda r: SLOT_WINDOW[0] - STEEP * (r - SHADOW_DEPTH)
     h = SLOT_WINDOW[1] - SLOT_WINDOW[0]
     out = []
     for s in SLOT_S:
@@ -328,7 +355,13 @@ def build_slots():
 
 
 def build_shadow_groove():
-    return ring(0.0, SHADOW_DEPTH, *SHADOW_Z).intersect(box(-60, 60, -60, 0, -30, 5))
+    """Gorge d'ombre, bord haut en pente (38 deg) : la coque s'imprime face arriere en bas,
+    un rebord plat de 1.5 mm serait un surplomb sur la peau visible."""
+    z_ch = SHADOW_Z[1] - STEEP * SHADOW_DEPTH
+    floor = ring(-1.0, SHADOW_DEPTH, SHADOW_Z[0], z_ch)
+    slope = wp(cq.Solid.makeLoft([sec_wire(z_ch, -1.0), sec_wire(SHADOW_Z[1] + 0.3, -1.0)], True)).cut(
+        wp(cq.Solid.makeLoft([sec_wire(z_ch, SHADOW_DEPTH), sec_wire(SHADOW_Z[1] + 0.3, -0.3)], True)))
+    return floor.union(slope).intersect(box(-60, 60, -60, 0, -30, 5))
 
 
 # ================= joint, aimants, tunnel =================
@@ -342,12 +375,19 @@ def mag_pockets_up(z0, depth, dia=MAG_POCKET[0]):
 
 
 def build_rear_bosses():
+    """Bossages des aimants, prolonges par un contrefort a 38 deg qui finit dans la paroi
+    interieure du conduit (coque imprimee z vers le haut : pas de pointe pendante)."""
     h = MAG_POCKET[1] + 1.2
+    r_end, d_end = 0.8, 10.0
     out = []
-    for x, y in mag_xy():
+    for t in MAG_T_DEG:
+        x, y = eq_point(math.radians(t), MAG_OFFSET)[0]
+        z_end = -h - STEEP * ((MAG_OFFSET + BOSS_R) - (d_end + r_end))
+        xe, ye = section_point(math.radians(t), d_end, z_end)
         cyl = cq.Workplane("XY", origin=(x, y, -h)).circle(BOSS_R).extrude(h)
-        tip = wp(cq.Solid.makeCone(0.01, BOSS_R, BOSS_R, cq.Vector(x, y, -h - BOSS_R), cq.Vector(0, 0, 1)))
-        out.append(cyl.union(tip))
+        but = wp(cq.Solid.makeLoft([cq.Workplane("XY", origin=(xe, ye, z_end)).circle(r_end).wire().val(),
+                                    cq.Workplane("XY", origin=(x, y, -h)).circle(BOSS_R).wire().val()], True))
+        out.append(cyl.union(but))
     return union_all(out)
 
 
@@ -377,7 +417,7 @@ def rear_cavity_tool():
     a, b = outer_profile(s_of(CORBEL_BOTTOM))
     k = inset(s_of(CORBEL_BOTTOM), WALL)
     lower = loft_ellipses(sections([s_of(FLOOR_TOP), s_of((FLOOR_TOP + CORBEL_BOTTOM) / 2), s_of(CORBEL_BOTTOM)], WALL))
-    corbel = wp(cq.Solid.makeLoft([ell(2 * (a - k), 2 * (b - k), CORBEL_BOTTOM), sec_wire(CORBEL_TOP, CAV_JOINT)], True))
+    corbel = wp(cq.Solid.makeLoft([sec_wire(CORBEL_BOTTOM, k), sec_wire(CORBEL_TOP, CAV_JOINT)], True))
     return lower.union(corbel).union(band(CAV_JOINT, CORBEL_TOP, 0.5))
 
 
@@ -431,17 +471,31 @@ def grow(b, m):
 
 def bay_cut():
     lipo, charger, switch = bay_boxes()
-    bay = union_all([grow(lipo, 0.5), grow(charger, 0.5), grow(switch, 0.5)])
+    # un seul plafond de baie (pont unique) : chaque logement monte jusqu'au plafond
+    full = lambda b: box(*(lambda q: (q.xmin - 0.5, q.xmax + 0.5, q.ymin - 0.5, q.ymax + 0.5, Z_RF - 1, Z_RF + BAY_DEPTH))(b.val().BoundingBox()))
+    bay = union_all([full(lipo), full(charger), full(switch)])
     bay = bay.union(box(-CHARGER[0] / 2 - 0.5, CHARGER[0] / 2 + 0.5, -40, 0, Z_RF - 1, Z_RF + 0.4))
     cb = charger.val().BoundingBox()
     usb = cq.Workplane("XZ", origin=(0, cb.ymin + 2, Z_RF + 2.6)).slot2D(12.0, 6.0).extrude(20)
+    roof = cq.Workplane("XZ", origin=(0, cb.ymin + 2, 0)).polyline([(-3.0, Z_RF + 5.6), (3.0, Z_RF + 5.6), (0.0, Z_RF + 5.6 + 3.0 * STEEP)]).close().extrude(20)
+    usb = usb.union(roof)
     sb = switch.val().BoundingBox()
     lever = box(15.3 - 2.0, 15.3 + 2.0, -45, sb.ymin + 0.1, Z_RF + 1.2, Z_RF + 3.4)
     return bay.union(usb).union(lever)
 
 
-def cover_pockets(z0, depth):
-    return union_all(cq.Workplane("XY", origin=(x, y, z0)).circle(MAG_POCKET[0] / 2 + 0.05).extrude(depth) for x, y in COVER_MAG_XY)
+def cover_pockets(z0, depth, roof=0):
+    """Poches des aimants du couvercle ; roof = +1 ou -1 ajoute un toit conique a 45 deg
+    au fond (cote +z ou -z) pour une poche ouverte vers le plateau."""
+    r = MAG_POCKET[0] / 2 + 0.05
+    out = []
+    for x, y in COVER_MAG_XY:
+        p = cq.Workplane("XY", origin=(x, y, z0)).circle(r).extrude(depth)
+        if roof:
+            base = z0 + depth if roof > 0 else z0
+            p = p.union(wp(cq.Solid.makeCone(r, 0.0, r, cq.Vector(x, y, base), cq.Vector(0, 0, roof))))
+        out.append(p)
+    return union_all(out)
 
 
 def build_rear(rear_env):
@@ -459,7 +513,7 @@ def build_rear(rear_env):
     log("  conduit, entree, fentes, gorge", t)
     shell = shell.cut(ring(-1.0, REBATE, -RING_H, 1)).cut(ring(LED_CH[0], LED_CH[1], -LED_CH[2], 1))
     shell = shell.cut(mag_pockets_up(-MAG_POCKET[1], MAG_POCKET[1] + 1)).cut(build_tunnel())
-    shell = shell.cut(bay_cut()).cut(cover_pockets(Z_RF - 0.5, 0.5 + MAGNET[1] - COVER_MAG_PROTRUDE + 0.1))
+    shell = shell.cut(bay_cut()).cut(cover_pockets(Z_RF - 0.5, 0.5 + MAGNET[1] - COVER_MAG_PROTRUDE + 0.1, roof=1))
     log("coque arriere", t)
     return shell
 
@@ -471,7 +525,7 @@ def build_cover(rear_env):
         cover = cover.faces("<Z").edges().fillet(REAR_FILLET)
     except Exception as exc:  # shortcut: sans conge si OCCT refuse ; a reprendre a la main
         print(f"conge du dos refuse : {exc}")
-    cover = cover.cut(cover_pockets(Z_RF - 3.1, 3.2))
+    cover = cover.cut(cover_pockets(Z_RF - 3.1, 3.2, roof=-1))
     log("couvercle", t)
     return cover
 
@@ -481,7 +535,8 @@ def build_ring():
 
 
 def collar_insert_placed():
-    return cp.collar_insert(COLLAR_HEIGHT).translate((0, 0, Z_SEAT - cp.FLANGE_T - 0.1))
+    # la bride biseautee touche le cone quand son bord haut (flange_outer) rencontre le cone
+    return cp.collar_insert(COLLAR_HEIGHT).translate((0, 0, Z_SEAT - STEEP * cp.FLANGE_GAP - cp.FLANGE_T + 0.05))
 
 
 # ================= corps de reference =================
@@ -504,16 +559,16 @@ def build_mic_pedestal():
     de joint dans la cavite. Imprime avec la coque (z vers le haut) sans support."""
     r_top = v0.MIC_STEEL_DISC_DIAMETER / 2 + 0.5
     z_top = MIC_DISC_TOP
-    z_neck = z_top - (r_top - STEM_R) - 1.5
+    z_neck = z_top - STEEP * (r_top - STEM_R) - 1.5
     z_base = DUCT_BOTTOM + 4.0
     c = cq.Vector(MIC_XC, MIC_YC, 0)
-    head = wp(cq.Solid.makeCone(STEM_R, r_top, r_top - STEM_R, c + cq.Vector(0, 0, z_neck), cq.Vector(0, 0, 1)))
+    head = wp(cq.Solid.makeCone(STEM_R, r_top, STEEP * (r_top - STEM_R), c + cq.Vector(0, 0, z_neck), cq.Vector(0, 0, 1)))
     head = head.union(wp(cq.Solid.makeCylinder(r_top, 1.5, c + cq.Vector(0, 0, z_top - 1.5), cq.Vector(0, 0, 1))))
     stem = wp(cq.Solid.makeCylinder(STEM_R, z_neck - z_base + 0.01, c + cq.Vector(0, 0, z_base), cq.Vector(0, 0, 1)))
-    foot = wp(cq.Solid.makeCone(0.01, STEM_R, STEM_R, c + cq.Vector(0, 0, z_base - STEM_R), cq.Vector(0, 0, 1)))
+    foot = wp(cq.Solid.makeCone(0.01, STEM_R, STEEP * STEM_R, c + cq.Vector(0, 0, z_base - STEEP * STEM_R), cq.Vector(0, 0, 1)))
     y_wall = -outer_profile(s_of(0))[1] + CAV_JOINT - 1.0
     web = (cq.Workplane("YZ", origin=(MIC_XC - 2.0, 0, 0))
-           .polyline([(y_wall, z_base - STEM_R - (MIC_YC - y_wall)), (MIC_YC, z_base - STEM_R), (MIC_YC, -0.5),
+           .polyline([(y_wall, z_base - STEEP * (STEM_R + MIC_YC - y_wall)), (MIC_YC, z_base - STEEP * STEM_R), (MIC_YC, -0.5),
                       (y_wall, -0.5)]).close().extrude(4.0))
     return union_all([head, stem, foot, web])
 
@@ -527,12 +582,12 @@ def build_windscreen():
 def build_liner():
     """Manchon de mousse 9 mm sur les flancs de la chambre avant, piege entre la plaque
     d'appui et le chanfrein du joint ; decoupe devant le micro et l'ouverture."""
-    z0, z1 = FLANGE_TOP + CORBEL + 0.3, Z_SEAT - SEAT_PLATE - 0.3
+    z0, z1 = FLANGE_TOP + CORBEL_FRONT + 0.3, Z_SEAT - SEAT_PLATE - 0.3
     zs = [s_of(z0)] + [s for s in FRONT_SMOOTH if z0 < z_of(s) < z1] + [s_of(z1)]
     outer = loft_ellipses(sections(sorted(zs, reverse=True), WALL + 0.2))
     inner = loft_ellipses(sections(sorted(zs, reverse=True), WALL + 0.2 + LINER_T))
     liner = outer.cut(inner).cut(eprism(*SEAT_OPENING, z0 - 1, z1 + 1))
-    return liner.cut(grow(mic_box(), 2.0))
+    return liner.cut(grow(mic_box(), 2.0)).cut(build_front_bosses())
 
 
 def build_foam_disc():
@@ -761,7 +816,7 @@ def export():
             if ba.xmax < bb2.xmin or bb2.xmax < ba.xmin or ba.ymax < bb2.ymin or bb2.ymax < ba.ymin or ba.zmax < bb2.zmin or bb2.zmax < ba.zmin:
                 continue
             v = vol(bodies[a].intersect(bodies[b]))
-            if v > 1e-3:
+            if v > 0.1:  # mm3 : en dessous, bruit des faces en contact (plan de joint)
                 hits.append((a, b, round(v, 3)))
     m["interferences"] = hits
     assert not hits, hits

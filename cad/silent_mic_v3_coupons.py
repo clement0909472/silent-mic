@@ -126,7 +126,11 @@ def flange_outer():
 def collar_insert(height):
     """Collier amovible : bride plate posee dans le logement, serree par le coussin."""
     ci = collar_inner()
-    flange = ell_prism(*flange_outer(), 0, FLANGE_T).cut(ell_prism(*ci, -1, FLANGE_T + 1))
+    # bride biseautee a 38 deg (1.3 / 1) : va dans le logement droit du capot d'essai et dans le cone du corps
+    fo = flange_outer()
+    k = 2 * FLANGE_T / 1.3
+    flange = cq.Workplane("XY").newObject([cq.Solid.makeLoft([ell_wire(fo[0] - k, fo[1] - k, 0), ell_wire(*fo, FLANGE_T)], True)])
+    flange = flange.cut(ell_prism(*ci, -1, FLANGE_T + 1))
     ins = flange.union(collar(FLANGE_T, height))
     # hauteur gravee sur la bride, cote +x, lisible une fois le collier retire
     x = (collar_outer()[0] / 2 + flange_outer()[0] / 2) / 2

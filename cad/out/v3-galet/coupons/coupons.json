@@ -10,27 +10,27 @@
       ]
     },
     "collar-insert-3mm": {
-      "volume_cm3": 3.02,
+      "volume_cm3": 2.9,
       "size_mm": [
-        80.2,
-        60.2,
-        4.5
+        80.1,
+        60.1,
+        4.4
       ]
     },
     "collar-insert-10mm": {
-      "volume_cm3": 5.39,
+      "volume_cm3": 5.27,
       "size_mm": [
-        80.2,
-        60.2,
-        11.6
+        80.1,
+        60.1,
+        11.4
       ]
     },
     "collar-insert-16mm": {
-      "volume_cm3": 7.43,
+      "volume_cm3": 7.31,
       "size_mm": [
-        80.2,
-        60.2,
-        17.4
+        80.1,
+        60.1,
+        17.6
       ]
     },
     "joint-coupon-front": {
