@@ -31,7 +31,7 @@
     "z": 4.8
   },
   "duct": {
-    "section_mm2": 48.37,
+    "section_mm2": 48.18,
     "lap_mm": 191.2,
     "channel_dam_to_dam_mm": 182.2,
     "inlet_to_first_slot_mm": 171.1,
@@ -43,8 +43,8 @@
   },
   "min_wall_mm": {
     "cavity_to_outside": 3.0,
-    "duct_to_outside": 3.07,
-    "duct_to_cavity": 1.66
+    "duct_to_outside": 3.08,
+    "duct_to_cavity": 1.67
   },
   "mic": {
     "centre": [

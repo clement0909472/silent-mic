@@ -138,7 +138,7 @@ CONE_DEG, CONE_HARD = 15.0, 12.0  # 15 = regle (WARN en dessous), 12 = refus
 MOUTH_ABOVE_SEAT = 20.0  # coussin de 30 mm comprime : hypothese
 BREATH_Y = 10.0
 PLA = 1.24e-3
-LIN_TOL, ANG_TOL = 0.1, 0.3
+LIN_TOL, ANG_TOL = 0.02, 0.1  # a 0.1 / 0.3 rad, OCCT maillait la coque arriere 6 % trop petite
 WEB_TOL = (0.4, 0.6)
 WEB_TOL_FINE = (0.06, 0.15)  # pieces imprimees : le pavillon ne doit pas paraitre a facettes
 
@@ -324,15 +324,20 @@ def build_front(front_env):
 
 # ================= conduit =================
 
+def loft_wires(pairs):
+    """Loft regle a plusieurs sections (z, offset) : flanc et toit d'une seule surface, sans
+    face de jonction (une jonction coplanaire donnait des faces degenerees et un STL troue)."""
+    return wp(cq.Solid.makeLoft([sec_wire(z, d) for z, d in pairs], True))
+
+
 def build_duct():
     z_flat = DUCT_TOP - DUCT_ROOF_H
-    mid = sum(DUCT) / 2
-    body = ring(DUCT[0], DUCT[1], DUCT_BOTTOM, z_flat)
+    mid, ext = sum(DUCT) / 2, 0.3
+    z_ext = DUCT_TOP + STEEP * ext
     # les deux pans sont prolonges au-dela du faite : leur intersection donne une arete vive
-    ext = 0.3
-    outer = wp(cq.Solid.makeLoft([sec_wire(z_flat, DUCT[0]), sec_wire(DUCT_TOP + STEEP * ext, mid + ext)], True))
-    inner = wp(cq.Solid.makeLoft([sec_wire(z_flat, DUCT[1]), sec_wire(DUCT_TOP + STEEP * ext, mid - ext)], True))
-    return body.union(outer.cut(inner)).cut(box(-DAM / 2, DAM / 2, -60, -10, DUCT_BOTTOM - 2, 2))
+    outer = loft_wires([(DUCT_BOTTOM, DUCT[0]), (z_flat, DUCT[0]), (z_ext, mid + ext)])
+    inner = loft_wires([(DUCT_BOTTOM - 1.0, DUCT[1]), (z_flat, DUCT[1]), (z_ext, mid - ext)])
+    return outer.cut(inner).cut(box(-DAM / 2, DAM / 2, -60, -10, DUCT_BOTTOM - 2, 2))
 
 
 INLET_S = DAM / 2 + 1.0 + INLET_D / 2  # cote x > 0 du barrage
@@ -367,13 +372,12 @@ def build_slots():
 
 
 def build_shadow_groove():
-    """Gorge d'ombre, bord haut en pente (38 deg) : la coque s'imprime face arriere en bas,
-    un rebord plat de 1.5 mm serait un surplomb sur la peau visible."""
-    z_ch = SHADOW_FLOOR_TOP
-    floor = ring(-1.0, SHADOW_DEPTH, SHADOW_Z[0], z_ch)
-    slope = wp(cq.Solid.makeLoft([sec_wire(z_ch, -1.0), sec_wire(SHADOW_Z[1] + 0.3, -1.0)], True)).cut(
-        wp(cq.Solid.makeLoft([sec_wire(z_ch, SHADOW_DEPTH), sec_wire(SHADOW_Z[1] + 0.3, -0.3)], True)))
-    return floor.union(slope).intersect(box(-60, 60, -60, 0, -30, 5))
+    """Gorge d'ombre : fond vertical puis flanc haut a 38 deg (la coque s'imprime face arriere
+    en bas ; un rebord plat serait un surplomb sur la peau visible)."""
+    z_ch, z_top = SHADOW_FLOOR_TOP, SHADOW_Z[1] + 0.3
+    skin = loft_wires([(SHADOW_Z[0], -1.0), (z_top, -1.0)])
+    keep = loft_wires([(SHADOW_Z[0] - 1.0, SHADOW_DEPTH), (z_ch, SHADOW_DEPTH), (z_top, -0.3), (z_top + 1.0, -1.1)])
+    return skin.cut(keep.intersect(box(-70, 70, -70, 70, SHADOW_Z[0] - 1.0, z_top))).intersect(box(-60, 60, -60, 0, -30, 5))
 
 
 # ================= joint, aimants, tunnel =================
