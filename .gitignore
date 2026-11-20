@@ -13,3 +13,4 @@ __pycache__/
 # Sorties regenerables du modele acoustique
 acoustics/out/
 acoustics/fem/work/
+bench/sessions/

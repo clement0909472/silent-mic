@@ -1,2 +1,7 @@
 cadquery==2.8.0
-
+numpy
+scipy
+sounddevice
+soundfile
+gmsh
+h5py
