@@ -10,32 +10,57 @@ import tempfile
 import cadquery as cq
 
 
+SOURCES = ("whisper_mask_v0.py", "whisper_mask_v2_screwed.py", "whisper_mask_v2_compact.py",
+           "silent_mic_v3_coupons.py", "silent_mic_v3_galet.py", "guarded.sh")
+
+
+def volume(shape):
+    return sum(s.Volume() for s in shape.solids().vals())
+
+
+def compare_steps(current, rebuilt, exact_suffixes=()):
+    for filename in rebuilt.glob("*.step"):
+        published = cq.importers.importStep(str(current / filename.name))
+        fresh = cq.importers.importStep(str(filename))
+        assert published.val().isValid(), filename.name
+        assert published.solids().size() == fresh.solids().size(), filename.name
+        # Assembly references overlap intentionally: compare summed solid volumes.
+        assert abs(volume(published) - volume(fresh)) < 0.01, filename.name
+        a, b = published.val().BoundingBox(), fresh.val().BoundingBox()
+        for axis in ("xmin", "xmax", "ymin", "ymax", "zmin", "zmax"):
+            assert abs(getattr(a, axis) - getattr(b, axis)) < 0.001, filename.name
+        if filename.name.endswith(exact_suffixes):
+            a_, b_ = published.val(), fresh.val()
+            assert a_.cut(b_).Volume() + b_.cut(a_).Volume() < 0.01, filename.name
+
+
+def compare_stls(current, rebuilt):
+    for filename in rebuilt.glob("*.stl"):
+        assert (current / filename.name).read_bytes() == filename.read_bytes(), filename.name
+
+
 def main():
     source = Path(__file__).resolve().parent
     with tempfile.TemporaryDirectory(prefix="silent-mic-check-") as tmp:
         isolated = Path(tmp)
-        for filename in ("whisper_mask_v0.py", "whisper_mask_v2_screwed.py", "whisper_mask_v2_compact.py"):
+        for filename in SOURCES:
             shutil.copy2(source / filename, isolated / filename)
         for variant in ("screwed", "compact"):
             subprocess.run([sys.executable, str(isolated / f"whisper_mask_v2_{variant}.py")], check=True)
             current = source / "out" / f"v2-{variant}"
             rebuilt = isolated / "out" / f"v2-{variant}"
-            for filename in rebuilt.glob("*.step"):
-                published = cq.importers.importStep(str(current / filename.name))
-                fresh = cq.importers.importStep(str(filename))
-                assert published.val().isValid(), filename.name
-                assert published.solids().size() == fresh.solids().size(), filename.name
-                # Assembly references overlap intentionally: compare summed solid volumes.
-                volume = lambda shape: sum(s.Volume() for s in shape.solids().vals())
-                assert abs(volume(published) - volume(fresh)) < 0.01, filename.name
-                a, b = published.val().BoundingBox(), fresh.val().BoundingBox()
-                for axis in ("xmin", "xmax", "ymin", "ymax", "zmin", "zmax"):
-                    assert abs(getattr(a, axis) - getattr(b, axis)) < 0.001, filename.name
-                if filename.name.endswith(("-upper.step", "-lower.step")):
-                    assert volume(published.cut(fresh)) + volume(fresh.cut(published)) < 0.01, filename.name
-            for filename in rebuilt.glob("*.stl"):
-                assert (current / filename.name).read_bytes() == filename.read_bytes(), filename.name
+            compare_steps(current, rebuilt, ("-upper.step", "-lower.step"))
+            compare_stls(current, rebuilt)
             print(f"PASS {variant}: STEP metrics, exact printed geometry and deterministic STL exports")
+        # v3 galet : sous le garde memoire/duree (un booleen OCCT qui degenere a deja sature la machine)
+        guard = [str(isolated / "guarded.sh"), "-m", "6", "-t", "600", sys.executable]
+        for script in ("silent_mic_v3_coupons.py", "silent_mic_v3_galet.py"):
+            subprocess.run(guard + [str(isolated / script)], check=True, stdout=subprocess.DEVNULL)
+        for sub in ("v3-galet", "v3-galet/coupons"):
+            compare_steps(source / "out" / sub, isolated / "out" / sub,
+                          ("-front.step", "-rear.step", "-cover.step", "-ring.step", "-14mm.step", "cap.step"))
+            compare_stls(source / "out" / sub, isolated / "out" / sub)
+        print("PASS v3-galet: assertions, STEP metrics, exact printed geometry and deterministic STL exports")
 
 
 if __name__ == "__main__":
