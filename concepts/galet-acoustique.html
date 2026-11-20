@@ -1,0 +1,211 @@
+<meta charset="utf-8">
+<title>Galet Silent Mic</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Planche technique sombre, meme univers que la page des concepts : deux coupes en tete, puis les chiffres. Look unique et sombre, choisi. */
+:root {
+  --bg: #0b0c0e;
+  --panel: #131418;
+  --line: #24262c;
+  --fg: #e8eaee;
+  --muted: #8b909b;
+  --led: #3d8bff;
+  --air: #7db6ff;
+  --leak: #f0b04a;
+  --good: #4fd18b;
+  --shell: #2b2e36;
+  --shell-edge: #4a4e59;
+  --void: #101216;
+  --duct: #17335f;
+  --soft: #8d8378;
+  --foam: #5f6d64;
+  --skin: #1a1c21;
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-block: 32px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 32px; }
+.eyebrow { font: 700 12px var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--led); margin: 0 0 8px; }
+h1 { font: 800 clamp(28px, 5vw, 42px)/1.05 var(--display); letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.lede { max-width: 62ch; color: #c5c9d2; margin: 12px 0 0; font-size: 16px; }
+h2 { font: 700 12px var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+.figs { display: grid; grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr); gap: 16px; }
+figure { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; }
+figcaption { color: var(--muted); font-size: 13px; margin-top: 8px; }
+.scroll { overflow-x: auto; }
+.scroll svg { display: block; width: 100%; height: auto; }
+.scroll.wide svg { min-width: 620px; }
+svg text { font-family: var(--body); fill: var(--muted); font-size: 14px; }
+svg .t-air { fill: var(--air); }
+svg .badge { fill: var(--leak); }
+svg .badge-t { fill: #1b1405; font: 700 13px var(--mono); text-anchor: middle; dominant-baseline: central; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 640px; }
+th { text-align: left; font: 700 11px var(--display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 0 12px 8px 0; }
+td { border-top: 1px solid var(--line); padding: 10px 12px 10px 0; vertical-align: top; }
+td.n { width: 34px; }
+td.num { font: 500 14px var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dot { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--leak); color: #1b1405; font: 700 12px var(--mono); }
+td small { display: block; color: var(--muted); font-size: 13px; }
+.key { color: var(--leak); font-weight: 600; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; min-width: 0; }
+.card p { margin: 0 0 8px; }
+.card p:last-child { margin-bottom: 0; }
+.kv { display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; font-variant-numeric: tabular-nums; }
+.kv dt { color: #c5c9d2; }
+.kv dd { margin: 0; font: 500 14px var(--mono); text-align: right; }
+.bad { color: var(--leak); } .ok { color: var(--good); }
+ol { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+.note { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 14px; margin: 0; max-width: 80ch; }
+@media (max-width: 820px) { .figs { grid-template-columns: 1fr; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Silent Mic v3 · concept retenu</p>
+    <h1>Comment le galet étouffe la voix</h1>
+    <p class="lede">Le son n'a que six façons de sortir. Cinq ont une parade dans l'appareil. Une seule décide vraiment du résultat : le joint contre le visage.</p>
+  </header>
+
+  <div class="figs">
+    <figure>
+      <div class="scroll wide">
+        <svg viewBox="0 0 800 480" role="img" aria-label="Coupe verticale du galet plaqué sur la bouche, avec le trajet de l'air et les six chemins de fuite numérotés">
+          <defs>
+            <filter id="glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#7db6ff"/></marker>
+          </defs>
+          <!-- visage de profil -->
+          <path d="M0 0 L262 0 C280 14 322 24 322 40 C322 52 270 74 246 92 C240 108 243 124 244 138 C245 158 256 176 256 190 C256 196 240 198 238 202 C240 206 256 210 256 222 C256 240 240 262 240 282 C240 310 244 340 244 362 C244 392 232 420 206 440 C180 458 100 470 0 476 Z" fill="#1a1c21" stroke="#4a4e59" stroke-width="1.5"/>
+          <!-- coque -->
+          <path d="M272 115 C300 108 380 88 462 85 L572 85 C620 85 690 112 722 150 C736 166 746 178 748 190 L748 310 C746 322 736 334 722 350 C690 388 620 415 572 415 L462 415 C380 412 300 392 272 385 Z" fill="#2b2e36" stroke="#4a4e59" stroke-width="1.5"/>
+          <!-- cavité -->
+          <path d="M272 130 C300 123 380 103 462 100 L482 100 L482 130 L552 130 L552 100 L572 100 C612 100 668 122 700 152 L705 160 L705 340 L700 348 C668 378 612 400 572 400 L552 400 L552 370 L482 370 L482 400 L462 400 C380 397 300 377 272 370 Z" fill="#101216"/>
+          <!-- jupe : piste du joint et lèvre rigide -->
+          <rect x="264" y="115" width="8" height="50" fill="#2b2e36" stroke="#4a4e59"/><rect x="264" y="335" width="8" height="50" fill="#2b2e36" stroke="#4a4e59"/>
+          <rect x="250" y="159" width="14" height="6" fill="#2b2e36" stroke="#4a4e59"/><rect x="250" y="335" width="14" height="6" fill="#2b2e36" stroke="#4a4e59"/>
+          <!-- joint profil D -->
+          <rect x="244" y="119" width="20" height="38" rx="10" fill="#8d8378"/><rect x="244" y="343" width="20" height="38" rx="10" fill="#8d8378"/>
+          <!-- conduit annulaire (coupé en haut et en bas) -->
+          <rect x="486" y="100" width="54" height="22" fill="#17335f"/><rect x="486" y="378" width="54" height="22" fill="#17335f"/>
+          <rect x="522" y="370" width="14" height="8" fill="#17335f"/>
+          <rect x="492" y="400" width="14" height="15" fill="#17335f"/>
+          <rect x="512" y="378" width="6" height="22" fill="#4a4e59"/>
+          <rect x="472" y="409" width="40" height="7" fill="#0b0c0e"/>
+          <!-- liseré LED sur le plan de joint -->
+          <rect x="456" y="83" width="12" height="17" fill="#3d8bff" filter="url(#glow)"/><rect x="456" y="400" width="12" height="17" fill="#3d8bff" filter="url(#glow)"/>
+          <!-- mousse et baie batterie -->
+          <path d="M640 116 L698 151 L703 160 L703 340 L698 349 L640 384 Z" fill="#5f6d64"/>
+          <rect x="718" y="200" width="22" height="100" fill="#101216"/><rect x="722" y="218" width="14" height="64" rx="2" fill="#5b6070"/>
+          <!-- trajet de l'air -->
+          <path d="M262 204 C330 208 420 214 470 240 C512 262 528 320 529 362" fill="none" stroke="#7db6ff" stroke-width="2.5" stroke-dasharray="7 5" marker-end="url(#arr)"/>
+          <path d="M499 404 L499 450" fill="none" stroke="#7db6ff" stroke-width="2.5" marker-end="url(#arr)"/>
+          <text class="t-air" x="318" y="198">air expiré</text>
+          <!-- légendes -->
+          <text x="372" y="306" text-anchor="middle">cavité, 185 cm³</text>
+          <text x="671" y="255" text-anchor="middle" fill="#dfe6e1">mousse</text>
+          <line x1="513" y1="124" x2="513" y2="140" stroke="#8b909b"/><text x="513" y="156" text-anchor="middle">conduit d'évent</text>
+          <line x1="424" y1="444" x2="457" y2="414" stroke="#8b909b"/><text x="420" y="452" text-anchor="end">liseré LED</text>
+          <line x1="729" y1="302" x2="729" y2="452" stroke="#8b909b"/><text x="786" y="468" text-anchor="end">batterie et USB-C, au sec</text>
+          <!-- chemins de fuite -->
+          <line x1="226" y1="138" x2="242" y2="138" stroke="#f0b04a"/><circle class="badge" cx="214" cy="138" r="12"/><text class="badge-t" x="214" y="138">1</text>
+          <line x1="290" y1="150" x2="266" y2="161" stroke="#f0b04a"/><circle class="badge" cx="301" cy="146" r="12"/><text class="badge-t" x="301" y="146">2</text>
+          <circle class="badge" cx="526" cy="446" r="12"/><text class="badge-t" x="526" y="446">3</text>
+          <line x1="462" y1="70" x2="462" y2="82" stroke="#f0b04a"/><circle class="badge" cx="462" cy="58" r="12"/><text class="badge-t" x="462" y="58">4</text>
+          <line x1="624" y1="74" x2="622" y2="89" stroke="#f0b04a"/><circle class="badge" cx="625" cy="62" r="12"/><text class="badge-t" x="625" y="62">5</text>
+          <circle class="badge" cx="358" cy="30" r="12"/><text class="badge-t" x="358" y="30">6</text>
+        </svg>
+      </div>
+      <figcaption>Coupe verticale. Le galet se place 10 mm sous la ligne de la bouche, pour que son bord haut repose sur la lèvre supérieure et laisse le nez libre.</figcaption>
+    </figure>
+
+    <figure>
+      <div class="scroll">
+        <svg viewBox="0 0 360 300" role="img" aria-label="Vue de face en transparence : le conduit d'évent fait un seul tour de la coque, de l'entrée à la sortie, de part et d'autre d'une cloison en bas">
+          <ellipse cx="180" cy="150" rx="143" ry="112" fill="#2b2e36" stroke="#4a4e59" stroke-width="1.5"/>
+          <ellipse cx="180" cy="150" rx="140" ry="109" fill="none" stroke="#3d8bff" stroke-width="4" filter="url(#glow)"/>
+          <ellipse cx="180" cy="150" rx="110" ry="80" fill="#101216"/>
+          <path d="M190 243.7 A125 94 0 1 0 170 243.7" fill="none" stroke="#17335f" stroke-width="15"/>
+          <path d="M190 243.7 A125 94 0 1 0 170 243.7" fill="none" stroke="#7db6ff" stroke-width="1.5" stroke-dasharray="6 6"/>
+          <rect x="172" y="235" width="16" height="18" fill="#4a4e59"/>
+          <ellipse cx="180" cy="150" rx="102" ry="58" fill="none" stroke="#8b909b" stroke-dasharray="4 4"/>
+          <rect x="236" y="108" width="40" height="84" rx="6" fill="#8a8f99"/>
+          <path d="M305 158 L311 146 L299 146 Z" fill="#7db6ff" transform="rotate(180 305 152)"/>
+          <path d="M186 56 L174 50 L174 62 Z" fill="#7db6ff" transform="rotate(180 180 56)"/>
+          <path d="M55 146 L61 158 L49 158 Z" fill="#7db6ff" transform="rotate(180 55 152)"/>
+          <path d="M198 212 L198 234" fill="none" stroke="#7db6ff" stroke-width="2.5" marker-end="url(#arr)"/>
+          <path d="M162 252 L162 290" fill="none" stroke="#7db6ff" stroke-width="2.5" marker-end="url(#arr)"/>
+          <text x="180" y="24" text-anchor="middle">un seul tour, 180 mm</text>
+          <text x="180" y="154" text-anchor="middle">ouverture</text>
+          <text x="256" y="155" text-anchor="middle" fill="#14161a" font-size="12">micro</text>
+          <text class="t-air" x="206" y="226">entrée</text>
+          <text class="t-air" x="154" y="288" text-anchor="end">sortie</text>
+          <text x="200" y="270">cloison</text>
+        </svg>
+      </div>
+      <figcaption>Vue de face, en transparence. L'air entre d'un côté de la cloison, fait le tour de la coque et ressort de l'autre côté, vers le bas. Le micro est plaqué sur le flanc, hors du souffle.</figcaption>
+    </figure>
+  </div>
+
+  <section>
+    <h2>Les six chemins de fuite</h2>
+    <div class="tbl">
+      <table>
+        <thead><tr><th></th><th>Par où le son sort</th><th>Parade dans le galet</th><th>Ce qui sort encore, à 1 m</th></tr></thead>
+        <tbody>
+          <tr><td class="n"><span class="dot">1</span></td><td><span class="key">Joint contre le visage</span><small>le moindre jour laisse tout passer</small></td><td>Joint creux large et bas (10 mm de large, 4 mm une fois écrasé) sur une jupe rigide qui épouse le visage. On appuie avec toute la paume, donc l'appui est régulier.</td><td class="num">28 dB(A)<small>si le jour reste sous 0,2 mm</small></td></tr>
+          <tr><td class="n"><span class="dot">2</span></td><td>Flanc mou du joint<small>il gonfle et rayonne, c'était la faiblesse du v2</small></td><td>Lèvre rigide qui cache le flanc du joint. Il reste 3 mm exposés, contre 30 mm sur le v2.</td><td class="num">31 dB(A)</td></tr>
+          <tr><td class="n"><span class="dot">3</span></td><td>Évent<small>l'air expiré doit bien sortir</small></td><td>Un seul conduit long et étroit (48 mm² sur 180 mm) qui fait le tour de la coque. L'air lent passe. Le son, lui, doit mettre en mouvement toute la masse d'air du conduit.</td><td class="num">34 dB(A)<small>le chemin dominant quand le joint est bon</small></td></tr>
+          <tr><td class="n"><span class="dot">4</span></td><td>Jonction des deux coques</td><td>Un seul joint mousse, écrasé de 0,5 mm, fermé par 8 aimants cachés. La pression de la paume le serre encore en usage. Le liseré LED est posé dessus et cache la ligne.</td><td class="num">non modélisé<small>visé négligeable</small></td></tr>
+          <tr><td class="n"><span class="dot">5</span></td><td>Coque</td><td>3 mm de matière pleine, formes bombées, aucune grande surface plate.</td><td class="num">6 dB(A)<small>négligeable</small></td></tr>
+          <tr><td class="n"><span class="dot">6</span></td><td>Nez et tissus du visage<small>hors de l'appareil</small></td><td>Aucune : le nez reste libre pour respirer. C'est ce qui fixe le plafond sur une vraie personne.</td><td class="num">non modélisé</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <h2>Atténuation de la voix</h2>
+      <dl class="kv">
+        <dt>v2 actuel (modèle 1D)</dt><dd class="bad">6,6 dB(A)</dd>
+        <dt>Galet (modèle 1D)</dt><dd class="ok">23,1 dB(A)</dd>
+        <dt>Galet (openCFS, joint rigide et fermé)</dt><dd class="ok">24,3 dB(A)</dd>
+        <dt>Attendu sur une vraie personne</dt><dd>12 à 18 dB(A)</dd>
+      </dl>
+    </div>
+    <div class="card">
+      <h2>Le joint décide</h2>
+      <dl class="kv">
+        <dt>Joint fermé</dt><dd class="ok">23,9</dd>
+        <dt>Jour de 0,2 mm sur 30 mm</dt><dd class="ok">23,1</dd>
+        <dt>Jour de 0,5 mm sur 30 mm</dt><dd class="bad">12,8</dd>
+        <dt>Jour de 0,2 mm sur tout le tour</dt><dd class="bad">15,1</dd>
+        <dt>Jour de 0,5 mm sur tout le tour</dt><dd class="bad">-2,4</dd>
+        <dt>Joint étanche mais trop mou</dt><dd class="bad">10,7</dd>
+      </dl>
+    </div>
+    <div class="card">
+      <h2>Idées testées puis écartées</h2>
+      <p><b>Feutre dans le conduit</b> : 1 à 2 dB(A) de moins. Il déplace la résonance du conduit vers 500 Hz, là où la voix est la plus forte.</p>
+      <p><b>Résonateur accordé</b> : 0,7 dB(A) de mieux seulement. Gardé en réserve si la mesure montre un pic vers 1 kHz.</p>
+      <p><b>Deux chambres en série</b> : crée une résonance vers 250 Hz.</p>
+      <p><b>Bouchon de feutre dans l'évent</b> : il faudrait forcer pour souffler.</p>
+    </div>
+    <div class="card">
+      <h2>Ordre des essais</h2>
+      <ol>
+        <li><b>Bagues d'essai du joint</b>, trois tailles, environ 25 min d'impression chacune. Elles disent si le joint tient sur ton visage, avant d'imprimer le reste.</li>
+        <li><b>Le v2 au banc</b> avec les deux micros : il dit si le micro sature dans une cavité fermée.</li>
+        <li><b>Le galet complet</b>, d'abord sans LED.</li>
+      </ol>
+    </div>
+  </section>
+
+  <p class="note">Tous les chiffres sortent de deux modèles (<code>acoustics/tmm.py</code> et openCFS), sur une géométrie simplifiée. Voix normale nue : 59 dB(A) à 1 m. Rien n'est encore mesuré. Le volume de la cavité et la longueur du conduit seront recalés sur la CAO.</p>
+</div>

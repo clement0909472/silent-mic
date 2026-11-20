@@ -1,0 +1,290 @@
+<meta charset="utf-8">
+<title>Galet Silent Mic 3D</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Studio photo plein ecran : l'objet seul, une barre de reglages en bas. Look unique, choisi ; le fond clair ou sombre est un reglage de la scene. */
+:root {
+  --bg-a: #2a2d33; --bg-b: #0b0c0e;
+  --ui: rgba(18, 19, 23, 0.82); --ui-line: #3a3d45; --fg: #e8eaee; --muted: #9aa0ab; --led: #4d9bff;
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: #0b0c0e; color: var(--fg); font-family: var(--body); font-size: 14px; overflow: hidden; }
+.stage { position: relative; height: 100%; background: radial-gradient(ellipse at 50% 38%, var(--bg-a), var(--bg-b) 72%); transition: background 0.4s; }
+.stage.light { --bg-a: #f3f4f6; --bg-b: #b9bdc6; --ui: rgba(250, 250, 252, 0.86); --ui-line: #c3c7cf; --fg: #16181c; --muted: #555b66; }
+#view { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.head { position: absolute; top: 16px; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; pointer-events: none; color: var(--fg); }
+.brand { font: 800 15px var(--display); letter-spacing: 0.08em; text-transform: uppercase; }
+.brand span { color: var(--led); }
+.dims { font: 12px/1.5 var(--mono); color: var(--muted); text-align: right; }
+.bar { position: absolute; left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); display: flex; flex-wrap: wrap; gap: 8px 14px; justify-content: center; }
+.grp { display: flex; align-items: center; gap: 4px; background: var(--ui); border: 1px solid var(--ui-line); border-radius: 999px; padding: 4px; backdrop-filter: blur(8px); }
+.grp > span { font: 600 11px var(--display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 0 6px 0 10px; }
+button { font: 500 13px var(--body); color: var(--fg); background: transparent; border: 1px solid transparent; border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+button:hover { border-color: var(--ui-line); }
+button:focus-visible { outline: 2px solid var(--led); outline-offset: 1px; }
+button[aria-pressed="true"] { background: var(--led); color: #06101f; }
+.note { position: absolute; left: 0; right: 0; top: 52px; text-align: center; font-size: 12px; color: var(--muted); pointer-events: none; padding: 0 16px; }
+@media (max-width: 640px) { .dims { display: none; } .note { top: 44px; } .grp > span { display: none; } button { padding: 6px 10px; } }
+</style>
+
+<div class="stage" id="stage">
+  <canvas id="view" aria-label="Rendu 3D du galet Silent Mic, à faire tourner"></canvas>
+  <div class="head">
+    <div class="brand">Silent Mic <span>galet</span></div>
+    <div class="dims" id="dims"></div>
+  </div>
+  <p class="note">Maquette d'aspect : formes, proportions et matières. Ce n'est pas encore la pièce d'impression.</p>
+  <div class="bar">
+    <div class="grp" role="group" aria-label="Forme"><span>Forme</span>
+      <button id="f-evase" data-form="evase" aria-pressed="true">Évasé</button>
+      <button id="f-oeuf" data-form="oeuf" aria-pressed="false">Œuf</button>
+    </div>
+    <div class="grp" role="group" aria-label="Finition"><span>Finition</span>
+      <button id="s-brut" data-finish="brut" aria-pressed="true">Brut</button>
+      <button id="s-peint" data-finish="peint" aria-pressed="false">Peint</button>
+    </div>
+    <div class="grp" role="group" aria-label="Vue"><span>Vue</span>
+      <button data-view="avant">Avant</button>
+      <button data-view="profil">Profil</button>
+      <button data-view="dos">Dos</button>
+    </div>
+    <div class="grp" role="group" aria-label="Scène">
+      <button id="t-led" aria-pressed="true">LED</button>
+      <button id="t-light" aria-pressed="false">Fond clair</button>
+      <button id="t-pose" aria-pressed="false">Posé</button>
+      <button id="t-card" aria-pressed="false" title="Affiche une carte bancaire à côté, pour la taille">Échelle</button>
+      <button id="t-spin" aria-pressed="true">Rotation</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
+<script>
+(() => {
+  const TAU = Math.PI * 2, SEG = 128;
+  const PAD = { outer: [55, 45], open: [35, 25], thick: 30 };   // coussin Brainwavz 110 x 90, ouverture 70 x 50
+  const SEAT = PAD.thick, REAR = 116;                           // axe z : 0 = face du coussin, 116 = dos
+  const smooth = t => { t = Math.min(Math.max(t, 0), 1); return t * t * (3 - 2 * t); };
+  const sq = (c, n) => Math.sign(c) * Math.pow(Math.abs(c), 2 / n);   // superellipse
+
+  // ---------- formes : demi-axes (largeur, hauteur) le long de l'axe ----------
+  const FORMS = {
+    evase: {
+      ring: 54, dims: "coussin 110 × 90 mm<br>corps 84 × 66 mm<br>longueur 116 mm",
+      r(s) {
+        if (s < 60) { const k = 1 - smooth((s - SEAT) / 18); return [42 + 10 * k, 33 + 9 * k]; }
+        const f = Math.pow(1 - Math.pow((s - 60) / 61.3, 2.4), 1 / 2.2); return [42 * f, 33 * f];
+      },
+    },
+    oeuf: {
+      ring: 58, dims: "coussin 110 × 90 mm<br>corps 89 × 72 mm au milieu<br>longueur 116 mm",
+      r(s) { const u = 0.88 * (s - SEAT) / (REAR - SEAT), f = Math.pow(1 - Math.pow(u, 1.8), 0.6); return [52 * f, 42 * f]; },
+    },
+  };
+  // congé au dos, puis rainure d'ombre (sorties d'air) sur la moitié basse derrière le liseré
+  const fillet = s => { const t = Math.min(Math.max((s - 113.5) / 2.5, 0), 1); return -2.5 * (1 - Math.sqrt(1 - t * t)); };
+  function radial(form, s, a) {
+    const g0 = form.ring + 3.4, g = smooth((s - g0) / 0.8) * (1 - smooth((s - g0 - 3.6) / 0.8));
+    const low = smooth((-Math.sin(a) + 0.15) / 0.3);
+    return fillet(s) - 1.4 * g * low;
+  }
+
+  // ---------- géométries ----------
+  function grid(rows, cols, fn, closeU = true) {
+    const pos = [], uv = [], idx = [];
+    for (let j = 0; j <= rows; j++) for (let i = 0; i <= cols; i++) { const p = fn(i / cols, j / rows); pos.push(p[0], p[1], p[2]); uv.push(p[3], p[4]); }
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) { const a = j * (cols + 1) + i, b = a + cols + 1; idx.push(a, a + 1, b, b, a + 1, b + 1); }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+    g.setIndex(idx); g.computeVertexNormals();
+    if (closeU) {   // couture invisible : moyenne des normales de la première et de la dernière colonne
+      const n = g.attributes.normal;
+      for (let j = 0; j <= rows; j++) {
+        const a = j * (cols + 1), b = a + cols, v = new THREE.Vector3(n.getX(a) + n.getX(b), n.getY(a) + n.getY(b), n.getZ(a) + n.getZ(b)).normalize();
+        n.setXYZ(a, v.x, v.y, v.z); n.setXYZ(b, v.x, v.y, v.z);
+      }
+    }
+    return g;
+  }
+  const flip = g => { const i = g.index.array; for (let k = 0; k < i.length; k += 3) { const t = i[k]; i[k] = i[k + 1]; i[k + 1] = t; } g.computeVertexNormals(); return g; };
+  // surface de révolution ovale entre s0 et s1 ; rad(s) -> [rx, ry], dr(s, a) décalage radial
+  function loft(s0, s1, rad, dr, n = 2.4, step = 0.6) {
+    const rows = Math.max(1, Math.round((s1 - s0) / step));
+    return grid(rows, SEG, (u, v) => {
+      const a = u * TAU, s = s0 + (s1 - s0) * v, [rx, ry] = rad(s), d = dr ? dr(s, a) : 0;
+      return [sq(Math.cos(a), n) * (rx + d), sq(Math.sin(a), n) * (ry + d), s, u, s / 2.4];
+    });
+  }
+  function cap(z, rx, ry, n = 2.4, inner = null) {   // disque ou couronne plane
+    return grid(1, SEG, (u, v) => {
+      const a = u * TAU, k = inner ? v : v, ax = inner ? inner[0] + (rx - inner[0]) * k : rx * k, ay = inner ? inner[1] + (ry - inner[1]) * k : ry * k;
+      return [sq(Math.cos(a), n) * ax, sq(Math.sin(a), n) * ay, z, u * 6, v];
+    });
+  }
+  // boudin le long d'un ovale : section superellipse (hw, hh), centre à mi-chemin, pour le coussin et les joncs
+  function ovalTube(cx, cy, hw, hh, zc, n = 2.2, e = 3, rows = 36) {
+    return grid(rows, SEG, (u, v) => {
+      const a = u * TAU, t = v * TAU, px = sq(Math.cos(a), n) * cx, py = sq(Math.sin(a), n) * cy;
+      const tx = -Math.sin(a) * cx, ty = Math.cos(a) * cy, l = Math.hypot(tx, ty) || 1, nx = ty / l, ny = -tx / l;   // normale sortante
+      const w = sq(Math.cos(t), e) * hw, h = sq(Math.sin(t), e) * hh;
+      return [px + nx * w, py + ny * w, zc + h, u * 26, v * 5];
+    });
+  }
+
+  // ---------- textures procédurales ----------
+  function noiseTex(size, scale, contrast) {
+    const c = document.createElement("canvas"); c.width = c.height = size;
+    const g = c.getContext("2d"), img = g.createImageData(size, size);
+    for (let i = 0; i < size * size; i++) { const v = 128 + (Math.random() - 0.5) * contrast; img.data.set([v, v, v, 255], i * 4); }
+    g.putImageData(img, 0, 0);
+    if (scale > 1) { const d = document.createElement("canvas"); d.width = d.height = size; const h = d.getContext("2d"); h.imageSmoothingEnabled = true; h.drawImage(c, 0, 0, size / scale, size / scale); h.drawImage(d, 0, 0, size / scale, size / scale, 0, 0, size, size); return new THREE.CanvasTexture(d); }
+    return new THREE.CanvasTexture(c);
+  }
+  function layerTex() {   // stries d'impression : 8 couches par motif, soit 0,3 mm par couche
+    const c = document.createElement("canvas"); c.width = 4; c.height = 64;
+    const g = c.getContext("2d");
+    for (let y = 0; y < 64; y++) { const v = Math.round(128 + 110 * Math.cos((y / 8) * TAU)); g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(0, y, 4, 1); }
+    return new THREE.CanvasTexture(c);
+  }
+  const wrap = (t, rx, ry) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); return t; };
+
+  // ---------- rendu ----------
+  const stage = document.getElementById("stage"), canvas = document.getElementById("view");
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.85;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  const scene = new THREE.Scene();
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new THREE.RoomEnvironment(), 0.04).texture;
+  const camera = new THREE.PerspectiveCamera(28, 1, 5, 6000);
+  const controls = new THREE.OrbitControls(camera, canvas);
+  controls.enableDamping = true; controls.minDistance = 160; controls.maxDistance = 1200; controls.maxPolarAngle = Math.PI * 0.56;
+
+  const key = new THREE.DirectionalLight(0xffffff, 0.7); key.position.set(160, 320, 240); key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048); key.shadow.bias = -0.0006; key.shadow.normalBias = 0.6;
+  Object.assign(key.shadow.camera, { left: -220, right: 220, top: 220, bottom: -220, near: 10, far: 900 }); scene.add(key);
+  const rim = new THREE.DirectionalLight(0xbcd4ff, 0.9); rim.position.set(-260, 140, -220); scene.add(rim);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), new THREE.ShadowMaterial({ opacity: 0.38 }));
+  ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+
+  const aniso = renderer.capabilities.getMaxAnisotropy();
+  const tLayer = wrap(layerTex(), 1, 1); tLayer.anisotropy = aniso;
+  const tGrain = wrap(noiseTex(256, 2, 150), 1, 1); tGrain.anisotropy = aniso;
+  const tFoam = wrap(noiseTex(128, 1, 220), 6, 6);
+  const M = {
+    shell: new THREE.MeshStandardMaterial({ color: 0x1a1b1e, roughness: 0.72, bumpMap: tLayer, bumpScale: 0.012, envMapIntensity: 0.14 }),
+    flat: new THREE.MeshStandardMaterial({ color: 0x1a1b1e, roughness: 0.74, envMapIntensity: 0.14 }),
+    pad: new THREE.MeshPhysicalMaterial({ color: 0x141416, roughness: 0.52, bumpMap: tGrain, bumpScale: 0.008, sheen: 0.2, sheenRoughness: 0.5, sheenColor: new THREE.Color(0x30343c), envMapIntensity: 0.18 }),
+    seam: new THREE.MeshStandardMaterial({ color: 0x050506, roughness: 0.9 }),
+    foam: new THREE.MeshStandardMaterial({ color: 0x1d1f23, roughness: 1, bumpMap: tFoam, bumpScale: 0.03, envMapIntensity: 0.06, side: THREE.DoubleSide }),
+    led: new THREE.MeshStandardMaterial({ color: 0x8fc0ff, emissive: 0x2f7dff, emissiveIntensity: 2.4, roughness: 0.35 }),
+    halo: new THREE.MeshBasicMaterial({ color: 0x3d8bff, transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }),
+    dark: new THREE.MeshBasicMaterial({ color: 0x020203 }),
+    metal: new THREE.MeshStandardMaterial({ color: 0x9aa0a8, roughness: 0.35, metalness: 0.9 }),
+    card: new THREE.MeshStandardMaterial({ color: 0xd9dde4, roughness: 0.45 }),
+  };
+
+  // ---------- assemblage ----------
+  const state = { form: "evase", finish: "brut", led: true, light: false, pose: false, card: false, spin: true };
+  const device = new THREE.Group(), pivot = new THREE.Group(); pivot.add(device); scene.add(pivot);
+  let ledParts = [], ledLights = [];
+  const add = (geo, mat, shadow = true) => { const m = new THREE.Mesh(geo, mat); m.castShadow = shadow; m.receiveShadow = true; device.add(m); return m; };
+
+  function build() {
+    device.clear(); ledParts = []; ledLights = [];
+    const F = FORMS[state.form], rad = s => F.r(s), dr = (s, a) => radial(F, s, a);
+    const z0 = F.ring - 1.3, z1 = F.ring + 1.3;
+    // coque, coupée par le liseré
+    add(loft(SEAT, z0, rad, dr), M.shell); add(loft(z1, REAR, rad, dr), M.shell);
+    const [ex, ey] = rad(REAR); add(flip(cap(REAR, ex - 2.5, ey - 2.5)), M.flat);
+    add(ovalTube((ex - 2.5) * 0.84, (ey - 2.5) * 0.84, 0.35, 0.35, REAR + 0.05, 2.4, 2, 6), M.dark, false);      // joint de la trappe
+    // liseré lumineux, légèrement en retrait, et son halo
+    const ring = add(loft(z0, z1, rad, (s, a) => dr(s, a) - 0.15, 2.4, 0.65), M.led, false); ledParts.push(ring);
+    for (const [w, o] of [[1.6, 0.16], [3.6, 0.08], [7, 0.04]]) {
+      const h = new THREE.Mesh(loft(z0 - w, z1 + w, rad, (s, a) => dr(s, a) + w * 0.55, 2.4, (2.6 + 2 * w) / 3), M.halo.clone());
+      h.material.opacity = o; device.add(h); ledParts.push(h);
+    }
+    // sorties d'air dans la rainure d'ombre, côté bas
+    for (let i = -2; i <= 2; i++) {
+      const a = -Math.PI / 2 + i * 0.3, s = F.ring + 5.6, [rx, ry] = rad(s);
+      const slot = new THREE.Mesh(new THREE.BoxGeometry(9, 0.6, 2.1), M.dark);
+      slot.position.set(sq(Math.cos(a), 2.4) * (rx - 1.25), sq(Math.sin(a), 2.4) * (ry - 1.25), s);
+      slot.rotation.z = a + Math.PI / 2; device.add(slot);
+    }
+    // port USB-C sous le dos
+    const us = 104, [ux, uy] = rad(us), usb = new THREE.Mesh(new THREE.CapsuleGeometry(1.6, 6, 6, 12), M.dark);
+    usb.rotation.z = Math.PI / 2; usb.position.set(0, -(uy + fillet(us)) + 0.9, us); device.add(usb);
+    const lip = new THREE.Mesh(new THREE.TorusGeometry(1, 0.25, 8, 24), M.metal); lip.scale.set(4.6, 1.75, 1); lip.rotation.x = Math.PI / 2; lip.position.copy(usb.position).y -= 0.35; device.add(lip);
+    // siège du coussin, col rigide et intérieur garni de mousse
+    const [sx, sy] = rad(SEAT);
+    add(cap(SEAT, sx, sy, 2.4, [33, 23]), M.flat);
+    add(loft(16, SEAT, () => [34.5, 24.5], null, 2.2, 2), M.flat); add(flip(loft(16, SEAT, () => [32.5, 22.5], null, 2.2, 2)), M.flat, false);
+    add(ovalTube(33.5, 23.5, 1, 1, 16, 2.2, 2, 10), M.flat, false);
+    add(flip(loft(SEAT, 78, s => [32.5 + 3.5 * smooth((s - SEAT) / 12), 22.5 + 4.5 * smooth((s - SEAT) / 12)], null, 2.2, 3)), M.foam, false);
+    add(cap(78, 36, 27, 2.2), M.foam, false);
+    // coussin de casque et sa couture
+    add(ovalTube(45, 35, 10, 15, 15), M.pad);
+    add(ovalTube(45, 35, 10.15, 0.45, 15, 2.2, 2, 6), M.seam, false);
+    document.getElementById("dims").innerHTML = F.dims;
+    applyLed(); applyFinish(); place();
+  }
+
+  const card = new THREE.Mesh(new THREE.BoxGeometry(85.6, 54, 0.8), M.card); card.castShadow = true; scene.add(card);
+  const chip = new THREE.Mesh(new THREE.BoxGeometry(12, 9, 0.3), new THREE.MeshStandardMaterial({ color: 0xc9a54a, roughness: 0.35, metalness: 0.9 })); chip.position.set(-24, 6, 0.5); card.add(chip);
+
+  function applyLed() { ledParts.forEach((m, i) => { if (i) m.visible = state.led; }); M.led.emissiveIntensity = state.led ? 2.4 : 0; M.led.color.set(state.led ? 0x8fc0ff : 0x2a3340); ledLights.forEach(l => l.visible = state.led); }
+  function applyFinish() { const brut = state.finish === "brut"; M.shell.bumpMap = brut ? tLayer : null; M.shell.roughness = brut ? 0.72 : 0.5; M.flat.roughness = brut ? 0.74 : 0.5; M.shell.needsUpdate = true; }
+  function place() {
+    device.position.set(0, 0, -REAR / 2 + 2);   // centré sur l'axe
+    if (state.pose) { pivot.rotation.set(Math.PI / 2, 0, 0); pivot.position.set(0, REAR / 2 + 2, 0); }       // debout sur le dos, coussin en haut
+    else { pivot.rotation.set(-0.16, 0, 0); pivot.position.set(0, 72, 0); }
+    card.visible = state.card; card.position.set(-70, 27.4, 108); card.rotation.y = -2.14;   // carte bancaire 85,6 x 54 mm, face a la vue avant
+    controls.target.set(state.card ? -25 : 0, state.pose ? 62 : 70, state.card ? 40 : 0);
+  }
+  const VIEWS = { avant: [-0.82, 0.3, -0.52], profil: [1, 0.12, 0.02], dos: [0.55, 0.3, 0.8] };
+  function view(name) {
+    const d = new THREE.Vector3(...VIEWS[name]).normalize(), tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    const dist = 1.15 * Math.max(150 / 2 / tan, (state.card ? 290 : 190) / 2 / (tan * camera.aspect)) + 70;
+    camera.position.copy(controls.target).addScaledVector(d, dist); controls.update();
+  }
+
+  // ---------- interface ----------
+  const press = (el, on) => el.setAttribute("aria-pressed", String(on));
+  document.querySelectorAll("[data-form]").forEach(b => b.addEventListener("click", () => { state.form = b.dataset.form; document.querySelectorAll("[data-form]").forEach(x => press(x, x === b)); build(); }));
+  document.querySelectorAll("[data-finish]").forEach(b => b.addEventListener("click", () => { state.finish = b.dataset.finish; document.querySelectorAll("[data-finish]").forEach(x => press(x, x === b)); applyFinish(); }));
+  document.querySelectorAll("[data-view]").forEach(b => b.addEventListener("click", () => { pivot.rotation.y = 0; spinAngle = 0; view(b.dataset.view); }));
+  const toggle = (id, k, fn) => document.getElementById(id).addEventListener("click", e => { state[k] = !state[k]; press(e.currentTarget, state[k]); fn && fn(); });
+  toggle("t-led", "led", applyLed);
+  toggle("t-light", "light", () => { stage.classList.toggle("light", state.light); ground.material.opacity = state.light ? 0.28 : 0.38; });
+  toggle("t-pose", "pose", () => { spinAngle = 0; place(); view("avant"); });
+  toggle("t-card", "card", () => { place(); view("avant"); });
+  toggle("t-spin", "spin");
+
+  let spinAngle = 0, first = true;
+  function resize() {
+    const r = stage.getBoundingClientRect(); renderer.setSize(r.width, r.height, false);
+    camera.aspect = r.width / Math.max(r.height, 1); camera.updateProjectionMatrix();
+    if (first) { first = false; view("avant"); }
+  }
+  new ResizeObserver(resize).observe(stage);
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { state.spin = false; press(document.getElementById("t-spin"), false); }
+  let last = performance.now();
+  function tick(now) {
+    const dt = Math.min((now - last) / 1000, 0.05); last = now;
+    if (state.spin) { spinAngle += dt * 0.3; if (state.pose) pivot.rotation.set(Math.PI / 2, 0, spinAngle); else pivot.rotation.set(-0.16, spinAngle, 0); }
+    controls.update(); renderer.render(scene, camera); requestAnimationFrame(tick);
+  }
+  build(); resize(); requestAnimationFrame(tick);
+})();
+</script>
