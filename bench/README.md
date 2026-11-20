@@ -50,7 +50,7 @@ But : mesurer sur ton visage quelle hauteur de col (3, 10 ou 16 mm) laisse le mo
 
 1. `python bench/cap_test.py --make-noise` écrit `bench/bruit-rose.wav`. Le jouer en boucle dans un écouteur sans fil, à volume fixe et modéré.
 2. Découper le voile de tissu tendu au dos du coussin, au ras de l'ouverture : sinon le col bute dessus et le coussin ne se plaque pas. Garder le morceau, il peut servir de filtre anti-pop collé sur le haut du col.
-3. Mettre l'écouteur et l'émetteur DJI dans le capot, boucher le passage de câble avec de la pâte adhésive, monter le coussin.
+3. Mettre l'écouteur et l'émetteur DJI dans le capot, boucher le passage de câble avec de la pâte adhésive, poser le coussin autour du col. Pas de scratch : son épaisseur de fibres laisse un jour tout autour, qui fausserait la comparaison des cols. Le coussin tient par la pression de la main.
 4. `python bench/cap_test.py --inside "DJI" --outside "Yeti" --session capot-$(date +%Y%m%d)` : le script demande chaque col trois fois, 12 s par pose, capot plaqué sur le visage, bouche fermée. Environ 10 minutes.
 5. `python bench/cap_test.py --report bench/sessions/capot-AAAAMMJJ` donne la fuite par col.
 

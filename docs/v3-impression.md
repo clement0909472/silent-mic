@@ -69,4 +69,5 @@ Pour la lumière, plus tard : batterie LiPo 502030 avec protection (5 × 20 × 3
 - **Longueur du filament LED non choisie.** Le tour de la rainure fait environ 21 cm.
 - **Levier de l'interrupteur** accessible par une fente de 4 × 2,2 mm sous la coque : à valider au doigt.
 - **Tenue des aimants contre le joint** : c'est l'objet des éprouvettes de joint.
+- **Accroche du coussin non dessinée.** Le prototype v2 le tient par du scratch, qui laisse un jour tout autour (calcul : de -3 à 11 dB(A) au lieu de 21). À remplacer par un anneau continu de ruban double face, ou par la lèvre élastique du coussin sur une gorge de la coque, à dessiner une fois le coussin mesuré.
 - **Dessous du coussin** : seulement posé sur l'appui, étanche par la pression de la main. Une fente de 0,5 mm sur 3 cm fait tomber l'atténuation calculée de 21 à 12 dB(A). Un anneau de ruban double face est en réserve, à trancher au test du capot (`bench/README.md`, étape 6).
