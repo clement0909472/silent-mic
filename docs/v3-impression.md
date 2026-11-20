@@ -64,7 +64,7 @@ Pour la lumière, plus tard : batterie LiPo 502030 avec protection (5 × 20 × 3
 
 ## Points ouverts
 
-- **Baie de l'électronique dessinée sur des cotes de catalogue.** Le chargeur est compté à 4 mm d'épaisseur avec sa prise, la batterie à 30 mm de long avec sa carte de protection. À mesurer pièces en main avant d'imprimer la coque arrière, sinon la réimprimer.
+- **Baie de l'électronique dessinée sur des cotes de catalogue.** Le chargeur est compté à 4 mm d'épaisseur avec sa prise, la batterie à 30 mm de long avec sa carte de protection. Décision de Clément du 20 novembre 2026 : l'électronique se commande plus tard, la coque arrière s'imprime telle quelle et se réimprime (4 h 44, 70 g) si une pièce ne rentre pas.
 - **Aucun clip dans la baie.** Les composants tiennent par empilement, logements ajustés à 0,5 mm et trappe. Aucune cloison imprimée entre chargeur et batterie.
 - **Longueur du filament LED non choisie.** Le tour de la rainure fait environ 21 cm.
 - **Levier de l'interrupteur** accessible par une fente de 4 × 2,2 mm sous la coque : à valider au doigt.
