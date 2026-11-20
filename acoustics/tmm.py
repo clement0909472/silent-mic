@@ -66,9 +66,22 @@ def delany_bazley(w, sigma):
     return zc * k / w, zc * w / k  # densite, module (convention e^{jwt})
 
 
-def duct_tm(w, area, length, perimeter, end_correction=0.0):
+def miki(w, sigma):
+    """Feutre dense en fluide equivalent (Miki) : reste physique a basse frequence, la ou Delany-Bazley derive."""
+    x = w / (2 * np.pi) / sigma
+    zc = RHO * C0 * (1 + 0.070 * x ** -0.632 - 1j * 0.107 * x ** -0.632)
+    k = w / C0 * (1 + 0.109 * x ** -0.618 - 1j * 0.160 * x ** -0.618)
+    return zc * k / w, zc * w / k
+
+
+def duct_tm(w, area, length, perimeter, end_correction=0.0, lining=None):
     r = 2 * area / perimeter  # rayon hydraulique equivalent
     rho_e, k_e = zk_fluid(w, r)
+    if lining:
+        # paroi garnie a reaction locale : couche de feutre adossee a une paroi rigide, Zs = -j Zc cot(k t)
+        rho_f, k_f = miki(w, lining["sigma"])
+        z_s = -1j * np.sqrt(rho_f * k_f) / np.tan(w * np.sqrt(rho_f / k_f) * lining["thickness"] * 1e-3)
+        k_e = 1 / (1 / k_e + lining["width"] * 1e-3 / (area * 1j * w * z_s))
     k = w * np.sqrt(rho_e / k_e)
     zc = np.sqrt(rho_e * k_e) / area
     L = length + end_correction * math.sqrt(area / math.pi)
@@ -82,8 +95,7 @@ def element_tm(w, e):
         a = e["width"] * e["height"] * 1e-6
         per = 2 * (e["width"] + e["height"]) * 1e-3
         n = e.get("count", 1)
-        tm = duct_tm(w, a * n, e["length"] * 1e-3, per * n, e.get("end_correction", 0.85))
-        return tm
+        return duct_tm(w, a * n, e["length"] * 1e-3, per * n, e.get("end_correction", 0.85), e.get("lining"))
     if kind == "hole":
         d, n = e["diameter"] * 1e-3, e.get("count", 1)
         a = n * math.pi * d * d / 4
@@ -91,6 +103,11 @@ def element_tm(w, e):
     if kind == "chamber":
         c = compliance(w, e["volume_cm3"], e.get("foam_cm3", 0.0), e.get("foam_sigma", 1.2e4))
         return np.array([[np.ones_like(w), 0 * w], [1j * w * c, np.ones_like(w)]])
+    if kind == "stub":  # branche borgne en derivation (quart d'onde), option : bouchon resistif a l'entree
+        a = e["width"] * e["height"] * 1e-6
+        t = duct_tm(w, a, e["length"] * 1e-3, 2 * (e["width"] + e["height"]) * 1e-3, e.get("end_correction", 0.4))
+        z = t[0, 0] / t[1, 0] + e.get("rayl", 0.0) / a
+        return np.array([[np.ones_like(w), 0 * w], [1 / z, np.ones_like(w)]])
     if kind == "screen":  # ecran resistif : resistance specifique (Rayl) sur une surface
         z = e["rayl"] / (e["area_mm2"] * 1e-6)
         return np.array([[np.ones_like(w), z + 0 * w], [0 * w, np.ones_like(w)]])
