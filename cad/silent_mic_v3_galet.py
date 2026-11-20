@@ -943,18 +943,19 @@ def export():
 
     # --- web : STL grossiers et manifeste
     t = time.perf_counter()
-    roles = {"front": ("Capot avant", "black", (0, 0, 30)), "rear": ("Coque arriere", "black", (0, 0, 0)),
-             "cover": ("Couvercle de la baie", "black", (0, 0, -30)), "ring": ("Anneau lumineux", "translucent", (0, 0, 8)),
-             "collar-insert-14mm": ("Collier amovible 14 mm", "black", (0, 0, 55)),
-             "mic": ("DJI Mic Mini 2", "electronics", (0, 0, 40)), "mic-disc": ("Disque acier 30 mm", "metal", (0, 0, 38)),
-             "earpad": ("Coussin Brainwavz", "soft", (0, 0, 75)), "gasket": ("Joint mousse 3 x 2", "soft", (0, 0, 15)),
-             "led-filament": ("Filament LED", "electronics", (0, 0, 6)), "foam-disc": ("Disque de mousse 20 mm", "foam", (0, 0, -15)),
-             "foam-liner": ("Manchon de mousse 9 mm", "foam", (0, 0, 45)), "foam-liner-rear": ("Mousse des flancs arriere 8 mm", "foam", (0, 0, -8)),
-             "windscreen": ("Bonnette 5 mm", "foam", (0, 0, 48)),
-             "battery": ("LiPo 30 x 20 x 5", "electronics", (0, 0, -45)), "charger": ("Chargeur USB-C TP4056", "electronics", (0, 0, -50)),
-             "switch": ("Interrupteur", "electronics", (0, 0, -50)), "joint-magnets": ("Aimants du joint 6 x 2", "metal", (0, 0, -4)),
-             "joint-steel-discs": ("Pastilles acier du joint", "metal", (0, 0, 20)), "cover-magnets": ("Aimants du couvercle", "metal", (0, 0, -38)),
-             "cover-steel-discs": ("Pastilles acier du couvercle", "metal", (0, 0, -42))}
+    # eclate = ordre de montage : baie par l'arriere, puis tout le reste par le plan de joint
+    roles = {"front": ("Capot avant", "black", (0, 0, 135)), "rear": ("Coque arriere", "black", (0, 0, 0)),
+             "cover": ("Couvercle de la baie", "black", (0, 0, -62)), "ring": ("Anneau lumineux", "translucent", (0, 0, 10)),
+             "collar-insert-14mm": ("Collier amovible 14 mm", "black", (0, 0, 150)),
+             "mic": ("DJI Mic Mini 2", "electronics", (0, 0, 66)), "mic-disc": ("Disque acier 30 mm", "metal", (0, 0, 62)),
+             "earpad": ("Coussin Brainwavz", "soft", (0, 0, 175)), "gasket": ("Joint mousse 3 x 2", "soft", (0, 0, 128)),
+             "led-filament": ("Filament LED", "electronics", (0, 0, 5)), "foam-disc": ("Disque de mousse 20 mm", "foam", (0, 0, 45)),
+             "foam-liner": ("Manchon de mousse 9 mm", "foam", (0, 0, 100)), "foam-liner-rear": ("Mousse des flancs arriere 8 mm", "foam", (0, 0, 58)),
+             "windscreen": ("Bonnette 5 mm", "foam", (0, 0, 72)),
+             "battery": ("LiPo 30 x 20 x 5", "electronics", (0, 0, -26)), "charger": ("Chargeur USB-C TP4056", "electronics", (0, 0, -44)),
+             "switch": ("Interrupteur", "electronics", (0, 0, -44)), "joint-magnets": ("Aimants du joint 6 x 2", "metal", (0, 0, 3)),
+             "joint-steel-discs": ("Pastilles acier du joint", "metal", (0, 0, 131)), "cover-magnets": ("Aimants du couvercle", "metal", (0, 0, -5)),
+             "cover-steel-discs": ("Pastilles acier du couvercle", "metal", (0, 0, -57))}
     manifest = []
     shown = dict(parts) | refs | {"earpad": web_earpad()}
     for n, p in shown.items():

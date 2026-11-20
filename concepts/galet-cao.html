@@ -26,7 +26,7 @@ body { background: #0b0c0e; color: var(--fg); font-family: var(--body); font-siz
 .bar { position: absolute; left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); display: flex; flex-wrap: wrap; gap: 8px 14px; justify-content: center; align-items: center; }
 .grp { display: flex; align-items: center; gap: 6px; background: var(--ui); border: 1px solid var(--ui-line); border-radius: 999px; padding: 4px 6px; backdrop-filter: blur(8px); }
 .grp > span { font: 600 11px var(--display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 0 4px 0 8px; }
-button { font: 500 13px var(--body); color: var(--fg); background: transparent; border: 1px solid transparent; border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+button { font: 500 13px var(--body); color: var(--fg); background: transparent; border: 1px solid transparent; border-radius: 999px; padding: 6px 12px; cursor: pointer; white-space: nowrap; }
 button:hover { border-color: var(--ui-line); }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--led); outline-offset: 1px; }
 button[aria-pressed="true"] { background: var(--led); color: #06101f; }
@@ -34,8 +34,10 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
 .legend { margin: 12px 0 0; padding: 10px 12px 10px 30px; max-width: 33ch; background: var(--ui); border: 1px solid var(--ui-line); border-radius: 12px; font-size: 12.5px; line-height: 1.4; backdrop-filter: blur(8px); }
 .legend li { margin: 3px 0; }
 .legend li::marker { color: var(--led); font: 800 12px var(--display); }
+#legend-asm { max-width: 46ch; }
+.stage.asm .parts { display: none; }   /* l'eclate de montage prend toute la largeur */
 #status { position: absolute; left: 0; right: 0; top: 46%; text-align: center; color: var(--muted); pointer-events: none; }
-@media (max-width: 700px) { .parts { width: 168px; max-height: 38%; font-size: 12px; } .sub { display: none; } .legend { max-width: none; margin-right: 16px; font-size: 12px; padding: 8px 10px 8px 26px; } .stage.air .parts { display: none; } }
+@media (max-width: 700px) { .parts { width: 168px; max-height: 38%; font-size: 12px; } .sub { display: none; } .legend { max-width: none; margin-right: 16px; font-size: 12px; padding: 8px 10px 8px 26px; } .stage.note .parts { display: none; } button { padding: 6px 9px; } }
 </style>
 
 <div class="stage" id="stage">
@@ -43,6 +45,15 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
   <div class="head">
     <div class="brand">Silent Mic <span>CAO</span></div>
     <p class="sub">Les vraies pièces à imprimer, avec les composants en place. Coupe et éclaté pour voir l'intérieur.</p>
+    <ol class="legend" id="legend-asm" hidden>
+      <li>Par l'arrière : la batterie, le chargeur USB-C et l'interrupteur se glissent dans la baie.</li>
+      <li>La trappe ferme la baie, tenue par 4 aimants.</li>
+      <li>Par l'avant : le disque de mousse au fond, puis la mousse des flancs.</li>
+      <li>Le ruban LED et l'anneau translucide se posent sur le bord de la coque.</li>
+      <li>Le micro se pose sur son pied et tient par aimant, sa bonnette par-dessus.</li>
+      <li>Le capot avant, garni de sa mousse, se plaque dessus : 8 aimants et un joint, aucune vis.</li>
+      <li>Le col se pose dans son logement, le coussin s'enfile dessus et le tient.</li>
+    </ol>
     <ol class="legend" id="legend">
       <li>La bouche souffle dans la chambre garnie de mousse.</li>
       <li>L'air entre dans le conduit par une ouverture en bas de la chambre.</li>
@@ -57,6 +68,7 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
     <div class="grp">
       <button id="t-cut" aria-pressed="false">Coupe</button>
       <button id="t-air" aria-pressed="true">Trajet d'air</button>
+      <button id="t-asm" aria-pressed="false">Montage</button>
       <button id="t-spin" aria-pressed="false">Rotation</button>
     </div>
     <div class="grp"><span>Vue</span>
@@ -79,7 +91,7 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
   const scene = new THREE.Scene();
   scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new THREE.RoomEnvironment(), 0.04).texture;
   const camera = new THREE.PerspectiveCamera(28, 1, 5, 6000);
-  const controls = new THREE.OrbitControls(camera, canvas); controls.enableDamping = true; controls.minDistance = 120; controls.maxDistance = 1500;
+  const controls = new THREE.OrbitControls(camera, canvas); controls.enableDamping = true; controls.minDistance = 120; controls.maxDistance = 2600;   // l'eclate de montage sur un ecran etroit demande du recul
   const key = new THREE.DirectionalLight(0xffffff, 0.6); key.position.set(160, 320, 240); scene.add(key);
   const rim = new THREE.DirectionalLight(0xbcd4ff, 0.5); rim.position.set(-260, 140, -220); scene.add(rim);
 
@@ -127,12 +139,16 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
     const len = c.getLength(), tube = new THREE.Mesh(new THREE.TubeGeometry(c, Math.ceil(len / 1.5), 1.1, 8), tubeMat); tube.renderOrder = 10; flow.add(tube);
     for (let i = 0, n = Math.max(1, Math.round(len / 24)); i < n; i++) { const h = new THREE.Mesh(headGeo, headMat); h.renderOrder = 11; flow.add(h); heads.push({ h, c, len, u: i / n }); }
   }
-  [[V(0, 8, 68)], [off(tIn, 15, -8)], [off(Math.PI / 2, -5, FLOW.z)], [off(tAt(-29.5), -16, -1)]].forEach(([p], i) => {
+  function tag(n, p, parent, size = 9) {
     const cv = document.createElement("canvas"), x = cv.getContext("2d"); cv.width = cv.height = 64;
     x.fillStyle = "#4d9bff"; x.beginPath(); x.arc(32, 32, 30, 0, 7); x.fill();
-    x.fillStyle = "#06101f"; x.font = "800 38px Arial"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(i + 1, 32, 35);
-    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), depthTest: false, toneMapped: false })); sp.scale.setScalar(9); sp.position.copy(p); sp.renderOrder = 12; flow.add(sp);
-  });
+    x.fillStyle = "#06101f"; x.font = "800 38px Arial"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(n, 32, 35);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), depthTest: false, toneMapped: false }));
+    sp.scale.setScalar(size); sp.position.copy(p); sp.renderOrder = 12; parent.add(sp); return sp;
+  }
+  [V(0, 8, 68), off(tIn, 15, -8), off(Math.PI / 2, -5, FLOW.z), off(tAt(-29.5), -16, -1)].forEach((p, i) => tag(i + 1, p, flow));
+  // Montage : l'eclate suit l'ordre de montage, une pastille par etape posee sur une piece de l'etape
+  const ASM = { "battery.stl": 1, "cover.stl": 2, "foam-disc.stl": 3, "ring.stl": 4, "mic.stl": 5, "front.stl": 6, "earpad.stl": 7 }, asmTags = [];
   const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
   let flowT = 0;
   function moveHeads(dt) {
@@ -143,7 +159,10 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
   // En coupe, les pieces restent pleines : le conduit se lit dans la matiere tranchee.
   const AIR_OPACITY = { black: 0.07, soft: 0.04, foam: 0.05 };
   function applyAir() {
-    flow.visible = state.air; document.getElementById("legend").hidden = !state.air; stage.classList.toggle("air", state.air);
+    const asm = !state.air && state.t >= 0.5;
+    flow.visible = state.air; document.getElementById("legend").hidden = !state.air; document.getElementById("legend-asm").hidden = !asm;
+    stage.classList.toggle("note", state.air || asm); stage.classList.toggle("asm", asm); asmTags.forEach(s => { s.visible = asm; });
+    document.getElementById("t-asm").setAttribute("aria-pressed", String(state.t >= 0.5));
     for (const p of parts) {
       if (p.role === "air") { p.mesh.visible = state.air; continue; }
       const [face, back] = p.mesh.children, m = face.material, o = AIR_OPACITY[p.role], ghost = state.air && !state.cut && o !== undefined;
@@ -169,8 +188,8 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
   function view(name) {
     const D = { air: [0.5, 0.26, 0.9], avant: [0.78, 0.3, 0.55], profil: [0.02, 0.08, 1], dos: [-0.75, 0.3, -0.5] }[name];
     const d = new THREE.Vector3(...D).normalize(), tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-    const span = 150 + 1.9 * state.t * 100, dist = 1.15 * Math.max(span / 2 / tan, span / 2 / (tan * camera.aspect)) + 60;
-    controls.target.set(0, 0, 0); camera.position.copy(d.multiplyScalar(dist)); controls.update();
+    const span = 150 + 2.6 * state.t * 100, dist = 1.15 * Math.max(span / 2 / tan, span / 2 / (tan * camera.aspect)) + 60;
+    controls.target.set(51 * state.t, 66 * state.t, 0); camera.position.copy(d.multiplyScalar(dist)).add(controls.target); controls.update();   // l'eclate n'est pas centre sur la coque, et il passe sous la legende
   }
 
   fetch("parts.json").then(r => { if (!r.ok) throw new Error("fichier des pièces introuvable"); return r.json(); }).then(man => {
@@ -184,6 +203,7 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
       mesh.add(new THREE.Mesh(g, mat(Object.assign({ color: new THREE.Color(hex) }, ROLES[role].o || {}))));
       if (role !== "air") mesh.add(new THREE.Mesh(g, cap(hex)));
       mesh.position.z = -8;   // recentre : le modele va de z = -55 (dos) a z = +61 (face du coussin)
+      if (ASM[p.file]) { g.computeBoundingBox(); asmTags.push(tag(ASM[p.file], V(0, 62, (g.boundingBox.min.z + g.boundingBox.max.z) / 2), mesh, 15)); }
       device.add(mesh); parts.push({ ...p, role, mesh, base: mesh.position.clone(), explode: new THREE.Vector3(...p.explode) });
     }
     status.hidden = true; ui(); applyCut(); view("air");
@@ -192,9 +212,18 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
   const press = (el, on) => el.setAttribute("aria-pressed", String(on));
   const toggle = (id, k, fn) => document.getElementById(id).addEventListener("click", e => { state[k] = !state[k]; press(e.currentTarget, state[k]); fn && fn(); });
   toggle("t-cut", "cut", applyCut);
-  toggle("t-air", "air", applyAir);
+  function setExplode(t) {
+    state.t = t; document.getElementById("explode").value = t * 100;
+    parts.forEach(p => p.mesh.position.copy(p.base).addScaledVector(p.explode, t)); applyAir();
+  }
+  toggle("t-air", "air", () => { if (state.air && state.t > 0) { setExplode(0); device.rotation.y = Math.PI / 2; view("air"); } else applyAir(); });
+  document.getElementById("t-asm").addEventListener("click", () => {
+    const on = state.t < 0.5;
+    if (on && state.air) { state.air = false; press(document.getElementById("t-air"), false); }
+    setExplode(on ? 1 : 0); device.rotation.y = Math.PI / 2; view(on ? "profil" : "avant");
+  });
   toggle("t-spin", "spin");
-  document.getElementById("explode").addEventListener("input", e => { state.t = e.target.value / 100; parts.forEach(p => p.mesh.position.copy(p.base).addScaledVector(p.explode, state.t)); });
+  document.getElementById("explode").addEventListener("input", e => setExplode(e.target.value / 100));
   document.querySelectorAll("[data-view]").forEach(b => b.addEventListener("click", () => { device.rotation.y = Math.PI / 2; view(b.dataset.view); }));
 
   function resize() { const r = stage.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); camera.aspect = r.width / Math.max(r.height, 1); camera.updateProjectionMatrix(); }
