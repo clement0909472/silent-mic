@@ -4,19 +4,29 @@
 
 ## Impression
 
-Bambu Lab A1 mini, buse 0,4 mm, couches de 0,20 mm, 4 périmètres, 20 % de remplissage, supports automatiques avec « ne pas supporter les ponts ». PLA noir mat, sauf l'anneau et l'éprouvette de lumière en PETG translucide. Fichiers dans `cad/out/v3-galet/`.
+Bambu Lab A1 mini, buse 0,4 mm, couches de 0,20 mm, 4 périmètres, 20 % de remplissage, couture alignée, plaque PEI texturée. PLA : préréglage « ELEGOO PLA Mat Flow Rate Calibrated » de Clément (débit 1,029, densité 1,32). PETG : « Bambu PETG Translucent @BBL A1M ». Fichiers dans `cad/out/v3-galet/`.
+
+### Pièces d'essai : projets Bambu Studio prêts à imprimer
+
+Dans `print/`, trois projets 3MF tranchés, réglages embarqués, aucun support demandé (contrôle fait avec supports automatiques et « ne pas supporter les ponts »). Ils se rouvrent et se retranchent à l'identique en ligne de commande. On les ouvre dans Bambu Studio, on choisit l'imprimante, on lance. Régénération : `cad/bambu_3mf.sh` (lit le préréglage de Clément sans le modifier).
+
+| Plateau | Fichier | Contenu | Temps | Filament |
+|---|---|---|---|---|
+| 1 | `print/capot-essai.3mf` | capot d'essai du coussin | 3 h 15 | 66 g PLA |
+| 2 | `print/cols-et-joint.3mf` | cols de 3, 10 et 16 mm, éprouvettes de joint avant et arrière | 1 h 36 | 28 g PLA |
+| 3 | `print/lumiere-petg.3mf` | éprouvette de lumière | 5 min | 1 g PETG |
+
+Grammes calculés par Bambu Studio avec la densité réelle du filament (1,32) : le tableau OrcaSlicer précédent comptait 1,24, d'où environ 6 % de moins.
+
+### Corps
 
 | Ordre | Pièce | Fichier | Temps | Filament |
 |---|---|---|---|---|
-| 1 | Capot d'essai | `coupons/pad-test-cap.stl` | 3 h 22 | 62 g |
-| 1 | Cols de 3, 10 et 16 mm | `coupons/collar-insert-*.stl` | 20, 29 et 36 min | 20 g |
-| 2 | Éprouvettes de joint | `coupons/joint-coupon-front.stl`, `-rear.stl` | 22 min chacune | |
-| 2 | Éprouvette de lumière (PETG) | `coupons/light-coupon-petg.stl` | 17 min | |
 | 3 | Capot avant, appui du coussin sur le plateau | `silent-mic-v3-galet-front.stl` | 2 h 53 | 46 g |
 | 3 | Coque arrière, face arrière sur le plateau | `silent-mic-v3-galet-rear.stl` | 4 h 44 | 70 g |
 | 3 | Trappe, col de 14 mm, anneau (PETG) | `-cover.stl`, `-collar-insert-14mm.stl`, `-ring.stl` | 32, 33 et 21 min | 17 g |
 
-Le corps (ordre 3) ne s'imprime qu'après le test des cols (`bench/README.md`) et l'essai des éprouvettes de joint. Les seuls supports du corps sont dans la baie de la coque arrière, cachée par la trappe.
+Temps et masses du corps : OrcaSlicer, densité 1,24. Le corps ne s'imprime qu'après le test des cols (`bench/README.md`) et l'essai des éprouvettes de joint. Les seuls supports du corps sont dans la baie de la coque arrière, cachée par la trappe.
 
 ## Montage
 
