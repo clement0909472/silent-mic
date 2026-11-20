@@ -120,7 +120,7 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
 
   // Trajet d'air : fleches animees, vues a travers la coque. Cotes recopiees de cad/silent_mic_v3_galet.py
   // (section au milieu du conduit, offset du conduit, entree et fentes en abscisse depuis 6 h) : a recopier si elles changent.
-  const FLOW = { a: 41.6, b: 32.7, d: 6.85, z: -11.3, inlet: 9.5, slots: [-48.25, -35.75, -23.25, -10.75] };
+  const FLOW = { a: 41.6, b: 32.7, d: 6.85, z: -11.3, inlet: 9.5, slots: [-42.55, -31.75, -20.95, -10.15] };
   const flow = new THREE.Group(); flow.position.z = -8; device.add(flow);
   const off = (t, d, z) => { const nx = FLOW.b * Math.cos(t), ny = FLOW.a * Math.sin(t), k = Math.hypot(nx, ny); return new THREE.Vector3(FLOW.a * Math.cos(t) - d * nx / k, FLOW.b * Math.sin(t) - d * ny / k, z); };
   const table = []; { let s = 0, prev; for (let i = 0; i <= 720; i++) { const t = -Math.PI / 2 + 2 * Math.PI * i / 720, p = off(t, FLOW.d, 0); if (prev) s += p.distanceTo(prev); table.push([s, t]); prev = p; } }
@@ -131,7 +131,7 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
   const curves = [
     new THREE.CatmullRomCurve3([V(0, 8, 62), V(0, 7, 42), V(1, 5, 22), V(4, -4, 4), V(7, -16, -8), off(tIn, 10, -12), off(tIn, FLOW.d, FLOW.z)]),
     new THREE.CatmullRomCurve3(loopPts),
-    ...FLOW.slots.map(s => new THREE.CatmullRomCurve3([off(tAt(s), FLOW.d, -14), off(tAt(s), 1.5, -7.3), off(tAt(s), -11, -2.5)])),
+    ...FLOW.slots.map(s => new THREE.CatmullRomCurve3([off(tAt(s), FLOW.d, -12), off(tAt(s), 1.5, -7.4), off(tAt(s), -11, -2.5)])),
   ];
   const tubeMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(0xff7a1a).convertSRGBToLinear(), transparent: true, opacity: 0.95, depthTest: false, toneMapped: false });
   const headMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, depthTest: false, toneMapped: false });
@@ -147,7 +147,7 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), depthTest: false, toneMapped: false }));
     sp.scale.setScalar(size); sp.position.copy(p); sp.renderOrder = 12; parent.add(sp); return sp;
   }
-  [V(0, 8, 68), off(tIn, 15, -8), off(Math.PI / 2, -5, FLOW.z), off(tAt(-29.5), -16, -1)].forEach((p, i) => tag(i + 1, p, flow));
+  [V(0, 8, 68), off(tIn, 15, -8), off(Math.PI / 2, -5, FLOW.z), off(tAt(-26.35), -16, -1)].forEach((p, i) => tag(i + 1, p, flow));
   // Montage : l'eclate suit l'ordre de montage, une pastille par etape posee sur une piece de l'etape
   const ASM = { "battery.stl": 1, "cover.stl": 2, "foam-disc.stl": 3, "ring.stl": 4, "mic.stl": 5, "front.stl": 6, "earpad.stl": 7 }, asmTags = [];
   const still = matchMedia("(prefers-reduced-motion: reduce)").matches;

@@ -1,6 +1,6 @@
 # Silent Mic v3 galet : impression et montage
 
-État au 20 novembre 2026. Rien n'est encore imprimé : temps et masses viennent du tranchage OrcaSlicer, le montage vient de la CAO (`cad/silent_mic_v3_galet.py`, aucune interférence détectée).
+État au 20 novembre 2026. Rien n'est encore imprimé : temps et masses viennent du tranchage Bambu Studio, le montage vient de la CAO (`cad/silent_mic_v3_galet.py`, aucune interférence détectée).
 
 ## Impression
 
@@ -18,15 +18,49 @@ Dans `print/`, trois projets 3MF tranchés, réglages embarqués, aucun support 
 
 Grammes calculés par Bambu Studio avec la densité réelle du filament (1,32) : le tableau OrcaSlicer précédent comptait 1,24, d'où environ 6 % de moins.
 
-### Corps
+### Corps : projets Bambu Studio prêts
 
-| Ordre | Pièce | Fichier | Temps | Filament |
+| Plateau | Fichier | Contenu | Temps | Filament |
 |---|---|---|---|---|
-| 3 | Capot avant, appui du coussin sur le plateau | `silent-mic-v3-galet-front.stl` | 2 h 53 | 46 g |
-| 3 | Coque arrière, face arrière sur le plateau | `silent-mic-v3-galet-rear.stl` | 4 h 44 | 70 g |
-| 3 | Trappe, col de 14 mm, anneau (PETG) | `-cover.stl`, `-collar-insert-14mm.stl`, `-ring.stl` | 32, 33 et 21 min | 17 g |
+| 4 | `print/corps-capot-avant.3mf` | capot avant, appui du coussin sur le plateau | 2 h 57 | 48 g PLA |
+| 5 | `print/corps-coque-arriere.3mf` | coque arrière, face arrière sur le plateau | 4 h 42 | 72 g PLA |
+| 6 | `print/corps-trappe-col.3mf` | trappe et col de 14 mm | 57 min | 17 g PLA |
+| 7 | `print/corps-anneau-petg.3mf` | anneau lumineux | 7 min | 2 g PETG |
 
-Temps et masses du corps : OrcaSlicer, densité 1,24. Le corps ne s'imprime qu'après le test des cols (`bench/README.md`) et l'essai des éprouvettes de joint. Les seuls supports du corps sont dans la baie de la coque arrière, cachée par la trappe. Pour la coque arrière, régler les supports sur « Sur plateau uniquement » : en automatique, le trancheur monte en plus une tour de support dans la cavité, sous les butées du nid du micro (vérifié : supports de 0,2 à 10,4 mm seulement avec ce réglage, 4 h 46, 69,9 g).
+Mêmes réglages que les pièces d'essai. Le corps ne s'imprime qu'après le test des cols (`bench/README.md`) et l'essai des éprouvettes de joint. Régénération : `cad/bambu_3mf.sh corps`.
+
+Seule la coque arrière a des supports, réglés sur « Sur plateau uniquement » : ils restent sous le passage de la prise USB-C, dans la baie cachée par la trappe (de 0,2 à 10,4 mm de haut). En automatique, le trancheur monterait en plus une tour dans la cavité, sous les butées du nid du micro, et pourrait en poser dans les fentes de sortie.
+
+## Contrôles avant impression
+
+Trois contrôles tournent sur les fichiers à imprimer eux-mêmes, pas sur l'intention du dessin.
+
+- **Maillages fermés.** À l'export, chaque STL est nettoyé puis refusé si une arête n'est pas partagée par exactement deux faces (`clean_stl` dans `cad/silent_mic_v3_coupons.py`). OCCT laissait un triangle vide au sommet de chaque toit conique de logement d'aimant : 4 sur la coque arrière, 2 sur une éprouvette de joint.
+- **Étanchéité.** `cad/leak_check.py` remet les STL en position de montage, les découpe en voxels de 0,25 mm et « inonde » l'air de la chambre. Résultat dans `cad/out/v3-galet/leak-check.json`.
+- **Ouvertures mesurées dans la CAO.** `export()` mesure la section de l'entrée et des fentes là où elles percent les parois, et refuse un modèle où elles ne débouchent pas.
+
+![Coupes du modèle : chambre, conduit, fentes, baie](img/v3-etancheite.png)
+
+| Contrôle d'étanchéité | Résultat |
+|---|---|
+| La chambre rejoint l'extérieur par le conduit | oui |
+| Fentes bouchées : la chambre est étanche | oui, donc aucune autre ouverture |
+| Entrée bouchée : la chambre est étanche | oui, donc une seule entrée dans le conduit |
+| Conduit bouché à midi : la chambre est étanche | oui, donc l'air fait le tour complet |
+| Trou témoin de 1 mm² percé dans la paroi | détecté |
+| Fentes | 4, de 9,3 mm de long, passage réel de 1,7 mm, 62 mm² en tout |
+| Entrée et section du conduit | 49 et 48 mm² |
+
+Le contrôle suppose trois fermetures qu'il ne prouve pas : le joint mousse du plan de joint, le coussin collé sur son appui, le visage sur le coussin. La baie de l'électronique, la prise USB-C, la fente de l'interrupteur, le tunnel des fils et la rainure LED sont ouverts sur l'extérieur, mais séparés de la chambre par des parois pleines.
+
+**Défauts trouvés et corrigés le 20 novembre 2026.**
+
+- Les 4 fentes ne débouchaient pas dans le conduit (0,2 à 0,9 mm de plastique restaient au bout) et l'entrée du conduit était presque fermée côté chambre (peau de 0 à 0,5 mm). Fentes et entrée étaient posées sur la section du plan de joint, alors que conduit, gorge et chambre suivent la peau, qui s'affine vers l'arrière. Les sections annoncées venaient de formules, pas de la pièce.
+- Les fentes étaient inclinées à 22° de la verticale : leur passage réel ne faisait que 0,9 mm, soit 38 mm² en tout, moins que le conduit (48 mm²). Elles sont à 38°, comme les autres surplombs internes : 1,7 mm et 62 mm². Au modèle acoustique : 21,2 dB(A) inchangés, 48 Pa à 0,2 L/s au lieu de 71 Pa.
+- La quatrième fente dépassait au-dessus de la gorge, à moitié borgne. Les 4 fentes tiennent maintenant sous la gorge.
+- Les logements des pastilles d'acier crevaient la peau de la trappe : 4 encoches visibles au dos. Les 4 aimants de la trappe sont déplacés entre la baie et le flanc de la trappe.
+
+**À vérifier sur la pièce imprimée.** Souffler dans l'entrée du conduit (dans la paroi de la coque arrière, en bas à droite quand on la regarde de face) : l'air doit sortir par les 4 fentes, sous l'anneau. Une fente obstruée par un fil se dégage avec une lame fine.
 
 ## Montage
 
@@ -35,7 +69,7 @@ Trois coques s'empilent le long de l'axe, sans aucune vis : trappe, coque arriè
 **Une fois, à la colle cyanoacrylate**
 
 - 8 aimants 6 × 2 dans les bossages du bord de la coque arrière, 8 pastilles d'acier en face dans le capot avant.
-- 4 aimants dans le dos de la coque arrière. Ils dépassent de 0,9 mm et centrent la trappe. 4 pastilles dans la trappe.
+- 4 aimants dans le dos de la coque arrière : deux au-dessus de la baie, un de chaque côté. Ils dépassent de 0,9 mm et centrent la trappe. 4 pastilles dans la trappe.
 - Le disque d'acier de 30 mm sur la tête du pied du micro.
 - La bande de mousse 3 × 2 au fond de la rainure du capot avant.
 
@@ -93,14 +127,20 @@ Pour la lumière, plus tard : batterie LiPo 502030 avec protection (5 × 20 × 3
 
 ## Revue Onshape
 
-Le 20 novembre 2026, l'assemblage `silent-mic-v3-galet-technical.step` (40 corps, avec le nid du micro) a été importé dans le document Onshape « Silent Mic - Référence ». La détection d'interférences d'Onshape ne trouve aucune collision, sur l'assemblage complet comme sur les sous-ensembles (pièces imprimées, micro, aimants, électronique). Onshape affiche cependant « Some interferences may be missing » à chaque passe, même sur deux pièces : son contrôle n'est donc pas une preuve complète. La preuve principale reste le contrôle du script (`metrics.json` : aucune interférence, jeux chiffrés).
+Le 20 novembre 2026, l'assemblage `silent-mic-v3-galet-technical.step` a été importé dans le document Onshape « Silent Mic - Référence », puis remplacé le soir même par le modèle corrigé (clic droit sur l'onglet du fichier dans le dossier « Imports CAD », « Update »). Le volume d'air y passe de 13 corps séparés à 9 : fentes, conduit et chambre communiquent maintenant.
+
+La détection d'interférences d'Onshape ne trouve aucune collision entre les 5 pièces imprimées. Onshape affiche cependant « Some interferences may be missing » à chaque passe, même sur deux pièces : son contrôle n'est donc pas une preuve complète. Les preuves principales restent les contrôles du script (`metrics.json` : aucune interférence, jeux chiffrés) et le contrôle d'étanchéité.
+
+Onshape ne voit pas ce que les contrôles ci-dessus ont trouvé : des pièces qui ne se touchent pas peuvent quand même avoir un passage fermé.
 
 ## Points ouverts
 
-- **Baie de l'électronique dessinée sur des cotes de catalogue.** Le chargeur est compté à 4 mm d'épaisseur avec sa prise, la batterie à 30 mm de long avec sa carte de protection. Décision de Clément du 20 novembre 2026 : l'électronique se commande plus tard, la coque arrière s'imprime telle quelle et se réimprime (4 h 44, 70 g) si une pièce ne rentre pas.
+- **Baie de l'électronique dessinée sur des cotes de catalogue.** Le chargeur est compté à 4 mm d'épaisseur avec sa prise, la batterie à 30 mm de long avec sa carte de protection. Décision de Clément du 20 novembre 2026 : l'électronique se commande plus tard, la coque arrière s'imprime telle quelle et se réimprime (4 h 42, 72 g) si une pièce ne rentre pas.
 - **Aucun clip dans la baie.** Les composants tiennent par empilement, logements ajustés à 0,5 mm et trappe. Aucune cloison imprimée entre chargeur et batterie.
 - **Longueur du filament LED non choisie.** Le tour de la rainure fait environ 21 cm.
 - **Levier de l'interrupteur** accessible par une fente de 4 × 2,2 mm sous la coque : à valider au doigt.
 - **Tenue des aimants contre le joint** : c'est l'objet des éprouvettes de joint.
 - **Accroche du coussin : ruban double face.** Décision de Clément du 20 novembre 2026. Le scratch du prototype v2 laisse un jour tout autour (calcul : de -3 à 11 dB(A) au lieu de 21). La lèvre élastique du coussin sur une gorge de la coque est réservée à une version de production : même étanchéité attendue, coussin plus simple à changer, mais gorge à ajuster au millimètre.
+- **Fentes de sortie** : passage de 1,7 mm imprimé en surplomb à 38°, sans support. À contrôler au souffle sur la pièce (voir « Contrôles avant impression »).
+- **Plafond de la baie** : pont d'environ 21 mm sans support, caché par la trappe.
 - **Dessous du coussin** : seulement posé sur l'appui, étanche par la pression de la main. Une fente de 0,5 mm sur 3 cm fait tomber l'atténuation calculée de 21 à 12 dB(A). Un anneau de ruban double face est en réserve, à trancher au test du capot (`bench/README.md`, étape 6).

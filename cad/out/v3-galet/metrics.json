@@ -33,12 +33,18 @@
     "section_mm2": 48.18,
     "lap_mm": 191.2,
     "channel_dam_to_dam_mm": 182.2,
-    "inlet_to_first_slot_mm": 171.1,
-    "inlet_to_slot_centroid_mm": 152.6,
+    "inlet_to_first_slot_mm": 171.7,
+    "inlet_to_slot_centroid_mm": 155.7,
     "inlet_area_mm2": 48.8,
-    "slot_window_mm2": 102.9,
-    "slot_min_section_mm2": 72.8,
-    "dam_mm": 9.0
+    "slot_window_mm2": 102.3,
+    "slot_min_section_mm2": 62.4,
+    "dam_mm": 9.0,
+    "wall_openings_mm2": {
+      "fentes_au_fond_de_gorge": 108.8,
+      "fentes_a_la_paroi_du_conduit": 115.3,
+      "entree_a_la_paroi_du_conduit": 48.9,
+      "entree_a_la_paroi_de_la_chambre": 48.9
+    }
   },
   "min_wall_mm": {
     "cavity_to_outside": 3.0,
@@ -96,6 +102,10 @@
       }
     },
     "bonnette_volume_cm3": 1.74
+  },
+  "cover_magnet_walls_mm": {
+    "to_cover_skin": 1.23,
+    "to_bay_pockets": 0.95
   },
   "gasket_compression_mm": 0.55,
   "magnets": {
@@ -165,13 +175,13 @@
   "mass_g_solid_pla": {
     "front": 57.7,
     "rear": 104.9,
-    "cover": 14.9,
+    "cover": 14.8,
     "collar-insert-14mm": 8.2,
     "ring_petg": 1.9,
-    "total": 187.6
+    "total": 187.5
   },
   "warn": [
-    "longueur entree -> centre des fentes 152.6 mm < 175 (canal barrage a barrage 182.2)",
+    "longueur entree -> centre des fentes 155.7 mm < 175 (canal barrage a barrage 182.2)",
     "cone du souffle : micro a 12.3 deg (regle 15.0, refus < 12.0)"
   ],
   "fail": []

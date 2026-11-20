@@ -109,6 +109,26 @@ def pocket_down(x, y, z0):
     return cyl.union(roof)
 
 
+def clean_stl(path):
+    """Retire les triangles degeneres qu'OCCT pose au sommet des cones (toits des poches d'aimant),
+    puis exige un maillage ferme : chaque arete partagee par exactement deux faces."""
+    import numpy as np
+    path = Path(path)
+    raw = path.read_bytes()
+    n = int.from_bytes(raw[80:84], "little")
+    assert len(raw) == 84 + 50 * n, f"{path.name} : STL binaire attendu"
+    tri = np.frombuffer(raw, np.dtype([("n", "<f4", 3), ("v", "<f4", (3, 3)), ("a", "<u2")]), n, 84)
+    f = np.unique(tri["v"].reshape(-1, 3), axis=0, return_inverse=True)[1].reshape(-1, 3)
+    keep = (f[:, 0] != f[:, 1]) & (f[:, 1] != f[:, 2]) & (f[:, 2] != f[:, 0])
+    f = f[keep]
+    edges = np.sort(np.concatenate([f[:, [0, 1]], f[:, [1, 2]], f[:, [2, 0]]]), axis=1)
+    counts = np.unique(edges, axis=0, return_counts=True)[1]
+    assert (counts == 2).all(), f"{path.name} : {int((counts != 2).sum())} aretes ouvertes ou partagees par plus de deux faces"
+    if not keep.all():
+        path.write_bytes(raw[:80] + int(keep.sum()).to_bytes(4, "little") + tri[keep].tobytes())
+    return int((~keep).sum())
+
+
 def vol(w):
     return sum(s.Volume() for s in w.solids().vals())
 
@@ -201,6 +221,7 @@ def export(out=HERE / "out" / "v3-galet" / "coupons"):
         assert shape.val().isValid() and shape.solids().size() == 1, name
         cq.exporters.export(shape, str(out / f"{name}.step"))
         cq.exporters.export(shape, str(out / f"{name}.stl"), tolerance=LIN_TOL, angularTolerance=ANG_TOL)
+        clean_stl(out / f"{name}.stl")
         bb = shape.val().BoundingBox()
         report[name] = {"volume_cm3": round(vol(shape) / 1000, 2), "size_mm": [round(bb.xlen, 1), round(bb.ylen, 1), round(bb.zlen, 1)]}
         print(f"{name}: {report[name]}  ({time.perf_counter() - t:.1f} s)", flush=True)
