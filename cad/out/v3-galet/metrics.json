@@ -16,29 +16,34 @@
     84.0
   ],
   "nose_clearance_ymax_mm": 42.0,
-  "cavity_air_plus_foam_cm3": 191.0,
-  "cavity_air_only_cm3": 163.4,
+  "cavity_air_plus_foam_cm3": 190.8,
+  "cavity_air_only_cm3": 134.7,
   "foam_cm3": {
-    "foam-disc": 11.8,
-    "foam-liner": 12.3,
+    "foam-disc": 31.0,
+    "foam-liner": 16.7,
+    "foam-liner-rear": 5.1,
     "windscreen": 3.4,
-    "total": 27.6
+    "total": 56.2
   },
   "pad_zone_above_collar_info_cm3": 49.2,
+  "free_passage_min_mm2": {
+    "area": 1246,
+    "z": 4.8
+  },
   "duct": {
-    "section_mm2": 48.81,
+    "section_mm2": 48.37,
     "lap_mm": 191.2,
     "channel_dam_to_dam_mm": 182.2,
-    "inlet_to_first_slot_mm": 171.7,
-    "inlet_to_slot_centroid_mm": 154.6,
-    "inlet_area_mm2": 50.3,
-    "slot_window_mm2": 106.4,
-    "slot_min_section_mm2": 75.2,
+    "inlet_to_first_slot_mm": 171.1,
+    "inlet_to_slot_centroid_mm": 152.6,
+    "inlet_area_mm2": 48.8,
+    "slot_window_mm2": 102.9,
+    "slot_min_section_mm2": 72.8,
     "dam_mm": 9.0
   },
   "min_wall_mm": {
     "cavity_to_outside": 3.0,
-    "duct_to_outside": 3.08,
+    "duct_to_outside": 3.07,
     "duct_to_cavity": 1.66
   },
   "mic": {
@@ -130,7 +135,7 @@
     "total": 187.8
   },
   "warn": [
-    "longueur entree -> centre des fentes 154.6 mm < 175 (canal barrage a barrage 182.2)",
+    "longueur entree -> centre des fentes 152.6 mm < 175 (canal barrage a barrage 182.2)",
     "cone du souffle : micro a 12.3 deg (regle 15.0, refus < 12.0)"
   ],
   "fail": []

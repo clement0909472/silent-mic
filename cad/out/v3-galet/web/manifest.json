@@ -104,7 +104,7 @@
     },
     {
       "file": "foam-disc.stl",
-      "label": "Disque de mousse 12 mm",
+      "label": "Disque de mousse 20 mm",
       "role": "foam",
       "explode": [
         0,
@@ -120,6 +120,16 @@
         0,
         0,
         45
+      ]
+    },
+    {
+      "file": "foam-liner-rear.stl",
+      "label": "Mousse des flancs arriere 8 mm",
+      "role": "foam",
+      "explode": [
+        0,
+        0,
+        -8
       ]
     },
     {

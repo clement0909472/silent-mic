@@ -96,10 +96,10 @@
     },
     {
       "name": "v3-galet",
-      "_source": "CAO cad/silent_mic_v3_galet.py (profil evase, joint s = 61, 20 nov. 2026) : cavite air + mousse mesuree jusqu'au sommet du collier, conduit annulaire d'un tour 4.5 x 12.0 mm (toit en pointe), longueur prise de l'entree au centre des fentes (le canal fait 182.2 mm de barrage a barrage), joint = coussin Brainwavz sur collier de 14 mm.",
+      "_source": "CAO cad/silent_mic_v3_galet.py (profil evase, joint s = 61, 20 nov. 2026) : cavite air + mousse mesuree jusqu'au sommet du collier, conduit annulaire d'un tour 4.5 x 12.1 mm (faite vif) (toit en pointe), longueur prise de l'entree au centre des fentes (le canal fait 182.2 mm de barrage a barrage), joint = coussin Brainwavz sur collier de 14 mm.",
       "cavity": {
-        "volume_cm3": 191.0,
-        "foam_cm3": 27.6,
+        "volume_cm3": 190.8,
+        "foam_cm3": 56.2,
         "foam_sigma": 12000
       },
       "vent": {
@@ -112,19 +112,19 @@
           },
           {
             "type": "duct",
-            "width": 10.85,
+            "width": 10.75,
             "height": 4.5,
-            "length": 154.6,
+            "length": 152.6,
             "minor_k": 1.5
           },
           {
             "type": "screen",
             "rayl": 3,
-            "area_mm2": 106.4,
-            "_doc": "fentes inclinees vers la gorge d'ombre, fenetres 106 mm2 (section mini 75 mm2)"
+            "area_mm2": 102.9,
+            "_doc": "fentes inclinees (22 deg) vers la gorge d'ombre de 5 mm, fenetres 103 mm2"
           }
         ],
-        "outlet_area_mm2": 106.4
+        "outlet_area_mm2": 102.9
       },
       "seal": {
         "_cushion": "coussin Brainwavz 110 x 90 x 30, ouverture 70 x 50, sur collier rigide de 14 mm ; paroi souple exposee = perimetre de l'ouverture x (20 mm comprime - 14 mm de collier), compression a mesurer ; raideur laissee a la valeur du superviseur (v2 memoire de forme : 2.5e5)",

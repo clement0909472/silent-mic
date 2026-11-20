@@ -93,19 +93,21 @@ SEAT_OPENING = tuple(f - 2 * LEDGE for f in cp.flange_outer())
 
 # ---------- conduit annulaire ----------
 DUCT = (4.6, 9.1)  # offsets radiaux : 4.5 mm
-DUCT_H = 12.04  # 9.1 de flanc droit + toit en pointe 2.9 : 48 mm2, imprimable sans support
+DUCT_H = 12.13  # 9.2 de flanc droit + toit en pointe 2.9 (faite vif) : 48 mm2, imprimable sans support
 DUCT_TOP = -5.2  # 3 mm sous la rainure LED (exterieur)
 DUCT_BOTTOM = DUCT_TOP - DUCT_H
-DUCT_APEX = 0.3  # largeur au faite du toit
+DUCT_APEX = 0.0  # faite vif : un plat, meme de 0.3 mm, est un plafond qu'Orca supporte
 STEEP = 1.3  # pente des surplombs internes : 1.3 en hauteur pour 1 en largeur (38 deg)
 DUCT_ROOF_H = STEEP * ((DUCT[1] - DUCT[0]) - DUCT_APEX) / 2
 DAM = 9.0  # barrage a 6 h, porte aussi le tunnel des fils
-INLET_D = 8.0
-INLET_Z = DUCT_BOTTOM + 1.85 + INLET_D / 2
+INLET_D = 8.0  # largeur de l'entree (voir INLET_W)
+INLET_Z = DUCT_BOTTOM + 4.5  # repere de hauteur de l'entree (debut du controle de passage)
 SHADOW_DEPTH = 1.5
-SHADOW_Z = (-RING_H - 2.1 - 3.6, -RING_H - 2.1)  # comme la maquette : 2.1 mm derriere l'anneau
-SLOT_LEN, SLOT_GAP, SLOT_COUNT = 9.5, 2.0, 4
-SLOT_WINDOW = (SHADOW_Z[0] + 0.4, SHADOW_Z[1] - 0.4)
+SHADOW_Z = (-RING_H - 1.2 - 5.0, -RING_H - 1.2)  # 5 mm visibles, 1.2 mm derriere l'anneau
+SHADOW_FLOOR_TOP = SHADOW_Z[1] - 1.3 * 1.5  # fond vertical, puis flanc haut a 38 deg
+SLOT_LEN, SLOT_GAP, SLOT_COUNT = 10.5, 2.0, 4
+SLOT_STEEP = 2.5  # fentes a 22 deg de la verticale : a 38 et 32 deg Orca les supportait encore
+SLOT_WINDOW = (SHADOW_Z[0] + 0.3, SHADOW_FLOOR_TOP - 0.3)  # fenetres dans le fond vertical seulement
 CORBEL_TOP = DUCT_BOTTOM - 1.6  # plancher du conduit garde 1.6 mm
 CORBEL_BOTTOM = CORBEL_TOP - CORBEL
 
@@ -113,8 +115,10 @@ CORBEL_BOTTOM = CORBEL_TOP - CORBEL
 BAY_DEPTH = 10.5
 FLOOR_TOP = Z_RF + BAY_DEPTH + WALL
 FLOOR_RIB = 1.5
-FOAM_DISC_T = 12.0
-LINER_T = 9.0
+FOAM_DISC_T = 20.0
+LINER_T = 10.0
+REAR_LINER_T = 8.0
+MIN_PASSAGE = 1200.0  # section d'air libre le long de l'axe, de l'entree au coussin
 TUNNEL_D = 2.6
 TUNNEL_OFFSET = 3.8
 COVER_MAG_XY = ((-21.5, 9.0), (21.5, 9.0), (-21.5, -9.0), (21.5, -9.0))
@@ -136,6 +140,7 @@ BREATH_Y = 10.0
 PLA = 1.24e-3
 LIN_TOL, ANG_TOL = 0.1, 0.3
 WEB_TOL = (0.4, 0.6)
+WEB_TOL_FINE = (0.06, 0.15)  # pieces imprimees : le pavillon ne doit pas paraitre a facettes
 
 
 # ================= outils =================
@@ -323,8 +328,10 @@ def build_duct():
     z_flat = DUCT_TOP - DUCT_ROOF_H
     mid = sum(DUCT) / 2
     body = ring(DUCT[0], DUCT[1], DUCT_BOTTOM, z_flat)
-    outer = wp(cq.Solid.makeLoft([sec_wire(z_flat, DUCT[0]), sec_wire(DUCT_TOP, mid - DUCT_APEX / 2)], True))
-    inner = wp(cq.Solid.makeLoft([sec_wire(z_flat, DUCT[1]), sec_wire(DUCT_TOP, mid + DUCT_APEX / 2)], True))
+    # les deux pans sont prolonges au-dela du faite : leur intersection donne une arete vive
+    ext = 0.3
+    outer = wp(cq.Solid.makeLoft([sec_wire(z_flat, DUCT[0]), sec_wire(DUCT_TOP + STEEP * ext, mid + ext)], True))
+    inner = wp(cq.Solid.makeLoft([sec_wire(z_flat, DUCT[1]), sec_wire(DUCT_TOP + STEEP * ext, mid - ext)], True))
     return body.union(outer.cut(inner)).cut(box(-DAM / 2, DAM / 2, -60, -10, DUCT_BOTTOM - 2, 2))
 
 
@@ -332,19 +339,24 @@ INLET_S = DAM / 2 + 1.0 + INLET_D / 2  # cote x > 0 du barrage
 SLOT_S = [-(DAM / 2 + 1.0 + SLOT_LEN / 2 + i * (SLOT_LEN + SLOT_GAP)) for i in range(SLOT_COUNT)]
 
 
+INLET_W, INLET_RECT = 8.0, 3.5
+INLET_BOTTOM = DUCT_BOTTOM + 0.33
+INLET_AREA = INLET_W * INLET_RECT + INLET_W * STEEP * INLET_W / 4
+
+
 def build_inlet():
-    r = INLET_D / 2
-    k = r / math.sqrt(2)
-    # goutte : rond de 8 mm plus un toit a 45 deg (trou horizontal sans support)
-    port = (cq.Workplane("XZ", origin=(0, DUCT[1] - 0.6, INLET_Z)).moveTo(-k, k).lineTo(0, r * math.sqrt(2)).lineTo(k, k)
-            .threePointArc((r, 0), (k, -k)).threePointArc((0, -r), (-k, -k)).threePointArc((-r, 0), (-k, k)).close()
-            .extrude(-(CAV_JOINT - DUCT[1] + 1.2)))
+    """Entree en pentagone : flancs verticaux, toit a 38 deg dont le faite reste sous le toit
+    interieur du conduit (sinon poche dans le toit, qu'Orca supporte)."""
+    zb, zr = INLET_BOTTOM, INLET_BOTTOM + INLET_RECT
+    port = (cq.Workplane("XZ", origin=(0, DUCT[1] - 0.6, 0))
+            .polyline([(-INLET_W / 2, zb), (INLET_W / 2, zb), (INLET_W / 2, zr), (0, zr + STEEP * INLET_W / 2), (-INLET_W / 2, zr)])
+            .close().extrude(-(CAV_JOINT - DUCT[1] + 1.2)))
     return place(port, t_at(CENTER_TABLE, INLET_S))
 
 
 def build_slots():
-    r0, r1 = SHADOW_DEPTH - 0.5, DUCT[0] + 0.6
-    lo = lambda r: SLOT_WINDOW[0] - STEEP * (r - SHADOW_DEPTH)
+    r0, r1 = SHADOW_DEPTH - 0.05, DUCT[0] + 0.6  # debouche dans le fond vertical, pas dans le flanc
+    lo = lambda r: SLOT_WINDOW[0] - SLOT_STEEP * (r - SHADOW_DEPTH)
     h = SLOT_WINDOW[1] - SLOT_WINDOW[0]
     out = []
     for s in SLOT_S:
@@ -357,7 +369,7 @@ def build_slots():
 def build_shadow_groove():
     """Gorge d'ombre, bord haut en pente (38 deg) : la coque s'imprime face arriere en bas,
     un rebord plat de 1.5 mm serait un surplomb sur la peau visible."""
-    z_ch = SHADOW_Z[1] - STEEP * SHADOW_DEPTH
+    z_ch = SHADOW_FLOOR_TOP
     floor = ring(-1.0, SHADOW_DEPTH, SHADOW_Z[0], z_ch)
     slope = wp(cq.Solid.makeLoft([sec_wire(z_ch, -1.0), sec_wire(SHADOW_Z[1] + 0.3, -1.0)], True)).cut(
         wp(cq.Solid.makeLoft([sec_wire(z_ch, SHADOW_DEPTH), sec_wire(SHADOW_Z[1] + 0.3, -0.3)], True)))
@@ -401,8 +413,8 @@ def tunnel_points():
 
 def build_tunnel():
     a, b, c = tunnel_points()
-    return union_all([cyl_between(a, b, TUNNEL_D / 2), cyl_between(b, c, TUNNEL_D / 2),
-                      wp(cq.Solid.makeSphere(TUNNEL_D / 2, cq.Vector(*b)))])
+    # sans sphere au coude : son dome serait un plafond ; le troncon vertical deborde de 1.5 mm
+    return cyl_between(a, (b[0], b[1], b[2] - 1.5), TUNNEL_D / 2).union(cyl_between(b, c, TUNNEL_D / 2))
 
 
 def build_tunnel_rib():
@@ -587,14 +599,38 @@ def build_liner():
     outer = loft_ellipses(sections(sorted(zs, reverse=True), WALL + 0.2))
     inner = loft_ellipses(sections(sorted(zs, reverse=True), WALL + 0.2 + LINER_T))
     liner = outer.cut(inner).cut(eprism(*SEAT_OPENING, z0 - 1, z1 + 1))
-    return liner.cut(grow(mic_box(), 2.0)).cut(build_front_bosses())
+    # couche de 5 mm sur le chanfrein du joint, sous le manchon (section encore large a cet endroit)
+    zl, zm, t = FLANGE_TOP + 0.2, FLANGE_TOP + CORBEL_FRONT + 0.3, 5.5
+    k = inset(s_of(FLANGE_TOP + CORBEL_FRONT), WALL)
+    a_ = wp(cq.Solid.makeLoft([sec_wire(FLANGE_TOP, CAV_JOINT + 0.2), sec_wire(FLANGE_TOP + CORBEL_FRONT, k + 0.2)], True))
+    b_ = wp(cq.Solid.makeLoft([sec_wire(FLANGE_TOP, CAV_JOINT + 0.2 + t), sec_wire(FLANGE_TOP + CORBEL_FRONT, k + 0.2 + t)], True))
+    liner = liner.union(a_.cut(b_).intersect(box(-70, 70, -70, 70, zl, zm)))
+    return liner.cut(grow(mic_box(), 2.0)).cut(build_front_bosses()).cut(grow(build_mic_pedestal(), 1.0))
 
 
-def build_foam_disc():
+def inlet_notch():
+    bb = build_inlet().val().BoundingBox()
+    return box(bb.xmin - 3, bb.xmax + 3, -60, bb.ymax + 4, DUCT_BOTTOM - 2, 1)
+
+
+def build_foam_disc(rear=None):
+    """Disque de 20 mm qui epouse tout le fond de la cavite (retenu par le chanfrein sous le conduit),
+    entaille devant l'entree du conduit, autour du pied du micro et du tunnel des fils."""
     z0 = FLOOR_TOP + FLOOR_RIB
-    a, b = cavity_half_axes(disc_top())
-    disc = eprism(2 * a - 2, 2 * b - 2, z0, z0 + FOAM_DISC_T)
-    return disc.cut(build_tunnel_rib()).cut(grow(build_mic_pedestal(), 0.5)).cut(box(-0.9, 0.9, -45, 45, z0 - 1, z0 + 0.2)).cut(box(-45, 45, -0.9, 0.9, z0 - 1, z0 + 0.2))
+    disc = rear_cavity_tool().intersect(box(-70, 70, -70, 70, z0, z0 + FOAM_DISC_T))
+    if rear is not None:
+        disc = disc.cut(rear)
+    return disc.cut(build_tunnel_rib()).cut(grow(build_mic_pedestal(), 0.5)).cut(inlet_notch()).cut(
+        box(-0.9, 0.9, -45, 45, z0 - 1, z0 + 0.2)).cut(box(-45, 45, -0.9, 0.9, z0 - 1, z0 + 0.2))
+
+
+def build_rear_liner(rear=None):
+    """Pieces de 8 mm sur les flancs de la bande du conduit, posees sur le disque et tenues
+    sous les contreforts des aimants ; rien en bas (entree du conduit, pied du micro)."""
+    z0, z1 = FLOOR_TOP + FLOOR_RIB + FOAM_DISC_T, -MAG_POCKET[1] - 1.2 - 0.3
+    liner = ring(CAV_JOINT + 0.05, CAV_JOINT + REAR_LINER_T, z0, z1).intersect(box(-70, 70, -8.0, 70, z0, z1))
+    liner = liner.cut(build_rear_bosses()).cut(grow(build_mic_pedestal(), 1.0)).cut(inlet_notch())
+    return liner if rear is None else liner.cut(rear)
 
 
 def build_refs():
@@ -606,12 +642,28 @@ def build_refs():
         "mic": mic_box(), "mic-disc": mic_disc(), "earpad": pad,
         "gasket": ring(GROOVE[0] + 0.1, GROOVE[1] - 0.1, TONGUE[2], GROOVE_DEPTH),
         "led-filament": ring(LED_CH[0] + 0.2, LED_CH[1] - 0.2, -LED_CH[2] + 0.1, -0.1),
-        "foam-disc": build_foam_disc(), "foam-liner": build_liner(),
+        "foam-disc": build_foam_disc(), "foam-liner": build_liner(), "foam-liner-rear": build_rear_liner(),
         "battery": lipo, "charger": charger, "switch": switch,
         "joint-magnets": mag_pockets_up(-MAGNET[1] - 0.1, MAGNET[1], MAGNET[0]),
         "joint-steel-discs": mag_pockets_up(0.1, MAGNET[1], MAGNET[0]),
         "cover-magnets": cmag, "cover-steel-discs": csteel,
     }
+
+
+def web_earpad(levels=13, n=2.6):
+    """Coussin arrondi pour la vue web : section en superellipse (20 mm de large, 30 de haut)
+    balayee le long de l'ellipse moyenne du coussin. Le corps de reference CAO reste l'anneau plein."""
+    cw, ch = (PAD["outer"][0] + PAD["opening"][0]) / 2, (PAD["outer"][1] + PAD["opening"][1]) / 2
+    half = (PAD["outer"][0] - PAD["opening"][0]) / 4
+    th = PAD["thickness"]
+    outer_s, inner_s = [], []
+    for i in range(levels):
+        u = -1 + 2 * i / (levels - 1)
+        w = max(half * (1 - abs(u) ** n) ** (1 / n), 0.6)
+        z = Z_SEAT + th / 2 * (1 + u * 0.999)
+        outer_s.append((cw + 2 * w, ch + 2 * w, z, 0.0))
+        inner_s.append((cw - 2 * w, ch - 2 * w, z, 0.0))
+    return loft_ellipses(outer_s).cut(loft_ellipses(inner_s))
 
 
 # ================= controles =================
@@ -643,7 +695,7 @@ def duct_metrics(duct):
     area = vol(duct.intersect(box(-0.5, 0.5, 0, 60, -40, 5))) / 1.0
     return {"section_mm2": round(area, 2), "lap_mm": round(lap, 1), "channel_dam_to_dam_mm": round(channel, 1),
             "inlet_to_first_slot_mm": round(inlet_to_first, 1), "inlet_to_slot_centroid_mm": round(inlet_to_centroid, 1),
-            "inlet_area_mm2": round(math.pi * INLET_D ** 2 / 4, 1),
+            "inlet_area_mm2": round(INLET_AREA, 1),
             "slot_window_mm2": round(SLOT_COUNT * SLOT_LEN * (SLOT_WINDOW[1] - SLOT_WINDOW[0]), 1),
             "slot_min_section_mm2": round(SLOT_COUNT * SLOT_LEN * (SLOT_WINDOW[1] - SLOT_WINDOW[0]) / math.sqrt(2), 1),
             "dam_mm": DAM}
@@ -719,6 +771,8 @@ def export():
     refs = build_refs()
     ws = build_windscreen().cut(front).cut(insert).intersect(box(-70, 70, -70, 70, -60, Z_SEAT - 0.2))
     refs["windscreen"] = ws
+    refs["foam-disc"] = build_foam_disc(rear)
+    refs["foam-liner-rear"] = build_rear_liner(rear)
     log("corps de reference", t)
 
     # --- enveloppe et longueur
@@ -741,7 +795,7 @@ def export():
     cav = cav.union(eprism(*COLLAR_INNER, Z_SEAT - cp.FLANGE_T - 0.2, Z_SEAT + COLLAR_HEIGHT))
     cav = cav.cut(front).cut(rear).cut(insert).cut(build_tunnel()).cut(refs["mic"]).cut(refs["mic-disc"])
     v_cav = vol(cav) / 1000
-    foam = {k: vol(refs[k]) / 1000 for k in ("foam-disc", "foam-liner", "windscreen")}
+    foam = {k: vol(refs[k]) / 1000 for k in ("foam-disc", "foam-liner", "foam-liner-rear", "windscreen")}
     v_foam = sum(foam.values())
     m["cavity_air_plus_foam_cm3"] = round(v_cav, 1)
     m["cavity_air_only_cm3"] = round(v_cav - v_foam, 1)
@@ -750,7 +804,21 @@ def export():
     m["pad_zone_above_collar_info_cm3"] = round(pad_zone - math.pi / 4 * COLLAR_INNER[0] * COLLAR_INNER[1] * COLLAR_HEIGHT / 1000, 1)
     assert v_cav >= 185.0, f"cavite {v_cav:.1f} cm3 < 185"
     assert cav.solids().size() >= 1
-    log("cavite", t)
+    # section d'air libre (sans mousse ni pieces) le long de l'axe, de l'entree du conduit au coussin
+    air = cav.cut(union_all([refs[k] for k in ("foam-disc", "foam-liner", "foam-liner-rear", "windscreen")]))
+    z, passage = disc_top() + 0.3, []  # au-dessus du disque ; l'entree reste ouverte par l'entaille du disque
+    while z < Z_SEAT - 4.0:
+        area_ = 0.0
+        for dz in (0.0, 0.07, 0.13):  # une tranche qui frole une face plane peut faire echouer le booleen
+            area_ = vol(air.intersect(box(-70, 70, -70, 70, z + dz, z + dz + 0.2))) / 0.2
+            if area_ > 0:
+                break
+        passage.append((round(z, 1), round(area_)))
+        z += 1.5
+    zmin, amin = min(passage, key=lambda q: q[1])
+    m["free_passage_min_mm2"] = {"area": amin, "z": zmin}
+    assert amin >= MIN_PASSAGE, (amin, zmin)
+    log("cavite et passage libre", t)
 
     # --- conduit
     t = time.perf_counter()
@@ -876,16 +944,19 @@ def export():
              "collar-insert-14mm": ("Collier amovible 14 mm", "black", (0, 0, 55)),
              "mic": ("DJI Mic Mini 2", "electronics", (0, 0, 40)), "mic-disc": ("Disque acier 30 mm", "metal", (0, 0, 38)),
              "earpad": ("Coussin Brainwavz", "soft", (0, 0, 75)), "gasket": ("Joint mousse 3 x 2", "soft", (0, 0, 15)),
-             "led-filament": ("Filament LED", "electronics", (0, 0, 6)), "foam-disc": ("Disque de mousse 12 mm", "foam", (0, 0, -15)),
-             "foam-liner": ("Manchon de mousse 9 mm", "foam", (0, 0, 45)), "windscreen": ("Bonnette 5 mm", "foam", (0, 0, 48)),
+             "led-filament": ("Filament LED", "electronics", (0, 0, 6)), "foam-disc": ("Disque de mousse 20 mm", "foam", (0, 0, -15)),
+             "foam-liner": ("Manchon de mousse 9 mm", "foam", (0, 0, 45)), "foam-liner-rear": ("Mousse des flancs arriere 8 mm", "foam", (0, 0, -8)),
+             "windscreen": ("Bonnette 5 mm", "foam", (0, 0, 48)),
              "battery": ("LiPo 30 x 20 x 5", "electronics", (0, 0, -45)), "charger": ("Chargeur USB-C TP4056", "electronics", (0, 0, -50)),
              "switch": ("Interrupteur", "electronics", (0, 0, -50)), "joint-magnets": ("Aimants du joint 6 x 2", "metal", (0, 0, -4)),
              "joint-steel-discs": ("Pastilles acier du joint", "metal", (0, 0, 20)), "cover-magnets": ("Aimants du couvercle", "metal", (0, 0, -38)),
              "cover-steel-discs": ("Pastilles acier du couvercle", "metal", (0, 0, -42))}
     manifest = []
-    for n, p in (dict(parts) | refs).items():
+    shown = dict(parts) | refs | {"earpad": web_earpad()}
+    for n, p in shown.items():
         f = web / f"{n}.stl"
-        cq.exporters.export(p, str(f), tolerance=WEB_TOL[0], angularTolerance=WEB_TOL[1])
+        tol = WEB_TOL_FINE if n in ("front", "rear", "cover", "collar-insert-14mm") else WEB_TOL
+        cq.exporters.export(p, str(f), tolerance=tol[0], angularTolerance=tol[1])
         assert f.stat().st_size < 1.5e6, (n, f.stat().st_size)
         label, role, ex = roles[n]
         manifest.append({"file": f.name, "label": label, "role": role, "explode": list(ex)})
@@ -893,7 +964,7 @@ def export():
     manifest.append({"file": "air-volume.stl", "label": "Air : cavite et conduit", "role": "air", "explode": [0, 0, 0]})
     (web / "manifest.json").write_text(json.dumps({"units": "mm", "axes": "x lateral, y haut, z vers le visage, z=0 plan de joint",
                                                    "parts": manifest}, indent=2, ensure_ascii=False))
-    (out / f"{stem}-metrics.json").write_text(json.dumps(m, indent=2, ensure_ascii=False))
+    (out / "metrics.json").write_text(json.dumps(m, indent=2, ensure_ascii=False))
     log("web", t)
     print(json.dumps({k: v for k, v in m.items() if k not in ("curvature",)}, indent=1, ensure_ascii=False))
     print(f"total {time.perf_counter() - t0:.1f} s")
