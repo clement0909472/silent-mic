@@ -1,0 +1,216 @@
+{
+  "units": "mm",
+  "axes": "x lateral, y haut, z vers le visage, z=0 plan de joint",
+  "parts": [
+    {
+      "file": "front.stl",
+      "label": "Capot avant",
+      "role": "black",
+      "explode": [
+        0,
+        0,
+        30
+      ]
+    },
+    {
+      "file": "rear.stl",
+      "label": "Coque arriere",
+      "role": "black",
+      "explode": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "cover.stl",
+      "label": "Couvercle de la baie",
+      "role": "black",
+      "explode": [
+        0,
+        0,
+        -30
+      ]
+    },
+    {
+      "file": "ring.stl",
+      "label": "Anneau lumineux",
+      "role": "translucent",
+      "explode": [
+        0,
+        0,
+        8
+      ]
+    },
+    {
+      "file": "collar-insert-14mm.stl",
+      "label": "Collier amovible 14 mm",
+      "role": "black",
+      "explode": [
+        0,
+        0,
+        55
+      ]
+    },
+    {
+      "file": "mic.stl",
+      "label": "DJI Mic Mini 2",
+      "role": "electronics",
+      "explode": [
+        0,
+        0,
+        40
+      ]
+    },
+    {
+      "file": "mic-disc.stl",
+      "label": "Disque acier 30 mm",
+      "role": "metal",
+      "explode": [
+        0,
+        0,
+        38
+      ]
+    },
+    {
+      "file": "earpad.stl",
+      "label": "Coussin Brainwavz",
+      "role": "soft",
+      "explode": [
+        0,
+        0,
+        75
+      ]
+    },
+    {
+      "file": "gasket.stl",
+      "label": "Joint mousse 3 x 2",
+      "role": "soft",
+      "explode": [
+        0,
+        0,
+        15
+      ]
+    },
+    {
+      "file": "led-filament.stl",
+      "label": "Filament LED",
+      "role": "electronics",
+      "explode": [
+        0,
+        0,
+        6
+      ]
+    },
+    {
+      "file": "foam-disc.stl",
+      "label": "Disque de mousse 12 mm",
+      "role": "foam",
+      "explode": [
+        0,
+        0,
+        -15
+      ]
+    },
+    {
+      "file": "foam-liner.stl",
+      "label": "Manchon de mousse 9 mm",
+      "role": "foam",
+      "explode": [
+        0,
+        0,
+        45
+      ]
+    },
+    {
+      "file": "battery.stl",
+      "label": "LiPo 30 x 20 x 5",
+      "role": "electronics",
+      "explode": [
+        0,
+        0,
+        -45
+      ]
+    },
+    {
+      "file": "charger.stl",
+      "label": "Chargeur USB-C TP4056",
+      "role": "electronics",
+      "explode": [
+        0,
+        0,
+        -50
+      ]
+    },
+    {
+      "file": "switch.stl",
+      "label": "Interrupteur",
+      "role": "electronics",
+      "explode": [
+        0,
+        0,
+        -50
+      ]
+    },
+    {
+      "file": "joint-magnets.stl",
+      "label": "Aimants du joint 6 x 2",
+      "role": "metal",
+      "explode": [
+        0,
+        0,
+        -4
+      ]
+    },
+    {
+      "file": "joint-steel-discs.stl",
+      "label": "Pastilles acier du joint",
+      "role": "metal",
+      "explode": [
+        0,
+        0,
+        20
+      ]
+    },
+    {
+      "file": "cover-magnets.stl",
+      "label": "Aimants du couvercle",
+      "role": "metal",
+      "explode": [
+        0,
+        0,
+        -38
+      ]
+    },
+    {
+      "file": "cover-steel-discs.stl",
+      "label": "Pastilles acier du couvercle",
+      "role": "metal",
+      "explode": [
+        0,
+        0,
+        -42
+      ]
+    },
+    {
+      "file": "windscreen.stl",
+      "label": "Bonnette 5 mm",
+      "role": "foam",
+      "explode": [
+        0,
+        0,
+        48
+      ]
+    },
+    {
+      "file": "air-volume.stl",
+      "label": "Air : cavite et conduit",
+      "role": "air",
+      "explode": [
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

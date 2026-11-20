@@ -1,0 +1,137 @@
+{
+  "profile": "evase",
+  "joint_s": 61.0,
+  "envelope_mm": [
+    104.0,
+    84.0,
+    86.0
+  ],
+  "length_with_collar_mm": 100.0,
+  "palm_section_mm": [
+    83.9980413468183,
+    65.99846105821437
+  ],
+  "seat_mm": [
+    104.0,
+    84.0
+  ],
+  "nose_clearance_ymax_mm": 42.0,
+  "cavity_air_plus_foam_cm3": 198.5,
+  "cavity_air_only_cm3": 161.8,
+  "foam_cm3": {
+    "foam-disc": 20.9,
+    "foam-liner": 12.4,
+    "windscreen": 3.5,
+    "total": 36.7
+  },
+  "pad_zone_above_collar_info_cm3": 49.2,
+  "duct": {
+    "section_mm2": 47.52,
+    "lap_mm": 191.5,
+    "channel_dam_to_dam_mm": 182.5,
+    "inlet_to_first_slot_mm": 171.9,
+    "inlet_to_slot_centroid_mm": 154.8,
+    "inlet_area_mm2": 50.3,
+    "slot_window_mm2": 106.4,
+    "slot_min_section_mm2": 75.2,
+    "dam_mm": 9.0
+  },
+  "min_wall_mm": {
+    "cavity_to_outside": 3.0,
+    "duct_to_outside": 3.07,
+    "duct_to_cavity": 1.65
+  },
+  "mic": {
+    "centre": [
+      0.25,
+      -12.5,
+      20.0
+    ],
+    "cone_min_deg": 12.7,
+    "clearance_mm": {
+      "front": 1.06,
+      "insert": 2.94,
+      "rear_except_disc": 0.3,
+      "liner": 2.0
+    },
+    "mouth_assumed_above_seat_mm": 20.0
+  },
+  "gasket_compression_mm": 0.55,
+  "magnets": {
+    "joint": 8,
+    "cover": 4
+  },
+  "interferences": [],
+  "curvature": [
+    {
+      "type": "BSPLINE",
+      "single_curvature_z_extent": 1.4,
+      "z": [
+        13.0,
+        31.0
+      ]
+    },
+    {
+      "type": "BSPLINE",
+      "single_curvature_z_extent": 12.0,
+      "z": [
+        1.0,
+        13.0
+      ]
+    },
+    {
+      "type": "PLANE",
+      "z": 31.0,
+      "size": [
+        104.0,
+        84.0
+      ]
+    },
+    {
+      "type": "BSPLINE",
+      "single_curvature_z_extent": 1.0,
+      "z": [
+        -0.0,
+        1.0
+      ]
+    },
+    {
+      "type": "PLANE",
+      "z": 0.0,
+      "size": [
+        84.0,
+        66.0
+      ]
+    },
+    {
+      "type": "PLANE",
+      "z": -55.0,
+      "size": [
+        40.0,
+        31.4
+      ]
+    },
+    {
+      "type": "PLANE",
+      "z": -0.0,
+      "size": [
+        84.0,
+        66.0
+      ]
+    }
+  ],
+  "flat_faces_note": "plans > 35 mm : appui du coussin (couvert par le coussin, voulu plat) et face arriere du dos (maquette)",
+  "mass_g_solid_pla": {
+    "front": 54.9,
+    "rear": 101.5,
+    "cover": 15.0,
+    "collar-insert-14mm": 8.4,
+    "ring_petg": 1.9,
+    "total": 181.7
+  },
+  "warn": [
+    "longueur entree -> centre des fentes 154.8 mm < 175 (canal barrage a barrage 182.5)",
+    "cone du souffle : micro a 12.7 deg (regle 15.0, refus < 12.0)"
+  ],
+  "fail": []
+}
