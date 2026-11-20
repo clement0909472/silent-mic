@@ -2,7 +2,7 @@
 # Copyright 2026 Clement Barberousse
 """Silent Mic v3 galet : eprouvettes a imprimer avant le corps.
 
-- trois capots d'essai du coussin d'oreillette (collier 3, 10 et 16 mm) ;
+- un capot d'essai du coussin d'oreillette et trois colliers amovibles (3, 10 et 16 mm) ;
 - eprouvette de joint (deux moities, deux poches d'aimant chacune, rainure de mousse) ;
 - eprouvette de lumiere (bande translucide en marches de 0.8 a 2.4 mm).
 
@@ -66,6 +66,7 @@ CAP_COLLARS = (3.0, 10.0, 16.0)
 CAP_DEPTH = 28.0  # interieur derriere l'appui : DJI 28.6 x 28 x 13.5 a plat + ecouteur
 CAP_WALL = 3.0
 CABLE_PORT = 5.5
+FLANGE_T, FLANGE_W, FLANGE_GAP = 1.2, 9.0, 0.2  # bride du collier amovible
 
 LIGHT_STEPS = (0.8, 1.2, 1.6, 2.0, 2.4)
 LIN_TOL, ANG_TOL = 0.1, 0.3
@@ -87,7 +88,7 @@ def funnel(w, h, z_top, depth=40.0):
 
 def collar(z_seat, height, pad=PAD):
     co, ci = collar_outer(pad), collar_inner(pad)
-    ring = ell_prism(*co, z_seat - 0.5, z_seat + height).cut(ell_prism(*ci, z_seat - 1, z_seat + height + 1))
+    ring = ell_prism(*co, z_seat - 0.1, z_seat + height).cut(ell_prism(*ci, z_seat - 1, z_seat + height + 1))
     return ring.faces(">Z").edges().fillet(COLLAR_ROUND)
 
 
@@ -100,25 +101,51 @@ def teardrop_x(x0, zc, d, length):
     return prof.extrude(length)
 
 
+def pocket_down(x, y, z0):
+    """Poche d'aimant ouverte vers le plateau : toit conique a 45 deg au lieu d'un pont plat."""
+    r, d = MAG_POCKET[0] / 2, MAG_POCKET[1]
+    cyl = cq.Workplane("XY", origin=(x, y, z0 - 0.5)).circle(r).extrude(d + 0.5)
+    roof = cq.Workplane("XY").newObject([cq.Solid.makeCone(r, 0.0, r, cq.Vector(x, y, z0 + d), cq.Vector(0, 0, 1))])
+    return cyl.union(roof)
+
+
 def vol(w):
     return sum(s.Volume() for s in w.solids().vals())
 
 
-def pad_test_cap(height):
-    """Capot ferme : dos plat au plateau, appui du coussin en haut, collier au-dessus."""
+def seat_recess(z_seat):
+    """Logement peu profond de la bride du collier dans l'appui du coussin."""
+    fo = flange_outer()
+    return ell_prism(fo[0] + 2 * FLANGE_GAP, fo[1] + 2 * FLANGE_GAP, z_seat - FLANGE_T - 0.1, z_seat + 1)
+
+
+def flange_outer():
+    return tuple(c + 2 * FLANGE_W for c in collar_inner())
+
+
+def collar_insert(height):
+    """Collier amovible : bride plate posee dans le logement, serree par le coussin."""
+    ci = collar_inner()
+    flange = ell_prism(*flange_outer(), 0, FLANGE_T).cut(ell_prism(*ci, -1, FLANGE_T + 1))
+    ins = flange.union(collar(FLANGE_T, height))
+    # hauteur gravee sur la bride, cote +x, lisible une fois le collier retire
+    x = (collar_outer()[0] / 2 + flange_outer()[0] / 2) / 2
+    label = (cq.Workplane(cq.Plane(origin=(x, 0, FLANGE_T), xDir=(0, 1, 0), normal=(0, 0, 1)))
+             .text(f"{height:g}", 5, -0.4, combine=False, halign="center", valign="center"))
+    return ins.cut(label)
+
+
+def pad_test_cap():
+    """Capot ferme : dos plat au plateau, appui du coussin en haut avec logement de collier."""
     z_seat = CAP_WALL + CAP_DEPTH
     ci = collar_inner()
     body = ell_prism(*SEAT, 0, z_seat)
-    # l'entonnoir rejoint l'interieur du collier sans rebord (sinon 1 mm en surplomb)
-    z_top = z_seat - 0.5
+    # l'entonnoir rejoint l'ouverture du collier sans rebord (sinon surplomb)
+    z_top = z_seat - FLANGE_T - 0.3
     inner = ell_prism(SEAT[0] - 2 * CAP_WALL, SEAT[1] - 2 * CAP_WALL, CAP_WALL, z_top).intersect(funnel(*ci, z_top))
     inner = inner.union(ell_prism(*ci, z_top - 0.2, z_seat + 1))
-    cap = body.cut(inner).union(collar(z_seat, height))
-    cap = cap.cut(teardrop_x(SEAT[0] / 2 - CAP_WALL - 1, CAP_WALL + CABLE_PORT / 2 + 1.5, CABLE_PORT, CAP_WALL + 2))
-    # repere grave au dos, lisible de l'exterieur (texte vu depuis -z)
-    label = (cq.Workplane(cq.Plane(origin=(0, 0, 0), xDir=(-1, 0, 0), normal=(0, 0, -1)))
-             .text(f"{height:g} mm", 12, -0.6, combine=False, halign="center", valign="center"))
-    return cap.cut(label)
+    cap = body.cut(inner).cut(seat_recess(z_seat))
+    return cap.cut(teardrop_x(SEAT[0] / 2 - CAP_WALL - 1, CAP_WALL + CABLE_PORT / 2 + 1.5, CABLE_PORT, CAP_WALL + 2))
 
 
 def joint_coupon_halves(length=40.0, width=18.0, thick=6.0):
@@ -130,7 +157,9 @@ def joint_coupon_halves(length=40.0, width=18.0, thick=6.0):
         cq.Workplane("XY", origin=(0, MAG_OFFSET, min(z0, z0 + d))).pushPoints([(-10, 0), (10, 0)])
         .circle(dia / 2).extrude(abs(d)))
     front = cq.Workplane("XY").box(length, width, thick).translate((0, width / 2, thick / 2))
-    front = front.cut(strip(GROOVE[0], GROOVE[1], -1, GROOVE_DEPTH)).cut(pockets(0, MAG_POCKET[1]))
+    front = front.cut(strip(GROOVE[0], GROOVE[1], -1, GROOVE_DEPTH))
+    for x in (-10, 10):
+        front = front.cut(pocket_down(x, MAG_OFFSET, 0))
     rear = cq.Workplane("XY").box(length, width, thick).translate((0, width / 2, -thick / 2))
     rear = rear.union(cq.Workplane("XY").box(length, TONGUE[1] - TONGUE[0], TONGUE[2] + 0.5)
                       .translate((0, (TONGUE[0] + TONGUE[1]) / 2, (TONGUE[2] - 0.5) / 2)))
@@ -172,15 +201,17 @@ def export(out=HERE / "out" / "v3-galet" / "coupons"):
         report[name] = {"volume_cm3": round(vol(shape) / 1000, 2), "size_mm": [round(bb.xlen, 1), round(bb.ylen, 1), round(bb.zlen, 1)]}
         print(f"{name}: {report[name]}  ({time.perf_counter() - t:.1f} s)", flush=True)
 
+    t = time.perf_counter()
+    cap = pad_test_cap()
+    print(f"construit capot en {time.perf_counter() - t:.1f} s", flush=True)
+    assert CAP_DEPTH >= v0.MIC_SIZE[2] + 8.0, "place pour DJI a plat + ecouteur"
+    save("pad-test-cap", cap)
     for h in CAP_COLLARS:
-        t = time.perf_counter()
-        cap = pad_test_cap(h)
-        print(f"construit capot {h:g} mm en {time.perf_counter() - t:.1f} s", flush=True)
-        bb = cap.val().BoundingBox()
-        assert bb.xlen <= 180 and bb.ylen <= 180 and bb.zlen <= 180
-        inner = CAP_DEPTH
-        assert inner >= v0.MIC_SIZE[2] + 8.0, "place pour DJI a plat + ecouteur"
-        save(f"pad-test-cap-collar-{h:g}mm", cap)
+        ins = collar_insert(h)
+        z_seat = CAP_WALL + CAP_DEPTH
+        placed = ins.translate((0, 0, z_seat - FLANGE_T - 0.1))
+        assert vol(placed.intersect(cap)) < 1e-6, "collier / capot"
+        save(f"collar-insert-{h:g}mm", ins)
     front, rear = joint_coupon_halves()
     assert vol(front.intersect(rear)) < 1e-6
     save("joint-coupon-front", front)
