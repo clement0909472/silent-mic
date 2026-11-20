@@ -59,27 +59,26 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/STLLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/utils/BufferGeometryUtils.js"></script>
 <script>
 (() => {
   const stage = document.getElementById("stage"), canvas = document.getElementById("view"), status = document.getElementById("status");
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.1;
+  renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.8;
   renderer.localClippingEnabled = true;
   const scene = new THREE.Scene();
   scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new THREE.RoomEnvironment(), 0.04).texture;
   const camera = new THREE.PerspectiveCamera(28, 1, 5, 6000);
   const controls = new THREE.OrbitControls(camera, canvas); controls.enableDamping = true; controls.minDistance = 120; controls.maxDistance = 1500;
-  const key = new THREE.DirectionalLight(0xffffff, 0.9); key.position.set(160, 320, 240); scene.add(key);
-  const rim = new THREE.DirectionalLight(0xbcd4ff, 0.9); rim.position.set(-260, 140, -220); scene.add(rim);
+  const key = new THREE.DirectionalLight(0xffffff, 0.6); key.position.set(160, 320, 240); scene.add(key);
+  const rim = new THREE.DirectionalLight(0xbcd4ff, 0.5); rim.position.set(-260, 140, -220); scene.add(rim);
 
   // un materiau par role du manifeste ; la coupe retire la moitie x < 0 de l'appareil (celle tournee vers la vue de profil).
   // Chaque piece a aussi une copie "dos" en aplat : a travers la coupe, elle remplit la matiere tranchee.
   const clip = new THREE.Plane(), localClip = new THREE.Plane(new THREE.Vector3(1, 0, 0), 0), mats = [];
   const reg = m => { mats.push(m); return m; };
-  const mat = (o) => reg(new THREE.MeshStandardMaterial(Object.assign({ roughness: 0.7, envMapIntensity: 0.45 }, o)));
+  const mat = (o) => reg(new THREE.MeshStandardMaterial(Object.assign({ roughness: 0.7, envMapIntensity: 0.25 }, o)));
   const cap = (hex) => reg(new THREE.MeshBasicMaterial({ color: new THREE.Color(hex).multiplyScalar(0.55), side: THREE.BackSide }));
   const ROLES = {
     black: { label: "Coque imprimée", color: "#56607a" },
@@ -116,12 +115,12 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
     controls.target.set(0, 0, 0); camera.position.copy(d.multiplyScalar(dist)); controls.update();
   }
 
-  fetch("web/manifest.json").then(r => { if (!r.ok) throw new Error("manifeste introuvable"); return r.json(); }).then(async man => {
-    const loader = new THREE.STLLoader();
+  fetch("parts.json").then(r => { if (!r.ok) throw new Error("fichier des pièces introuvable"); return r.json(); }).then(man => {
     for (const p of man.parts) {
       const role = ROLES[p.role] ? p.role : "black";
-      let g = await new Promise((ok, ko) => loader.load("web/" + p.file, ok, undefined, ko));
-      g.deleteAttribute("normal");
+      // sommets des triangles en float32, encodes en base64 par cad/web_bundle.py
+      const bin = atob(p.positions), buf = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+      let g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(buf.buffer), 3));
       g = THREE.BufferGeometryUtils.toCreasedNormals(THREE.BufferGeometryUtils.mergeVertices(g, 1e-3), THREE.MathUtils.degToRad(38));
       const hex = TINTS[p.file] || ROLES[role].color, mesh = new THREE.Group();
       mesh.add(new THREE.Mesh(g, mat(Object.assign({ color: new THREE.Color(hex) }, ROLES[role].o || {}))));

@@ -17,4 +17,4 @@ bench/sessions/
 
 # Journaux d erreur ecrits par la CLI OrcaSlicer dans le dossier courant
 /[0-9][0-9][0-9][0-9][0-9].log
-concepts/web
+concepts/parts.json
