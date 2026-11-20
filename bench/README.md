@@ -54,4 +54,6 @@ But : mesurer sur ton visage quelle hauteur de col (3, 10 ou 16 mm) laisse le mo
 4. `python bench/cap_test.py --inside "DJI" --outside "Yeti" --session capot-$(date +%Y%m%d)` : le script demande chaque col trois fois, 12 s par pose, capot plaqué sur le visage, bouche fermée. Environ 10 minutes.
 5. `python bench/cap_test.py --report bench/sessions/capot-AAAAMMJJ` donne la fuite par col.
 
+6. Refaire une courte session avec le meilleur col et le dessous du coussin collé au capot par un anneau de ruban double face : `python bench/cap_test.py --inside "DJI" --outside "Yeti" --session capot-colle-$(date +%Y%m%d) --collars 16`, puis `--report`. Le coussin est seulement posé sur son appui : si la fuite baisse nettement (plus que l'écart-type du rapport), le dessous fuyait et le ruban devient une étape du montage.
+
 La fuite est le niveau dehors moins le niveau dedans : elle ne dépend pas du volume de l'écouteur. Plus elle est basse, mieux le col isole. Le modèle prévoit environ 12 dB(A) d'écart entre le col de 3 mm et celui de 16 mm. Un écart nul voudrait dire que le flanc du coussin n'est pas le chemin de fuite principal.
