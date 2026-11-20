@@ -91,6 +91,10 @@ Déjà en main : coussin Brainwavz 110 × 90 × 30, disque d'acier de 30 mm, DJI
 
 Pour la lumière, plus tard : batterie LiPo 502030 avec protection (5 × 20 × 30 mm), chargeur TP4056 USB-C (17,5 × 28 mm), interrupteur à glissière 8,6 × 3,6 × 3,5 mm, filament LED souple 3 V, fil fin.
 
+## Revue Onshape
+
+Le 20 novembre 2026, l'assemblage `silent-mic-v3-galet-technical.step` (40 corps, avec le nid du micro) a été importé dans le document Onshape « Silent Mic - Référence ». La détection d'interférences d'Onshape ne trouve aucune collision, sur l'assemblage complet comme sur les sous-ensembles (pièces imprimées, micro, aimants, électronique). Onshape affiche cependant « Some interferences may be missing » à chaque passe, même sur deux pièces : son contrôle n'est donc pas une preuve complète. La preuve principale reste le contrôle du script (`metrics.json` : aucune interférence, jeux chiffrés).
+
 ## Points ouverts
 
 - **Baie de l'électronique dessinée sur des cotes de catalogue.** Le chargeur est compté à 4 mm d'épaisseur avec sa prise, la batterie à 30 mm de long avec sa carte de protection. Décision de Clément du 20 novembre 2026 : l'électronique se commande plus tard, la coque arrière s'imprime telle quelle et se réimprime (4 h 44, 70 g) si une pièce ne rentre pas.
