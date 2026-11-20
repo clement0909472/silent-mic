@@ -2,7 +2,7 @@
   "gasket_compression_mm": 0.5499999999999998,
   "parts": {
     "pad-test-cap-collar-3mm": {
-      "volume_cm3": 82.22,
+      "volume_cm3": 86.09,
       "size_mm": [
         105.2,
         85.2,
@@ -10,7 +10,7 @@
       ]
     },
     "pad-test-cap-collar-10mm": {
-      "volume_cm3": 84.59,
+      "volume_cm3": 88.46,
       "size_mm": [
         105.2,
         85.2,
@@ -18,7 +18,7 @@
       ]
     },
     "pad-test-cap-collar-16mm": {
-      "volume_cm3": 86.62,
+      "volume_cm3": 90.49,
       "size_mm": [
         105.2,
         85.2,

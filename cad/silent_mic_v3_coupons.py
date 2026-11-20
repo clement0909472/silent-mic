@@ -11,6 +11,7 @@ Usage : cad/guarded.sh -m 6 -t 600 .venv/bin/python cad/silent_mic_v3_coupons.py
 """
 
 from pathlib import Path
+import math
 import sys
 import time
 
@@ -90,6 +91,15 @@ def collar(z_seat, height, pad=PAD):
     return ring.faces(">Z").edges().fillet(COLLAR_ROUND)
 
 
+def teardrop_x(x0, zc, d, length):
+    """Trou horizontal selon x, en goutte (toit a 45 deg) : imprimable sans support."""
+    r = d / 2
+    k = r / math.sqrt(2)
+    prof = (cq.Workplane("YZ", origin=(x0, 0, zc)).moveTo(-k, k).lineTo(0, r * math.sqrt(2)).lineTo(k, k)
+            .threePointArc((r, 0), (k, -k)).threePointArc((0, -r), (-k, -k)).threePointArc((-r, 0), (-k, k)).close())
+    return prof.extrude(length)
+
+
 def vol(w):
     return sum(s.Volume() for s in w.solids().vals())
 
@@ -99,11 +109,12 @@ def pad_test_cap(height):
     z_seat = CAP_WALL + CAP_DEPTH
     ci = collar_inner()
     body = ell_prism(*SEAT, 0, z_seat)
-    inner = ell_prism(SEAT[0] - 2 * CAP_WALL, SEAT[1] - 2 * CAP_WALL, CAP_WALL, z_seat + 1).intersect(funnel(*ci, z_seat + 0.5))
+    # l'entonnoir rejoint l'interieur du collier sans rebord (sinon 1 mm en surplomb)
+    z_top = z_seat - 0.5
+    inner = ell_prism(SEAT[0] - 2 * CAP_WALL, SEAT[1] - 2 * CAP_WALL, CAP_WALL, z_top).intersect(funnel(*ci, z_top))
+    inner = inner.union(ell_prism(*ci, z_top - 0.2, z_seat + 1))
     cap = body.cut(inner).union(collar(z_seat, height))
-    port = (cq.Workplane("YZ", origin=(SEAT[0] / 2 - CAP_WALL - 1, 0, CAP_WALL + CABLE_PORT / 2 + 1.5))
-            .circle(CABLE_PORT / 2).extrude(CAP_WALL + 2))
-    cap = cap.cut(port)
+    cap = cap.cut(teardrop_x(SEAT[0] / 2 - CAP_WALL - 1, CAP_WALL + CABLE_PORT / 2 + 1.5, CABLE_PORT, CAP_WALL + 2))
     # repere grave au dos, lisible de l'exterieur (texte vu depuis -z)
     label = (cq.Workplane(cq.Plane(origin=(0, 0, 0), xDir=(-1, 0, 0), normal=(0, 0, -1)))
              .text(f"{height:g} mm", 12, -0.6, combine=False, halign="center", valign="center"))
