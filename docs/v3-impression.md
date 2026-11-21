@@ -2,7 +2,7 @@
 
 État au 21 novembre 2026. Rien n'est encore imprimé : temps et masses viennent du tranchage Bambu Studio, le montage vient de la CAO (`cad/silent_mic_v3_galet.py`).
 
-> **Support du micro repris le 21 novembre 2026.** Le micro est debout contre une plaque dressée au centre du fond, comme sur le v2, haut du boîtier vers la bouche, bonnette DJI en place (décision de Clément). Le capot avant se pose et se retire droit (contrôlé dans la CAO, sur les fichiers d'impression et dans Onshape). Une seconde relecture indépendante a confirmé le démontage et l'étanchéité, et fait abaisser la plaque sous la bonnette. **Avant d'imprimer le corps, vérifier sur la vraie bonnette DJI qu'elle ne descend pas de plus de 9 mm sur le dos du micro.** L'ancien pied, près de la paroi basse, bloquait le capot : voir « Relecture indépendante du 21 novembre 2026 ».
+> **Support du micro repris le 21 novembre 2026.** Le micro est debout contre une plaque dressée au centre du fond, comme sur le v2, haut du boîtier vers la bouche, bonnette DJI en place (décision de Clément). Le capot avant se pose et se retire droit (contrôlé dans la CAO, sur les fichiers d'impression et dans Onshape). Une seconde relecture indépendante a confirmé le démontage et l'étanchéité, et fait abaisser la plaque sous la bonnette. Clément a confirmé le 21 novembre 2026 que la jupe de sa bonnette DJI descend de moins de 9 mm sur le dos du micro et qu'elle est très molle : elle s'écrase au besoin. L'ancien pied, près de la paroi basse, bloquait le capot : voir « Relecture indépendante du 21 novembre 2026 ».
 
 ## Impression
 
@@ -20,7 +20,7 @@ Dans `print/`, trois projets 3MF tranchés, réglages embarqués, aucun support 
 
 Grammes calculés par Bambu Studio avec la densité réelle du filament (1,32) : le tableau OrcaSlicer précédent comptait 1,24, d'où environ 6 % de moins.
 
-### Corps : projets Bambu Studio prêts (après contrôle de la bonnette)
+### Corps : projets Bambu Studio prêts
 
 | Plateau | Fichier | Contenu | Temps | Filament |
 |---|---|---|---|---|
@@ -185,7 +185,7 @@ Onshape ne voit pas les défauts de passage trouvés par le contrôle d'étanch�
 - **Levier de l'interrupteur** accessible par une fente de 4 × 2,2 mm sous la coque : à valider au doigt.
 - **Tenue des aimants contre le joint** : c'est l'objet des éprouvettes de joint.
 - **Accroche du coussin : ruban double face.** Décision de Clément du 20 novembre 2026. Le scratch du prototype v2 laisse un jour tout autour (calcul : de -3 à 11 dB(A) au lieu de 21). La lèvre élastique du coussin sur une gorge de la coque est réservée à une version de production : même étanchéité attendue, coussin plus simple à changer, mais gorge à ajuster au millimètre.
-- **Bonnette DJI non mesurée.** Son encombrement est estimé à 36 × 26 mm, avec une jupe de 9 mm sur le haut du boîtier et 22 mm au-dessus du micro. Il reste 5,2 mm jusqu'au capot et au col, et son sommet arrive à 12,5 mm des lèvres supposées. La plaque laisse 9,5 mm libres au dos du micro : si la jupe réelle descend plus bas, changer `BONNET` dans `cad/silent_mic_v3_galet.py` avant d'imprimer la coque arrière.
+- **Bonnette DJI : cotes exactes non relevées.** Son encombrement est estimé à 36 × 26 mm, avec une jupe de 9 mm sur le haut du boîtier et 22 mm au-dessus du micro. Il reste 5,2 mm jusqu'au capot et au col, et son sommet arrive à 12,5 mm des lèvres supposées. La plaque laisse 9,5 mm libres au dos du micro, ce qui suffit d'après Clément (jupe de moins de 9 mm, très molle). Les cotes se règlent par `BONNET` dans `cad/silent_mic_v3_galet.py`.
 - **Fentes de sortie** : passage de 1,7 mm imprimé en surplomb à 38°, sans support. À contrôler au souffle sur la pièce (voir « Contrôles avant impression »).
 - **Plafond de la baie** : pont de 31 mm dans son sens le plus court (36 × 31 mm), imprimé sans support et caché par la trappe. Les seuls supports de la coque restent sous le passage de la prise USB-C. Un fléchissement de quelques dixièmes est possible : à mesurer sur la pièce avant de commander l'électronique.
 - **Qualité du volume du capot avant** : un bossage d'aimant garde une arête à tolérance large (0,8 mm) à la jonction de son contrefort. Sans effet sur le fichier d'impression, mais le volume relu varie de 0,2 à 0,6 %. À reprendre en dessinant le bossage d'un seul tenant.
