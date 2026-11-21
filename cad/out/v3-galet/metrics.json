@@ -114,6 +114,35 @@
   },
   "interferences": [],
   "pedestal_to_front_mm": 0.85,
+  "demontage_volume_commun_mm3": {
+    "capot_avant_micro_en_place": {
+      "1.0": 0.0,
+      "2.0": 43.4,
+      "4.0": 209.78,
+      "8.0": 556.94,
+      "14.0": 683.32,
+      "22.0": 363.04,
+      "32.0": 0.0
+    },
+    "micro_capot_ote": {
+      "1.0": 0.0,
+      "2.0": 0.0,
+      "4.0": 0.0,
+      "8.0": 0.0,
+      "14.0": 0.0,
+      "22.0": 0.0,
+      "32.0": 0.0
+    },
+    "trappe": {
+      "1.0": 0.0,
+      "2.0": 0.0,
+      "4.0": 0.0,
+      "8.0": 0.0,
+      "14.0": 0.0,
+      "22.0": 0.0,
+      "32.0": 0.0
+    }
+  },
   "curvature": [
     {
       "type": "BSPLINE",
@@ -185,5 +214,7 @@
     "longueur entree -> centre des fentes 155.7 mm < 175 (canal barrage a barrage 182.2)",
     "cone du souffle : micro a 12.3 deg (regle 15.0, refus < 12.0)"
   ],
-  "fail": []
+  "fail": [
+    "demontage bloque (capot_avant_micro_en_place) : 683.32 mm3 communs pendant le retrait"
+  ]
 }

@@ -1,6 +1,8 @@
 # Silent Mic v3 galet : impression et montage
 
-État au 20 novembre 2026. Rien n'est encore imprimé : temps et masses viennent du tranchage Bambu Studio, le montage vient de la CAO (`cad/silent_mic_v3_galet.py`, aucune interférence détectée).
+État au 21 novembre 2026. Rien n'est encore imprimé : temps et masses viennent du tranchage Bambu Studio, le montage vient de la CAO (`cad/silent_mic_v3_galet.py`).
+
+> **Ne pas imprimer le corps (plateaux 4 à 7) en l'état.** Le capot avant ne peut ni se poser ni se retirer : la tête du pied du micro et le micro lui-même, portés par la coque arrière, débordent de 4 à 5,5 mm au-dessus de la paroi intérieure du capot. Levé droit, le capot bute après 1,2 mm. Voir « Relecture indépendante du 21 novembre 2026 ». Les pièces d'essai (plateaux 1 à 3) ne sont pas concernées.
 
 ## Impression
 
@@ -18,7 +20,7 @@ Dans `print/`, trois projets 3MF tranchés, réglages embarqués, aucun support 
 
 Grammes calculés par Bambu Studio avec la densité réelle du filament (1,32) : le tableau OrcaSlicer précédent comptait 1,24, d'où environ 6 % de moins.
 
-### Corps : projets Bambu Studio prêts
+### Corps : projets Bambu Studio (à ne pas imprimer en l'état)
 
 | Plateau | Fichier | Contenu | Temps | Filament |
 |---|---|---|---|---|
@@ -33,11 +35,12 @@ Seule la coque arrière a des supports, réglés sur « Sur plateau uniquement �
 
 ## Contrôles avant impression
 
-Cinq contrôles tournent sur les fichiers produits eux-mêmes, pas sur l'intention du dessin.
+Six contrôles tournent sur les fichiers produits eux-mêmes, pas sur l'intention du dessin.
 
 - **Maillages fermés.** À l'export, chaque STL est nettoyé puis refusé si une arête n'est pas partagée par exactement deux faces (`clean_stl` dans `cad/silent_mic_v3_coupons.py`). OCCT laissait un triangle vide au sommet de chaque toit conique de logement d'aimant : 4 sur la coque arrière, 2 sur une éprouvette de joint.
 - **Étanchéité.** `cad/leak_check.py` remet les STL en position de montage, les découpe en voxels de 0,25 mm et « inonde » l'air de la chambre. Résultat dans `cad/out/v3-galet/leak-check.json`.
 - **Évent vu par l'acoustique.** Le même découpage sert à résoudre un écoulement d'air entre la chambre et l'extérieur, dans les pièces telles qu'elles s'impriment. Il en sort la conductivité de l'évent (une section divisée par une longueur), qui fixe sa masse acoustique, donc l'atténuation. Le contrôle échoue si elle s'écarte de plus de 5 % de celle que suppose le modèle acoustique (`acoustics/params.json`), ou le volume de la chambre de plus de 6 %.
+- **Démontage.** `export()` translate le capot avant (micro en place), le micro (capot ôté) et la trappe le long de leur direction de retrait, et refuse le modèle si la pièce rencontre quoi que ce soit en chemin. Ce contrôle échoue aujourd'hui sur le capot avant.
 - **STEP relisibles.** Chaque STEP est relu juste après son écriture et refusé s'il ne redonne pas les mêmes solides fermés (`export_step`). `cad/check_exports.py` refuse aussi un STEP sans solide.
 - **Ouvertures mesurées dans la CAO.** `export()` mesure la section de l'entrée et des fentes là où elles percent les parois, et refuse un modèle où elles ne débouchent pas.
 
@@ -66,6 +69,21 @@ Le contrôle suppose trois fermetures qu'il ne prouve pas : le joint mousse du p
 - Les STEP de la coque arrière, du capot avant et du volume d'air étaient défectueux : relus, ils n'étaient plus des solides (13 faces perdues sur la coque arrière, dont la gorge, les 4 fentes et l'entrée du conduit, 4 sur le capot avant). Onshape les importait en surfaces ouvertes, ce qui donnait l'impression de voir à travers sous l'anneau, et sa détection de collisions ne portait donc pas sur ces deux pièces. Les fichiers d'impression (STL, 3MF) n'étaient pas touchés. Ces trois STEP sont maintenant écrits en NURBS : mêmes surfaces, solides fermés à la relecture.
 - Le pied du micro touchait le capot avant à 6 h (voir « Revue Onshape »). Il est dégagé de 0,85 mm.
 - **Le calcul acoustique ne lisait pas la pièce.** `acoustics/tmm.py` et la simulation openCFS calculent sur un équivalent (un volume, un conduit droit, des fentes) dont les cotes sont recopiées à la main dans `params.json`. Ils annonçaient donc 21 dB(A) pour un évent dessiné fermé. Fermé, le modèle donne d'ailleurs 24 dB(A), mieux qu'ouvert : le défaut n'était pas acoustique mais respiratoire, l'air expiré n'ayant aucune sortie, il aurait soulevé le coussin. Mesurée dans les pièces imprimées, la conductivité de l'évent vaut 0,3035 mm, 4 % de plus que ce que supposait le modèle. Le modèle est recalé dessus (longueur équivalente du conduit 146,5 mm au lieu de 152,6) : 21,15 dB(A) au lieu de 21,20, 47,5 Pa à 0,2 L/s. Aucune mesure réelle n'existe encore : ces dB restent une estimation jusqu'au banc.
+
+### Relecture indépendante du 21 novembre 2026
+
+Les fichiers d'impression ont été relus par un second agent, sans mes conclusions, avec ses propres outils. Il confirme l'étanchéité, la section du conduit et l'absence de collision au repos. Il a trouvé ce que mes contrôles ne cherchaient pas.
+
+| Constat | Mesure | État |
+|---|---|---|
+| **Capot avant bloqué par le pied du micro** | micro jusqu'à y = -26,3 et tête du pied jusqu'à -27,8, pour une ouverture du capot à -22,3 ; levé de 2 mm, le capot recoupe la coque de 43 mm³, puis le micro jusqu'à 600 mm³ | ouvert, bloquant, à arbitrer |
+| Butées du nid du micro presque détachées | racine de 0,25 à 0,3 mm de large, départ en l'air sur une partie | ouvert, à reprendre avec le support du micro |
+| Languette trop juste dans sa rainure | 0,1 mm par côté sur tout le tour | ouvert, passer à 0,2 mm avant d'imprimer les éprouvettes de joint |
+| Anneau lumineux non tenu latéralement | seulement pincé entre les coques, épaisseur égale à sa feuillure | ouvert, lèvre de centrage ou points de colle, et 0,1 mm de moins en épaisseur |
+| Aimants pouvant s'enfoncer dans le toit conique des logements | 0,15 à 0,25 mm de trop, soit un jour de 0,2 à 0,6 mm sous la trappe | ouvert, épaulement à ajouter |
+| Parois de 0,6 à 0,7 mm entre logements de pastilles et rainure du capot | sur 2 mm de haut | ouvert, mineur |
+
+Non retenus : le recouvrement du ruban LED et du manchon de mousse avec les coques vient des maillages grossiers de la visionneuse, les solides exacts ne se recoupent pas.
 
 **À vérifier sur la pièce imprimée.** Souffler dans l'entrée du conduit (dans la paroi de la coque arrière, en bas à droite quand on la regarde de face) : l'air doit sortir par les 4 fentes, sous l'anneau. Une fente obstruée par un fil se dégage avec une lame fine.
 

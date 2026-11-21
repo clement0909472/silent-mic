@@ -1071,6 +1071,17 @@ def export():
     assert not hits, hits
     ped_gap = min_distance(build_mic_pedestal().intersect(box(-70, 70, -70, 70, 0.3, 40)), front)
     m["pedestal_to_front_mm"] = round(ped_gap, 2)
+    # demontage : chaque piece retiree au quotidien doit sortir en translation droite. Le 21 nov. 2026, sans
+    # aucune interference au repos, la tete du pied et le micro debordaient de 5.5 mm au-dessus du corbeau
+    # du capot avant : capot ni posable ni retirable (trouve par une relecture independante des STL).
+    steps = (1.0, 2.0, 4.0, 8.0, 14.0, 22.0, 32.0)
+    stays = rear.union(refs["mic"]).union(refs["mic-disc"])
+    pulls = {"capot_avant_micro_en_place": (front, stays, 1), "micro_capot_ote": (refs["mic"], rear, 1), "trappe": (cover, rear, -1)}
+    m["demontage_volume_commun_mm3"] = {k: {d: round(vol(p.translate((0, 0, sgn * d)).intersect(q)), 2) for d in steps}
+                                        for k, (p, q, sgn) in pulls.items()}
+    for k, v in m["demontage_volume_commun_mm3"].items():
+        if max(v.values()) > 0.05:
+            fail.append(f"demontage bloque ({k}) : {max(v.values())} mm3 communs pendant le retrait")
     assert ped_gap >= PEDESTAL_GAP - 0.1, ped_gap
     log("interferences", t)
 
