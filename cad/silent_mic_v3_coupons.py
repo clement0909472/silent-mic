@@ -51,7 +51,7 @@ def collar_inner(pad=PAD):
 RING_DEPTH, RING_H = 2.5, 2.8  # anneau translucide visible
 REBATE = 2.6
 LED_CH = (2.6, 5.0, 2.2)  # offsets et profondeur de la rainure du filament LED
-TONGUE = (6.0, 9.0, 2.0)  # offsets et hauteur de la languette (coque arriere)
+TONGUE = (6.1, 8.9, 2.0)  # offsets et hauteur de la languette (coque arriere) ; 0.2 mm de jeu par cote (0.1 coincait en FDM)
 GROOVE = (5.9, 9.1)  # rainure du capot avant
 GASKET = (3.0, 2.0)  # bande de mousse a cellules fermees
 GASKET_COMPRESSION = 0.55
@@ -233,7 +233,7 @@ def check():
     comp = TONGUE[2] + GASKET[1] - GROOVE_DEPTH
     assert 0.5 <= comp <= 0.6, comp
     assert GROOVE[1] - GROOVE[0] >= GASKET[0] and TONGUE[1] - TONGUE[0] <= GROOVE[1] - GROOVE[0]
-    assert TONGUE[0] - GROOVE[0] <= 0.15 and GROOVE[1] - TONGUE[1] <= 0.15, "centrage languette/rainure"
+    assert 0.15 <= TONGUE[0] - GROOVE[0] <= 0.25 and 0.15 <= GROOVE[1] - TONGUE[1] <= 0.25, "jeu languette/rainure"
     assert LED_CH[0] >= REBATE and TONGUE[0] - LED_CH[1] >= 0.9
     return comp
 

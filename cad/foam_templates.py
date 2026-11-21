@@ -70,8 +70,8 @@ def mid_ellipse(z):
 
 
 def sleeve_piece():
-    """Manchon avant developpe : secteur d'anneau (tronc de cone equivalent), ouvert au droit du
-    micro, une encoche rectangulaire au pied de chaque contrefort d'aimant du capot."""
+    """Manchon avant developpe : secteur d'anneau (tronc de cone equivalent), raccord bout a bout
+    a 6 h, une encoche rectangulaire au pied de chaque contrefort d'aimant du capot."""
     z0, z1 = g.liner_z()
     (a0, b0), (a1, b1) = mid_ellipse(z0), mid_ellipse(z1)
     p0, p1 = g.ellipse_arc_length(a0, b0, 0.0), g.ellipse_arc_length(a1, b1, 0.0)
@@ -85,8 +85,7 @@ def sleeve_piece():
     def frac(a, b, t):
         return g.ellipse_arc_length(a, b, 0.0, -math.pi / 2, t, 600) / g.ellipse_arc_length(a, b, 0.0)
 
-    bb = g.mic_box().val().BoundingBox()
-    xg = max(abs(bb.xmin), abs(bb.xmax)) + 2.0  # decoupe du manchon : boitier + 2 mm
+    xg = 0.5  # raccord bout a bout a 6 h : le micro, au centre, ne coupe plus le manchon
     f_gap0 = frac(a0, b0, -math.pi / 2 + math.asin(xg / a0))
     f_gap1 = frac(a1, b1, -math.pi / 2 + math.asin(xg / a1))
     # encoches des contreforts : largeur du bossage + 1 mm, hauteur jusqu'a leur retour dans la paroi
@@ -123,12 +122,6 @@ def sleeve_piece():
     info = {"rayons_developpes_mm": [round(rho0, 1), round(rho1, 1)], "angle_deg": round(math.degrees(theta), 1),
             "hauteur_bande_mm": round(slant, 1), "encoches": len(g.MAG_T_DEG), "encoche_mm": [round(n_w, 1), round(n_h, 1)]}
     return inner + outer, info, label_at
-
-
-def windscreen_piece():
-    bb = g.mic_box().val().BoundingBox()
-    w, h = bb.xlen + 4.0, bb.ylen + 4.0  # empreinte du micro + 2 mm par cote
-    return [(-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2)]
 
 
 def area(points):
@@ -179,8 +172,7 @@ def main():
     sleeve_pts, sleeve_info, sleeve_label = sleeve_piece()
     pieces = [
         ("fond", disc_piece(), "x2", 10.0, 2, "plaque de 10 mm, deux couches identiques, encoche vers le bas (6 h)", None),
-        ("manchon", sleeve_pts, "", 10.0, 1, "plaque de 10 mm, bord court (rayon interieur) vers le joint, ouverture au droit du micro", sleeve_label),
-        ("bonnette", windscreen_piece(), "", 5.0, 1, "plaque de 5 mm, collee sur les bords de la decoupe du manchon", None),
+        ("manchon", sleeve_pts, "", 10.0, 1, "plaque de 10 mm, bord court (rayon interieur) vers le joint, raccord en bas (6 h)", sleeve_label),
     ]
     report = {}
     for name, pts, sub, thick, qty, note, at in pieces:

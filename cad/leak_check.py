@@ -255,6 +255,17 @@ def run():
     res["entree_surface_mm2"] = round(float(inl.sum() * P ** 3 / 1.0), 1)
     res["conduit_section_mm2"] = round(float(sec.sum() * P ** 3 / (cols.sum() * P)), 1)
 
+    # demontage : le capot avant et son col se tirent droit vers le visage. Dans aucune colonne de voxels, ce
+    # qui reste (coque, anneau, micro, bonnette) ne doit se trouver au-dessus de la matiere du capot. Le
+    # 21 nov. 2026, la tete du pied du micro passait ainsi au-dessus du rebord du capot sur 110 mm2.
+    moving, stay = (mat == FRONT) | (mat == COLLAR), (mat == REAR) | (mat == RING)
+    low = np.where(moving.any(0), moving.argmax(0), NZ)
+    top = np.where(stay.any(0), NZ - 1 - stay[::-1].argmax(0), -1)
+    for name, z in (("mic", 0.0), ("bonnette", 20.0)):
+        tri = load(OUT / "web" / f"{name}.stl")
+        top = np.maximum(top, np.where(raster(layer_segments(tri, z)), np.searchsorted(ZC, tri[:, :, 2].max()), -1))
+    res["demontage_capot_surface_accrochee_mm2"] = round(float((top > low).sum()) * P * P, 2)
+
     k3d, n = vent_conductivity(mat, lab, chamber, duct, outside)
     k1d, v1d = model_conductivity()
     helmholtz = lambda k, v: round(float(343.2 / (2 * np.pi) * np.sqrt(k * 1e-3 / (v * 1e-6))), 1)
@@ -327,7 +338,7 @@ def figure(path, mat, lab, axes, res):
             (ax[1], "baie de l'électronique,\nhors de la chambre", (-41, 3), (-56, 30)),
             (ax[1], "prise USB-C", (-44.3, -26), (-35, -45)),
             (ax[1], "paroi pleine de 3 mm", (-34.9, 8), (-25, 22)),
-            (ax[1], "pied du micro", (-10, -12.3), (2, 12)),
+            (ax[1], "plaque du micro", (-5, -9.0), (4, 13)),
             (ax[2], "entrée du conduit", (9.5, -22.6), (14, -8)),
             (ax[2], "barrage", (0, -27.5), (-8, -14)),
             (ax[2], "4 fentes, 1 cm² en tout", (-27, -22.5), (-34, 2)),
@@ -356,6 +367,8 @@ def main():
     bad = [k for k in ("tel_que_dessine_la_chambre_rejoint_l_exterieur", "fentes_bouchees_chambre_etanche", "entree_bouchee_chambre_etanche",
                        "conduit_bouche_a_midi_chambre_etanche", "conduit_bouche_parois_non_epaissies_chambre_etanche",
                        "temoin_trou_1mm2_detecte") if not res[k]]
+    if res["demontage_capot_surface_accrochee_mm2"] > 0.5:
+        bad.append("capot avant accroche : il ne se retire pas droit")
     if not 0.95 <= res["event_conductivite_mm"]["rapport"] <= 1.05:
         bad.append("masse acoustique de l'event : le modele 1D ne decrit pas les pieces imprimees")
     if not 0.94 <= res["volume_chambre_cm3"] / res["volume_chambre_modele_1d_cm3"] <= 1.06:
