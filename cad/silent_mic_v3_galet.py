@@ -618,28 +618,38 @@ def mic_box(extra=None):
     return box(MIC_XC - sx / 2, MIC_XC + sx / 2, y0, y0 + sy, MIC_Z0, MIC_Z0 + sz)
 
 
+def mount_top():
+    """Haut de la plaque et du disque : juste sous la jupe de la bonnette, qui coiffe le haut du boitier sur ses
+    quatre faces. Montes jusqu'en haut du micro (comme sur le v2), ils empechaient de la mettre en place."""
+    return MIC_Z0 + v0.MIC_SIZE[1] - BONNET[2] - 0.5
+
+
 def mic_disc():
-    return wp(cq.Solid.makeCylinder(v0.MIC_STEEL_DISC_DIAMETER / 2, v0.MIC_STEEL_DISC_THICKNESS,
-                                    cq.Vector(MIC_XC, MOUNT_FACE_Y, MIC_ZC), cq.Vector(0, 1, 0)))
+    """Disque d'acier colle au ras du haut de la plaque : son centre est sous celui du boitier, l'aimant reste dessus."""
+    r = v0.MIC_STEEL_DISC_DIAMETER / 2
+    return wp(cq.Solid.makeCylinder(r, v0.MIC_STEEL_DISC_THICKNESS, cq.Vector(MIC_XC, MOUNT_FACE_Y, mount_top() - r), cq.Vector(0, 1, 0)))
 
 
 def build_mic_mount():
     """Plaque dressee sur le fond de la chambre (28 x 4 mm, comme le v2), imprimee avec la coque sans support.
     Le disque d'acier se colle sur sa face avant, le micro y tient par son aimant. Tout reste dans
-    l'ouverture du capot avant, qui se pose et se retire droit."""
-    top = MIC_Z0 + v0.MIC_SIZE[1] + 0.4
-    plate = box(MIC_XC - MOUNT_W / 2, MIC_XC + MOUNT_W / 2, MOUNT_FACE_Y - MOUNT_T, MOUNT_FACE_Y, FLOOR_TOP - 0.5, top)
+    l'ouverture du capot avant, qui se pose et se retire droit. Pied evase de 2 mm par face sur 3 mm :
+    decoller le micro fait travailler la plaque en flexion, a travers ses couches."""
+    y0, y1, zf = MOUNT_FACE_Y - MOUNT_T, MOUNT_FACE_Y, FLOOR_TOP - 0.5
+    prof = [(y0 - 2.0, zf), (y1 + 2.0, zf), (y1 + 2.0, FLOOR_TOP), (y1, FLOOR_TOP + 3.0), (y1, mount_top()),
+            (y0, mount_top()), (y0, FLOOR_TOP + 3.0), (y0 - 2.0, FLOOR_TOP)]
+    plate = cq.Workplane("YZ", origin=(MIC_XC - MOUNT_W / 2, 0, 0)).polyline(prof).close().extrude(MOUNT_W)
     return plate.edges("|Y and >Z").fillet(v0.MOUNT_EDGE_FILLET)
 
 
 def bonnet_envelope():
-    """Encombrement de la bonnette DJI clipsee sur le haut du boitier (estimation), hors micro et support."""
+    """Encombrement de la bonnette DJI clipsee sur le haut du boitier (estimation), sans le boitier."""
     w, d, lap, over = BONNET
     bb = mic_box().val().BoundingBox()
     yc = (bb.ymin + bb.ymax) / 2
     # contour ovale : en boite, ses coins fictifs accrochaient deux bossages d'aimant du capot au demontage
     env = eprism(w, d, bb.zmax - lap, bb.zmax + over).translate((MIC_XC, yc, 0))
-    return env.cut(mic_box()).cut(grow(mic_disc(), 0.05)).cut(grow(build_mic_mount(), 0.05))
+    return env.cut(mic_box())
 
 
 def build_liner():
@@ -671,7 +681,8 @@ def disc_layer_shape():
     zj = FLOOR_TOP + FLOOR_RIB + FOAM_LAYER
     a, b = cavity_half_axes(zj)
     ib = build_inlet().val().BoundingBox()
-    notch = (MIC_XC - MOUNT_W / 2 - 0.3, max(ib.xmax + 1.0, MIC_XC + MOUNT_W / 2 + 0.3), MOUNT_FACE_Y + 0.3)
+    half = max(MOUNT_W, v0.MIC_STEEL_DISC_DIAMETER) / 2 + 0.3  # le disque de 30 mm deborde de la plaque de 28
+    notch = (MIC_XC - half, max(ib.xmax + 1.0, MIC_XC + half), MOUNT_FACE_Y + 0.3)
     return a - 0.5, b - 0.5, notch
 
 
@@ -913,7 +924,8 @@ def export():
     mic, bonnet = refs["mic"], refs["bonnette"]
     clear = {"front": min_distance(mic, front), "insert": min_distance(mic, insert), "liner": min_distance(mic, refs["foam-liner"]),
              "rear_hors_plaque": min_distance(mic, rear.cut(grow(build_mic_mount(), 0.01))), "disque": min_distance(mic, refs["mic-disc"]),
-             "bonnette_capot_et_col": min(min_distance(bonnet, front), min_distance(bonnet, insert))}
+             "bonnette_capot_et_col": min(min_distance(bonnet, front), min_distance(bonnet, insert)),
+             "bonnette_plaque_et_disque": min(min_distance(bonnet, rear), min_distance(bonnet, refs["mic-disc"]))}
     # doigts : de chaque cote du boitier, une bande de 15 mm au-dessus de la languette, capot avant retire
     bbm = mic.val().BoundingBox()
     zf0 = TONGUE[2] + 0.5
@@ -929,6 +941,7 @@ def export():
                                         "du_haut_de_la_bonnette": round(lips - bonnet.val().BoundingBox().zmax, 1)},
                 "bonnette_estimee_mm": list(BONNET)}
     assert min(clear["front"], clear["insert"], clear["rear_hors_plaque"], clear["bonnette_capot_et_col"]) >= MIC_CLEARANCE - 0.01, clear
+    assert clear["bonnette_plaque_et_disque"] >= 0.4, clear
     assert all(f["obstacle_mm3"] < 0.01 and f["hauteur_libre_mm"] >= 9.0 for f in fingers.values()), fingers
     log("micro", t)
 
@@ -964,10 +977,15 @@ def export():
     # du capot avant : capot ni posable ni retirable (trouve par une relecture independante des STL).
     steps = (1.0, 2.0, 4.0, 8.0, 14.0, 22.0, 32.0)
     stays = union_all([rear, refs["mic"], refs["mic-disc"], refs["bonnette"]])
-    pulls = {"capot_avant_et_col_micro_en_place": (front.union(insert), stays, 1), "micro_capot_ote": (refs["mic"], rear, 1),
-             "trappe": (cover, rear, -1)}
-    m["demontage_volume_commun_mm3"] = {k: {d: round(vol(p.translate((0, 0, sgn * d)).intersect(q)), 2) for d in steps}
-                                        for k, (p, q, sgn) in pulls.items()}
+    mic_on = refs["mic"].union(refs["bonnette"])
+    held = rear.union(refs["mic-disc"])
+    # le micro, bonnette en place, se tire droit vers le visage ou se decolle du disque vers l'avant (+y) : 4 mm
+    # suffisent a liberer l'aimant, le boitier ne rencontre un bossage d'aimant de la coque qu'a 8 mm
+    pulls = {"capot_avant_et_col_micro_en_place": (front.union(insert), stays, (0, 0, 1)),
+             "micro_et_bonnette_tires_droit": (mic_on, held, (0, 0, 1)), "micro_et_bonnette_decolles": (mic_on, held, (0, 1, 0)),
+             "trappe": (cover, rear, (0, 0, -1))}
+    m["demontage_volume_commun_mm3"] = {k: {d: round(vol(p.translate(tuple(c * d for c in u)).intersect(q)), 2)
+                                            for d in steps if u[1] == 0 or d <= 4.0} for k, (p, q, u) in pulls.items()}
     for k, v in m["demontage_volume_commun_mm3"].items():
         if max(v.values()) > 0.05:
             fail.append(f"demontage bloque ({k}) : {max(v.values())} mm3 communs pendant le retrait")

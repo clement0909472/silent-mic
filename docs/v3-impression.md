@@ -2,7 +2,7 @@
 
 État au 21 novembre 2026. Rien n'est encore imprimé : temps et masses viennent du tranchage Bambu Studio, le montage vient de la CAO (`cad/silent_mic_v3_galet.py`).
 
-> **Support du micro repris le 21 novembre 2026.** Le micro est debout contre une plaque dressée au centre du fond, comme sur le v2, haut du boîtier vers la bouche, bonnette DJI en place (décision de Clément). Le capot avant se pose et se retire droit (contrôlé dans la CAO, sur les fichiers d'impression et dans Onshape). Une seconde relecture indépendante de cette version est en cours : attendre son résultat avant d'imprimer le corps. L'ancien pied, près de la paroi basse, bloquait le capot : voir « Relecture indépendante du 21 novembre 2026 ».
+> **Support du micro repris le 21 novembre 2026.** Le micro est debout contre une plaque dressée au centre du fond, comme sur le v2, haut du boîtier vers la bouche, bonnette DJI en place (décision de Clément). Le capot avant se pose et se retire droit (contrôlé dans la CAO, sur les fichiers d'impression et dans Onshape). Une seconde relecture indépendante a confirmé le démontage et l'étanchéité, et fait abaisser la plaque sous la bonnette. **Avant d'imprimer le corps, vérifier sur la vraie bonnette DJI qu'elle ne descend pas de plus de 9 mm sur le dos du micro.** L'ancien pied, près de la paroi basse, bloquait le capot : voir « Relecture indépendante du 21 novembre 2026 ».
 
 ## Impression
 
@@ -20,12 +20,12 @@ Dans `print/`, trois projets 3MF tranchés, réglages embarqués, aucun support 
 
 Grammes calculés par Bambu Studio avec la densité réelle du filament (1,32) : le tableau OrcaSlicer précédent comptait 1,24, d'où environ 6 % de moins.
 
-### Corps : projets Bambu Studio (attendre la seconde relecture)
+### Corps : projets Bambu Studio prêts (après contrôle de la bonnette)
 
 | Plateau | Fichier | Contenu | Temps | Filament |
 |---|---|---|---|---|
 | 4 | `print/corps-capot-avant.3mf` | capot avant, appui du coussin sur le plateau | 2 h 56 | 48 g PLA |
-| 5 | `print/corps-coque-arriere.3mf` | coque arrière, face arrière sur le plateau | 4 h 50 | 73 g PLA |
+| 5 | `print/corps-coque-arriere.3mf` | coque arrière, face arrière sur le plateau | 4 h 42 | 72 g PLA |
 | 6 | `print/corps-trappe-col.3mf` | trappe et col de 14 mm | 57 min | 17 g PLA |
 | 7 | `print/corps-anneau-petg.3mf` | anneau lumineux | 6 min | 2 g PETG |
 
@@ -40,7 +40,7 @@ Six contrôles tournent sur les fichiers produits eux-mêmes, pas sur l'intentio
 - **Maillages fermés.** À l'export, chaque STL est nettoyé puis refusé si une arête n'est pas partagée par exactement deux faces (`clean_stl` dans `cad/silent_mic_v3_coupons.py`). OCCT laissait un triangle vide au sommet de chaque toit conique de logement d'aimant : 4 sur la coque arrière, 2 sur une éprouvette de joint.
 - **Étanchéité.** `cad/leak_check.py` remet les STL en position de montage, les découpe en voxels de 0,25 mm et « inonde » l'air de la chambre. Résultat dans `cad/out/v3-galet/leak-check.json`.
 - **Évent vu par l'acoustique.** Le même découpage sert à résoudre un écoulement d'air entre la chambre et l'extérieur, dans les pièces telles qu'elles s'impriment. Il en sort la conductivité de l'évent (une section divisée par une longueur), qui fixe sa masse acoustique, donc l'atténuation. Le contrôle échoue si elle s'écarte de plus de 5 % de celle que suppose le modèle acoustique (`acoustics/params.json`), ou le volume de la chambre de plus de 6 %.
-- **Démontage.** `export()` translate le capot avant (micro en place), le micro (capot ôté) et la trappe le long de leur direction de retrait, et refuse le modèle si la pièce rencontre quoi que ce soit en chemin. Le col part avec le capot, la bonnette reste sur le micro. `cad/leak_check.py` refait ce contrôle sur les fichiers d'impression, colonne par colonne : rien de ce qui reste en place ne doit se trouver au-dessus de la matière du capot.
+- **Démontage.** `export()` translate le capot avant (micro en place), le micro (capot ôté) et la trappe le long de leur direction de retrait, et refuse le modèle si la pièce rencontre quoi que ce soit en chemin. Le col part avec le capot, la bonnette reste sur le micro. Le micro coiffé de sa bonnette est contrôlé de même, tiré droit puis décollé de 4 mm vers l'avant. `cad/leak_check.py` refait ce contrôle sur les fichiers d'impression, colonne par colonne : rien de ce qui reste en place ne doit se trouver au-dessus de la matière du capot.
 - **STEP relisibles.** Chaque STEP est relu juste après son écriture et refusé s'il ne redonne pas les mêmes solides fermés (`export_step`). `cad/check_exports.py` refuse aussi un STEP sans solide.
 - **Ouvertures mesurées dans la CAO.** `export()` mesure la section de l'entrée et des fentes là où elles percent les parois, et refuse un modèle où elles ne débouchent pas.
 
@@ -84,6 +84,20 @@ Les fichiers d'impression ont été relus par un second agent, sans mes conclusi
 | Aimants pouvant s'enfoncer dans le toit conique des logements | 0,10 à 0,15 mm d'après la géométrie (cône à 45° depuis un rayon de 3,10 à 3,15 mm, aimant de 3,0) | laissé tel quel : un épaulement plat réclamait des supports. Les aimants se collent affleurants, pressés contre une cale plate |
 | Parois de 0,6 à 0,7 mm entre logements de pastilles et rainure du capot | sur 2 mm de haut | laissé tel quel, non porteur |
 
+### Seconde relecture indépendante, sur la version au micro debout
+
+Même méthode, par un autre agent. Elle confirme, par ses propres mesures : capot, col, coussin et manchon tirés droit sans qu'aucune matière fixe se trouve au-dessus d'eux (balayage à 0,2 mm), jeu de languette de 0,19 à 0,21 mm sur tout le tour, chambre isolée de l'extérieur et de la baie quand l'entrée ou les fentes sont bouchées, conduit de 48,1 à 50,3 mm² sur tout le tour, cinq fichiers d'impression fermés.
+
+| Constat | Mesure | État |
+|---|---|---|
+| **Plaque et disque dans la zone de la jupe de la bonnette** | plaque jusqu'à z = 17,0 et disque jusqu'à 17,5, pour un haut de micro à 16,5 : une bonnette qui coiffe le boîtier sur ses quatre faces ne pouvait pas se mettre | corrigé : plaque et disque arrêtés 9,5 mm sous le haut du micro ; micro et bonnette tirés droit ou décollés de 4 mm vers l'avant ne rencontrent rien ; 0,5 mm entre bonnette et plaque |
+| Plafond de la baie plus long qu'annoncé | pont de 31 mm au plus court (36 × 31 mm, 837 mm²), annoncé à 21 | doc corrigée ; imprimé en pont sans support, vérifié sur les couches tranchées |
+| Plaque du micro sollicitée à travers ses couches | 0,46 MPa par newton appliqué au centre du micro, angles vifs au pied | pied évasé de 2 mm par face sur 3 mm de haut, plaque raccourcie de 10 mm |
+| Force du joint contre force des aimants | 0,55 mm d'écrasement sur 570 mm², 0,2 mm d'entrefer aux aimants | ouvert : c'est l'objet des éprouvettes de joint |
+| Arêtes fines au bord des 4 fentes | moins de 0,8 mm sur 1,2 mm de haut | sans effet : le trancheur les supprime, ce qui élargit un peu les fentes |
+
+Cette dernière retouche (plaque abaissée, pied évasé) n'a pas été relue par un troisième agent : elle est couverte par les contrôles automatiques et par Onshape.
+
 Non retenus : le recouvrement du ruban LED et du manchon de mousse avec les coques vient des maillages grossiers de la visionneuse, les solides exacts ne se recoupent pas.
 
 **À vérifier sur la pièce imprimée.** Souffler dans l'entrée du conduit (dans la paroi de la coque arrière, en bas à droite quand on la regarde de face) : l'air doit sortir par les 4 fentes, sous l'anneau. Une fente obstruée par un fil se dégage avec une lame fine.
@@ -96,7 +110,7 @@ Trois coques s'empilent le long de l'axe, sans aucune vis : trappe, coque arriè
 
 - 8 aimants 6 × 2 dans les bossages du bord de la coque arrière, 8 pastilles d'acier en face dans le capot avant. Aimants et pastilles se collent affleurants : les presser avec une cale plate pendant la prise.
 - 4 aimants dans le dos de la coque arrière : deux au-dessus de la baie, un de chaque côté. Ils dépassent de 0,9 mm et centrent la trappe. 4 pastilles dans la trappe.
-- Le disque d'acier de 30 mm sur la face avant de la plaque du micro, centré à mi-hauteur du boîtier (il dépasse de 1 mm de chaque côté).
+- Le disque d'acier de 30 mm sur la face avant de la plaque du micro, son bord haut au ras du haut de la plaque (il dépasse de 1 mm de chaque côté).
 - L'anneau translucide sur le bord de la coque arrière, par 4 points de colle.
 - La bande de mousse 3 × 2 au fond de la rainure du capot avant.
 
@@ -110,7 +124,7 @@ Trois coques s'empilent le long de l'axe, sans aucune vis : trappe, coque arriè
 
 4. Les deux couches de mousse du fond (10 mm chacune), encoche vers le bas : la plaque du micro passe dans l'encoche. Le chanfrein sous le conduit les retient.
 5. Le ruban LED dans sa rainure, derrière l'anneau translucide.
-6. Le micro debout contre la plaque, haut du boîtier vers la bouche, bonnette DJI en place : son aimant le tient sur le disque d'acier, son bas arrive au ras de la mousse du fond.
+6. Le micro debout contre la plaque, haut du boîtier vers la bouche, bonnette DJI en place : son aimant le tient sur le disque d'acier, son bas arrive au ras de la mousse du fond. La plaque et le disque s'arrêtent 9,5 mm sous le haut du micro : la jupe de la bonnette s'y emboîte.
 7. Le capot avant, garni de son manchon de mousse, descend droit autour du micro : la languette entre dans la rainure et écrase le joint.
 8. Le col de 14 mm se pose dans son logement. Le coussin, voile de tissu découpé, se colle autour sur son appui par un anneau continu de ruban double face : le ruban le tient et ferme le jour.
 
@@ -129,9 +143,9 @@ Deux pièces seulement, dans une plaque de mousse polyuréthane à cellules ouve
 2. Couper au cutter à lame neuve de 18 mm, lame verticale, en plusieurs passes légères le long du gabarit. Les encoches d'abord, le contour ensuite.
 3. Fond : couper deux fois le même contour. Manchon : le rayon intérieur (bord court, côté encoches) va vers le plan de joint ; les deux extrémités de la bande se rejoignent bout à bout en bas (6 h).
 
-Volumes découpés : fond 32,3 cm³, manchon 29,6 cm³. Pas de bonnette en mousse : c'est celle du DJI, sur le micro.
+Volumes découpés : fond 31,8 cm³, manchon 29,6 cm³. Pas de bonnette en mousse : c'est celle du DJI, sur le micro.
 
-Abandonnés par rapport à la version précédente, pour couper moins de pièces : la mousse des flancs arrière (6 encoches, 7 morceaux) et la couche du chanfrein du joint (8 encoches). Au modèle acoustique, retirer 9 cm³ de mousse coûte moins de 0,1 dB(A). Le manchon passe en revanche à une bande d'épaisseur constante de 10 mm (le passage d'air libre autour du micro reste de 1185 mm², plus de 20 fois la section du conduit).
+Abandonnés par rapport à la version précédente, pour couper moins de pièces : la mousse des flancs arrière (6 encoches, 7 morceaux) et la couche du chanfrein du joint (8 encoches). Au modèle acoustique, retirer 9 cm³ de mousse coûte moins de 0,1 dB(A). Le manchon passe en revanche à une bande d'épaisseur constante de 10 mm (le passage d'air libre autour du micro reste de 1188 mm², plus de 20 fois la section du conduit).
 
 ## À acheter
 
@@ -159,20 +173,20 @@ Jusqu'au 20 novembre au soir, la coque arrière et le capot avant y étaient des
 
 Le 20 novembre au soir, après correction, Onshape importe 50 vraies pièces (aucun composite, aucune surface) et l'assemblage compte 20 instances sans erreur. Sa détection de collisions, enfin sur de vrais solides, a trouvé un contact : le cône du pied du micro touchait le coin intérieur de la bride du capot avant à 6 h, sur 2,8 mm de large et 0,1 mm de profondeur (0,03 mm³, sous le seuil de 0,1 mm³ que le script appliquait). Le pied est depuis dégagé de 0,85 mm, mesuré à l'export, et le seuil du script est descendu à 0,005 mm³. Ce pied a ensuite été remplacé par la plaque dressée du micro.
 
-Le 21 novembre, la version au micro debout est rechargée (49 pièces, 20 instances sans erreur, micro et disque réinsérés). Détection de collisions sur la coque arrière, le capot avant, la trappe, l'anneau, le col, le micro et son disque : **aucune interférence**, sans avertissement d'Onshape.
+Le 21 novembre, la version au micro debout est rechargée (49 pièces, 20 instances sans erreur, micro et disque réinsérés). Détection de collisions sur la coque arrière, le capot avant, la trappe, l'anneau, le col, le micro, son disque et la bonnette, refaite après l'abaissement de la plaque : **aucune interférence**, sans avertissement d'Onshape.
 
 Onshape ne voit pas les défauts de passage trouvés par le contrôle d'étanchéité : des pièces qui ne se touchent pas peuvent quand même avoir un évent fermé.
 
 ## Points ouverts
 
-- **Baie de l'électronique dessinée sur des cotes de catalogue.** Le chargeur est compté à 4 mm d'épaisseur avec sa prise, la batterie à 30 mm de long avec sa carte de protection. Décision de Clément du 20 novembre 2026 : l'électronique se commande plus tard, la coque arrière s'imprime telle quelle et se réimprime (4 h 50, 73 g) si une pièce ne rentre pas.
+- **Baie de l'électronique dessinée sur des cotes de catalogue.** Le chargeur est compté à 4 mm d'épaisseur avec sa prise, la batterie à 30 mm de long avec sa carte de protection. Décision de Clément du 20 novembre 2026 : l'électronique se commande plus tard, la coque arrière s'imprime telle quelle et se réimprime (4 h 42, 72 g) si une pièce ne rentre pas.
 - **Aucun clip dans la baie.** Les composants tiennent par empilement, logements ajustés à 0,5 mm et trappe. Aucune cloison imprimée entre chargeur et batterie.
 - **Longueur du filament LED non choisie.** Le tour de la rainure fait environ 21 cm.
 - **Levier de l'interrupteur** accessible par une fente de 4 × 2,2 mm sous la coque : à valider au doigt.
 - **Tenue des aimants contre le joint** : c'est l'objet des éprouvettes de joint.
 - **Accroche du coussin : ruban double face.** Décision de Clément du 20 novembre 2026. Le scratch du prototype v2 laisse un jour tout autour (calcul : de -3 à 11 dB(A) au lieu de 21). La lèvre élastique du coussin sur une gorge de la coque est réservée à une version de production : même étanchéité attendue, coussin plus simple à changer, mais gorge à ajuster au millimètre.
-- **Bonnette DJI non mesurée.** Son encombrement est estimé à 36 × 26 mm, 22 mm au-dessus du micro : il reste 5,2 mm jusqu'au capot et au col, et son sommet arrive à 12,5 mm des lèvres supposées. À vérifier avec la vraie bonnette au premier montage.
+- **Bonnette DJI non mesurée.** Son encombrement est estimé à 36 × 26 mm, avec une jupe de 9 mm sur le haut du boîtier et 22 mm au-dessus du micro. Il reste 5,2 mm jusqu'au capot et au col, et son sommet arrive à 12,5 mm des lèvres supposées. La plaque laisse 9,5 mm libres au dos du micro : si la jupe réelle descend plus bas, changer `BONNET` dans `cad/silent_mic_v3_galet.py` avant d'imprimer la coque arrière.
 - **Fentes de sortie** : passage de 1,7 mm imprimé en surplomb à 38°, sans support. À contrôler au souffle sur la pièce (voir « Contrôles avant impression »).
-- **Plafond de la baie** : pont d'environ 21 mm sans support, caché par la trappe.
+- **Plafond de la baie** : pont de 31 mm dans son sens le plus court (36 × 31 mm), imprimé sans support et caché par la trappe. Les seuls supports de la coque restent sous le passage de la prise USB-C. Un fléchissement de quelques dixièmes est possible : à mesurer sur la pièce avant de commander l'électronique.
 - **Qualité du volume du capot avant** : un bossage d'aimant garde une arête à tolérance large (0,8 mm) à la jonction de son contrefort. Sans effet sur le fichier d'impression, mais le volume relu varie de 0,2 à 0,6 %. À reprendre en dessinant le bossage d'un seul tenant.
 - **Dessous du coussin** : seulement posé sur l'appui, étanche par la pression de la main. Une fente de 0,5 mm sur 3 cm fait tomber l'atténuation calculée de 21 à 12 dB(A). Un anneau de ruban double face est en réserve, à trancher au test du capot (`bench/README.md`, étape 6).

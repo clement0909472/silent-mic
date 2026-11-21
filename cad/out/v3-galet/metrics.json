@@ -16,16 +16,16 @@
     84.0
   ],
   "nose_clearance_ymax_mm": 42.0,
-  "cavity_air_plus_foam_cm3": 192.8,
-  "cavity_air_only_cm3": 125.6,
+  "cavity_air_plus_foam_cm3": 193.8,
+  "cavity_air_only_cm3": 127.0,
   "foam_cm3": {
-    "foam-disc": 32.3,
+    "foam-disc": 31.8,
     "foam-liner": 35.0,
-    "total": 67.3
+    "total": 66.8
   },
   "pad_zone_above_collar_info_cm3": 49.2,
   "free_passage_min_mm2": {
-    "area": 1185,
+    "area": 1188,
     "z": 3.3
   },
   "duct": {
@@ -62,7 +62,8 @@
       "liner": 8.37,
       "rear_hors_plaque": 5.53,
       "disque": 0.0,
-      "bonnette_capot_et_col": 5.22
+      "bonnette_capot_et_col": 5.22,
+      "bonnette_plaque_et_disque": 0.5
     },
     "stack_extra_mm": 0.0,
     "acces_doigts_capot_retire": {
@@ -108,7 +109,7 @@
       "22.0": 0.0,
       "32.0": 0.0
     },
-    "micro_capot_ote": {
+    "micro_et_bonnette_tires_droit": {
       "1.0": 0.0,
       "2.0": 0.0,
       "4.0": 0.0,
@@ -116,6 +117,11 @@
       "14.0": 0.0,
       "22.0": 0.0,
       "32.0": 0.0
+    },
+    "micro_et_bonnette_decolles": {
+      "1.0": 0.0,
+      "2.0": 0.0,
+      "4.0": 0.0
     },
     "trappe": {
       "1.0": 0.0,
@@ -188,11 +194,11 @@
   "flat_faces_note": "plans > 35 mm : appui du coussin (couvert par le coussin, voulu plat) et face arriere du dos (maquette)",
   "mass_g_solid_pla": {
     "front": 57.7,
-    "rear": 102.6,
+    "rear": 101.4,
     "cover": 14.8,
     "collar-insert-14mm": 8.2,
     "ring_petg": 1.8,
-    "total": 185.1
+    "total": 183.9
   },
   "warn": [
     "longueur entree -> centre des fentes 155.7 mm < 175 (canal barrage a barrage 182.2)"
