@@ -10,6 +10,11 @@ qu'un de ses 8 sous-voxels l'est : une peau de plastique de 0.13 mm en travers d
 
     cad/guarded.sh -m 4 -t 900 .venv/bin/python cad/leak_check.py [--figure docs/img/v3-etancheite.png]
 
+Le meme decoupage sert au controle acoustique : un ecoulement potentiel chambre -> exterieur est resolu
+dans l'air des pieces imprimees. Sa conductivite K (mm) donne la masse acoustique de l'event, rho / K, le
+parametre qui fixe l'attenuation. Elle est comparee a celle que suppose acoustics/params.json : le modele
+1D ne lit pas la CAO, et le 20 nov. 2026 il annoncait 21 dB(A) pour un event dessine ferme.
+
 Hypotheses, non prouvees ici : le joint mousse ferme le plan de joint, le coussin colle ferme
 l'appui et le visage ferme le col. Le controle porte sur les parois imprimees.
 """
@@ -137,6 +142,61 @@ def flood(mat, thick, closed):
     return ndimage.label(lut[mat] & ~thick)[0]
 
 
+def vent_conductivity(mat, lab, chamber, duct, outside, reach=8.0):
+    """Conductivite de Rayleigh K (mm) du trajet chambre -> exterieur, par ecoulement potentiel dans l'air
+    echantillonne au centre des voxels. Potentiel 1 dans la chambre et 0 dehors, au-dela de reach (mm) de
+    l'entree et des fentes ; parois impermeables. Un conduit droit de section S et de longueur L donne S / L."""
+    from scipy.sparse import coo_matrix, diags
+    from scipy.sparse.linalg import cg
+
+    k0, k1 = np.searchsorted(ZC, -19.0 - reach), np.searchsorted(ZC, -3.0 + reach)
+    m, l = mat[k0:k1], lab[k0:k1]
+    air = (m == 0) | (m >= SLOTS)
+    near = lambda pid: ndimage.distance_transform_edt(m != pid) * P <= reach
+    core = ndimage.binary_dilation((l == lab[duct]) | (m >= SLOTS), iterations=2)  # avec la lisiere que flood() ecarte
+    near_in, near_out = near(INLET), near(SLOTS)
+    one = air & (l == lab[chamber]) & ~near_in
+    zero = air & (l == lab[outside]) & ~near_out
+    free = air & ~one & ~zero & (core | near_in | near_out)
+    n = int(free.sum())
+    idx = np.full(m.shape, -1, np.int32)
+    idx[free] = np.arange(n)
+    diag, rhs, rows, cols, to_zero = np.zeros(n), np.zeros(n), [], [], []
+    for ax in range(3):
+        a = tuple(slice(None, -1) if i == ax else slice(None) for i in range(3))
+        b = tuple(slice(1, None) if i == ax else slice(None) for i in range(3))
+        both = free[a] & free[b]
+        i, j = idx[a][both], idx[b][both]
+        rows += [i, j]
+        cols += [j, i]
+        np.add.at(diag, np.concatenate([i, j]), 1.0)
+        for u, v in ((a, b), (b, a)):
+            w1, w0 = idx[u][free[u] & one[v]], idx[u][free[u] & zero[v]]
+            np.add.at(diag, np.concatenate([w1, w0]), 1.0)
+            np.add.at(rhs, w1, 1.0)
+            to_zero.append(w0)
+    rows, cols = np.concatenate(rows), np.concatenate(cols)
+    a_mat = diags(diag + 1e-9) - coo_matrix((np.ones(len(rows)), (rows, cols)), shape=(n, n)).tocsr()
+    phi, info = cg(a_mat, rhs, rtol=1e-9, maxiter=40000, M=diags(1.0 / (diag + 1e-9)))
+    assert info == 0, f"gradient conjugue non converge ({info})"
+    q_in = P * float(rhs.sum() - (rhs * phi).sum())
+    q_out = P * float(phi[np.concatenate(to_zero)].sum())
+    assert abs(q_in - q_out) <= 0.005 * q_in, (q_in, q_out)
+    return q_in, n
+
+
+def model_conductivity():
+    """La meme grandeur, telle que le modele 1D la suppose (acoustics/params.json, design v3-galet)."""
+    design = next(d for d in json.loads((HERE.parent / "acoustics" / "params.json").read_text())["designs"] if d["name"] == "v3-galet")
+    inv = 0.0
+    for e in design["vent"]["elements"]:
+        if e["type"] == "duct":
+            s = e["width"] * e["height"] * e.get("count", 1)
+            inv += (e["length"] + e.get("end_correction", 0.85) * np.sqrt(s / np.pi)) / s
+    s = design["vent"]["outlet_area_mm2"]
+    return 1.0 / (inv + 0.61 * np.sqrt(s / np.pi) / s), design["cavity"]["volume_cm3"]
+
+
 def at(x, y, z):
     return np.abs(ZC - z).argmin(), np.abs(YC - y).argmin(), np.abs(XC - x).argmin()
 
@@ -151,6 +211,8 @@ def run():
 
     res["tel_que_dessine_la_chambre_rejoint_l_exterieur"] = linked(flood(mat, thick, {MOUTH}))
     res["fentes_bouchees_chambre_etanche"] = not linked(flood(mat, thick, {MOUTH, SLOTS}))
+    # sans epaissir la matiere : un jeu de montage de plus de 0.25 mm entre deux pieces serait un chemin
+    res["conduit_bouche_parois_non_epaissies_chambre_etanche"] = not linked(flood(mat, np.zeros_like(thick), {MOUTH, TOP}))
     res["entree_bouchee_chambre_etanche"] = not linked(flood(mat, thick, {MOUTH, INLET}))
     res["conduit_bouche_a_midi_chambre_etanche"] = not linked(flood(mat, thick, {MOUTH, TOP}))
 
@@ -192,6 +254,15 @@ def run():
     res["fentes_section_min_mm2"] = round(min(slot.values()), 1)
     res["entree_surface_mm2"] = round(float(inl.sum() * P ** 3 / 1.0), 1)
     res["conduit_section_mm2"] = round(float(sec.sum() * P ** 3 / (cols.sum() * P)), 1)
+
+    k3d, n = vent_conductivity(mat, lab, chamber, duct, outside)
+    k1d, v1d = model_conductivity()
+    helmholtz = lambda k, v: round(float(343.2 / (2 * np.pi) * np.sqrt(k * 1e-3 / (v * 1e-6))), 1)
+    res["event_conductivite_mm"] = {"pieces_imprimees": round(k3d, 4), "modele_1d": round(float(k1d), 4),
+                                    "rapport": round(float(k3d / k1d), 3), "inconnues": n}
+    res["volume_chambre_modele_1d_cm3"] = v1d  # air + mousse dans la CAO ; les voxels comptent aussi le volume du micro
+    res["event_longueur_equivalente_mm_pour_48_mm2"] = round(res["conduit_section_mm2"] / k3d, 1)
+    res["resonance_helmholtz_hz"] = {"pieces_imprimees": helmholtz(k3d, res["volume_chambre_cm3"]), "modele_1d": helmholtz(k1d, v1d)}
     return res, mat, lab, axes
 
 
@@ -283,7 +354,12 @@ def main():
     if a.figure:
         figure(a.figure, mat, lab, axes, res)
     bad = [k for k in ("tel_que_dessine_la_chambre_rejoint_l_exterieur", "fentes_bouchees_chambre_etanche", "entree_bouchee_chambre_etanche",
-                       "conduit_bouche_a_midi_chambre_etanche", "temoin_trou_1mm2_detecte") if not res[k]]
+                       "conduit_bouche_a_midi_chambre_etanche", "conduit_bouche_parois_non_epaissies_chambre_etanche",
+                       "temoin_trou_1mm2_detecte") if not res[k]]
+    if not 0.95 <= res["event_conductivite_mm"]["rapport"] <= 1.05:
+        bad.append("masse acoustique de l'event : le modele 1D ne decrit pas les pieces imprimees")
+    if not 0.94 <= res["volume_chambre_cm3"] / res["volume_chambre_modele_1d_cm3"] <= 1.06:
+        bad.append("volume de la chambre : le modele 1D ne decrit pas les pieces imprimees")
     if res["fentes_nombre"] != 4 or res["fentes_section_min_mm2"] < 90 or res["entree_surface_mm2"] < 43 or not 44 <= res["conduit_section_mm2"] <= 52:
         bad.append("sections")
     if bad:

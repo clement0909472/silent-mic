@@ -23,7 +23,8 @@ def compare_steps(current, rebuilt, exact_suffixes=()):
         published = cq.importers.importStep(str(current / filename.name))
         fresh = cq.importers.importStep(str(filename))
         assert published.val().isValid(), filename.name
-        assert published.solids().size() == fresh.solids().size(), filename.name
+        # un STEP qui perd des faces se relit en zero solide : sans ce plancher, 0 == 0 passait
+        assert published.solids().size() == fresh.solids().size() >= 1, filename.name
         # Assembly references overlap intentionally: compare summed solid volumes.
         assert abs(volume(published) - volume(fresh)) < 0.01, filename.name
         a, b = published.val().BoundingBox(), fresh.val().BoundingBox()

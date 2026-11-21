@@ -15,6 +15,7 @@ import json
 import math
 import os
 import sys
+import tempfile
 import time
 
 import cadquery as cq
@@ -142,6 +143,7 @@ MIC_CLEARANCE = 1.0
 WINDSCREEN_T = 5.0
 WINDSCREEN_GAP = 0.5  # la bonnette, collee au manchon, effleure la grille quand le capot est ferme
 STEM_R = 4.0
+PEDESTAL_GAP = 0.8  # entre le pied du micro et l'interieur du capot avant
 # Nid du micro : 4 butees basses, une par face, sur la tete du pied. Le micro se pose et se retire
 # en translation selon +z ; au-dessus des butees, ses 4 faces restent libres pour les doigts.
 NEST_GAP, NEST_H, NEST_T = 0.45, 4.0, 1.2
@@ -670,7 +672,16 @@ def build_mic_pedestal():
     web = (cq.Workplane("YZ", origin=(MIC_XC - 2.0, 0, 0))
            .polyline([(y_wall, z_base - STEEP * (STEM_R + MIC_YC - y_wall)), (MIC_YC, z_base - STEEP * STEM_R), (MIC_YC, -0.5),
                       (y_wall, -0.5)]).close().extrude(4.0))
-    return union_all([head, stem, foot, web, build_mic_nest()])
+    # garde avec la bride et le chanfrein du capot avant : a 6 h, le cone du pied les touchait (0.1 mm de
+    # recouvrement, vu par Onshape le 20 nov. 2026, sous le seuil du controle d'alors)
+    z_main = FLANGE_TOP + CORBEL_FRONT
+    g = PEDESTAL_GAP * 1.45  # retrait dans le plan : le corbeau du capot est a 43 deg, la garde se mesure en normale
+    room = (box(-70, 70, -70, 70, -60, -0.5)
+            .union(band(CAV_JOINT + g, -0.6, FLANGE_TOP + 0.01))
+            .union(wp(cq.Solid.makeLoft([sec_wire(FLANGE_TOP, CAV_JOINT + g),
+                                         sec_wire(z_main, inset(s_of(z_main), WALL) + g)], True)))
+            .union(box(-70, 70, -70, 70, z_main - 0.01, 40)))
+    return union_all([head, stem, foot, web, build_mic_nest()]).intersect(room)
 
 
 def build_windscreen():
@@ -1054,10 +1065,13 @@ def export():
             if ba.xmax < bb2.xmin or bb2.xmax < ba.xmin or ba.ymax < bb2.ymin or bb2.ymax < ba.ymin or ba.zmax < bb2.zmin or bb2.zmax < ba.zmin:
                 continue
             v = vol(bodies[a].intersect(bodies[b]))
-            if v > 0.1:  # mm3 : en dessous, bruit des faces en contact (plan de joint)
+            if v > 0.005:  # mm3 : a 0.1, un vrai contact pied du micro / capot avant (0.03 mm3) passait
                 hits.append((a, b, round(v, 3)))
     m["interferences"] = hits
     assert not hits, hits
+    ped_gap = min_distance(build_mic_pedestal().intersect(box(-70, 70, -70, 70, 0.3, 40)), front)
+    m["pedestal_to_front_mm"] = round(ped_gap, 2)
+    assert ped_gap >= PEDESTAL_GAP - 0.1, ped_gap
     log("interferences", t)
 
     # --- double courbure de la peau
@@ -1079,8 +1093,9 @@ def export():
     # --- exports
     t = time.perf_counter()
     stem = "silent-mic-v3-galet"
+    written = {}
     for n, p in parts.items():
-        cq.exporters.export(p, str(out / f"{stem}-{n}.step"))
+        written[n] = cp.export_step(p, out / f"{stem}-{n}.step")
     # STL en orientation d'impression : capot appui en bas, coque face arriere en bas,
     # couvercle face plane en bas, anneau et collier a plat.
     printed = {
@@ -1096,16 +1111,24 @@ def export():
         cq.exporters.export(p, str(out / f"{stem}-{n}.stl"), tolerance=LIN_TOL, angularTolerance=ANG_TOL)
         cp.clean_stl(out / f"{stem}-{n}.stl")
     air = cav.union(duct).union(build_inlet()).union(build_slots())
-    cq.exporters.export(air, str(out / f"{stem}-air-volume.step"))
+    air_written = cp.export_step(air, out / f"{stem}-air-volume.step")
+    # corps de reference : meme controle de relecture (joint, filament LED et fond de mousse passent en NURBS)
+    with tempfile.TemporaryDirectory() as tmp:
+        ref_written = {n: cp.export_step(p, Path(tmp) / f"{n}.step") for n, p in refs.items()}
     assembly = cq.Assembly(name=f"{stem}-technical")
-    colors = {"front": (0.1, 0.1, 0.1, 0.4), "rear": (0.1, 0.1, 0.1, 0.4), "cover": (0.1, 0.1, 0.1, 0.4),
-              "ring": (0.9, 0.9, 1.0, 0.6), "collar-insert-14mm": (0.2, 0.2, 0.2, 0.6)}
+    # pieces imprimees opaques et de couleurs distinctes : en revue (Onshape), des coques transparentes
+    # donnent l'impression de voir a travers la paroi
+    colors = {"front": (0.35, 0.50, 0.65, 1.0), "rear": (0.80, 0.55, 0.10, 1.0), "cover": (0.30, 0.30, 0.32, 1.0),
+              "ring": (0.92, 0.92, 1.0, 0.6), "collar-insert-14mm": (0.20, 0.20, 0.22, 1.0)}
     for n, p in parts.items():
-        assembly.add(p, name=n, color=cq.Color(*colors[n]))
+        assembly.add(written[n], name=n, color=cq.Color(*colors[n]))
     for n, p in refs.items():
-        assembly.add(p, name=f"ref-{n}", color=cq.Color(0.6, 0.6, 0.65, 0.6))
-    assembly.add(air, name="air-cavity-and-duct", color=cq.Color(0.1, 0.7, 0.95, 0.25))
+        assembly.add(ref_written[n], name=f"ref-{n}", color=cq.Color(0.6, 0.6, 0.65, 0.6))
+    assembly.add(air_written, name="air-cavity-and-duct", color=cq.Color(0.1, 0.7, 0.95, 0.25))
     assembly.export(str(out / f"{stem}-technical.step"))
+    n_step = cp.step_solids(out / f"{stem}-technical.step").solids().size()
+    n_expected = sum(b.solids().size() for b in list(parts.values()) + list(refs.values()) + [air])
+    assert n_step == n_expected, f"assemblage STEP relu en {n_step} solides au lieu de {n_expected}"
     log("exports STEP/STL", t)
 
     # --- web : STL grossiers et manifeste

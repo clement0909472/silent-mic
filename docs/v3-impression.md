@@ -33,10 +33,12 @@ Seule la coque arrière a des supports, réglés sur « Sur plateau uniquement �
 
 ## Contrôles avant impression
 
-Trois contrôles tournent sur les fichiers à imprimer eux-mêmes, pas sur l'intention du dessin.
+Cinq contrôles tournent sur les fichiers produits eux-mêmes, pas sur l'intention du dessin.
 
 - **Maillages fermés.** À l'export, chaque STL est nettoyé puis refusé si une arête n'est pas partagée par exactement deux faces (`clean_stl` dans `cad/silent_mic_v3_coupons.py`). OCCT laissait un triangle vide au sommet de chaque toit conique de logement d'aimant : 4 sur la coque arrière, 2 sur une éprouvette de joint.
 - **Étanchéité.** `cad/leak_check.py` remet les STL en position de montage, les découpe en voxels de 0,25 mm et « inonde » l'air de la chambre. Résultat dans `cad/out/v3-galet/leak-check.json`.
+- **Évent vu par l'acoustique.** Le même découpage sert à résoudre un écoulement d'air entre la chambre et l'extérieur, dans les pièces telles qu'elles s'impriment. Il en sort la conductivité de l'évent (une section divisée par une longueur), qui fixe sa masse acoustique, donc l'atténuation. Le contrôle échoue si elle s'écarte de plus de 5 % de celle que suppose le modèle acoustique (`acoustics/params.json`), ou le volume de la chambre de plus de 6 %.
+- **STEP relisibles.** Chaque STEP est relu juste après son écriture et refusé s'il ne redonne pas les mêmes solides fermés (`export_step`). `cad/check_exports.py` refuse aussi un STEP sans solide.
 - **Ouvertures mesurées dans la CAO.** `export()` mesure la section de l'entrée et des fentes là où elles percent les parois, et refuse un modèle où elles ne débouchent pas.
 
 ![Coupes du modèle : chambre, conduit, fentes, baie](img/v3-etancheite.png)
@@ -47,18 +49,23 @@ Trois contrôles tournent sur les fichiers à imprimer eux-mêmes, pas sur l'int
 | Fentes bouchées : la chambre est étanche | oui, donc aucune autre ouverture |
 | Entrée bouchée : la chambre est étanche | oui, donc une seule entrée dans le conduit |
 | Conduit bouché à midi : la chambre est étanche | oui, donc l'air fait le tour complet |
+| Conduit bouché, matière non épaissie : la chambre est étanche | oui, donc aucun jeu de montage de plus de 0,25 mm ne relie la chambre à l'extérieur |
 | Trou témoin de 1 mm² percé dans la paroi | détecté |
+| Conductivité de l'évent dans les pièces imprimées | 0,3035 mm, soit un conduit de 48 mm² long de 158 mm ; résonance chambre + évent à 68 Hz |
 | Fentes | 4, de 9,3 mm de long, passage réel de 1,7 mm, 62 mm² en tout |
 | Entrée et section du conduit | 49 et 48 mm² |
 
 Le contrôle suppose trois fermetures qu'il ne prouve pas : le joint mousse du plan de joint, le coussin collé sur son appui, le visage sur le coussin. La baie de l'électronique, la prise USB-C, la fente de l'interrupteur, le tunnel des fils et la rainure LED sont ouverts sur l'extérieur, mais séparés de la chambre par des parois pleines.
 
-**Défauts trouvés et corrigés le 20 novembre 2026.**
+**Défauts trouvés et corrigés les 20 et 21 novembre 2026.**
 
 - Les 4 fentes ne débouchaient pas dans le conduit (0,2 à 0,9 mm de plastique restaient au bout) et l'entrée du conduit était presque fermée côté chambre (peau de 0 à 0,5 mm). Fentes et entrée étaient posées sur la section du plan de joint, alors que conduit, gorge et chambre suivent la peau, qui s'affine vers l'arrière. Les sections annoncées venaient de formules, pas de la pièce.
 - Les fentes étaient inclinées à 22° de la verticale : leur passage réel ne faisait que 0,9 mm, soit 38 mm² en tout, moins que le conduit (48 mm²). Elles sont à 38°, comme les autres surplombs internes : 1,7 mm et 62 mm². Au modèle acoustique : 21,2 dB(A) inchangés, 48 Pa à 0,2 L/s au lieu de 71 Pa.
 - La quatrième fente dépassait au-dessus de la gorge, à moitié borgne. Les 4 fentes tiennent maintenant sous la gorge.
 - Les logements des pastilles d'acier crevaient la peau de la trappe : 4 encoches visibles au dos. Les 4 aimants de la trappe sont déplacés entre la baie et le flanc de la trappe.
+- Les STEP de la coque arrière, du capot avant et du volume d'air étaient défectueux : relus, ils n'étaient plus des solides (13 faces perdues sur la coque arrière, dont la gorge, les 4 fentes et l'entrée du conduit, 4 sur le capot avant). Onshape les importait en surfaces ouvertes, ce qui donnait l'impression de voir à travers sous l'anneau, et sa détection de collisions ne portait donc pas sur ces deux pièces. Les fichiers d'impression (STL, 3MF) n'étaient pas touchés. Ces trois STEP sont maintenant écrits en NURBS : mêmes surfaces, solides fermés à la relecture.
+- Le pied du micro touchait le capot avant à 6 h (voir « Revue Onshape »). Il est dégagé de 0,85 mm.
+- **Le calcul acoustique ne lisait pas la pièce.** `acoustics/tmm.py` et la simulation openCFS calculent sur un équivalent (un volume, un conduit droit, des fentes) dont les cotes sont recopiées à la main dans `params.json`. Ils annonçaient donc 21 dB(A) pour un évent dessiné fermé. Fermé, le modèle donne d'ailleurs 24 dB(A), mieux qu'ouvert : le défaut n'était pas acoustique mais respiratoire, l'air expiré n'ayant aucune sortie, il aurait soulevé le coussin. Mesurée dans les pièces imprimées, la conductivité de l'évent vaut 0,3035 mm, 4 % de plus que ce que supposait le modèle. Le modèle est recalé dessus (longueur équivalente du conduit 146,5 mm au lieu de 152,6) : 21,15 dB(A) au lieu de 21,20, 47,5 Pa à 0,2 L/s. Aucune mesure réelle n'existe encore : ces dB restent une estimation jusqu'au banc.
 
 **À vérifier sur la pièce imprimée.** Souffler dans l'entrée du conduit (dans la paroi de la coque arrière, en bas à droite quand on la regarde de face) : l'air doit sortir par les 4 fentes, sous l'anneau. Une fente obstruée par un fil se dégage avec une lame fine.
 
@@ -127,11 +134,13 @@ Pour la lumière, plus tard : batterie LiPo 502030 avec protection (5 × 20 × 3
 
 ## Revue Onshape
 
-Le 20 novembre 2026, l'assemblage `silent-mic-v3-galet-technical.step` a été importé dans le document Onshape « Silent Mic - Référence », puis remplacé le soir même par le modèle corrigé (clic droit sur l'onglet du fichier dans le dossier « Imports CAD », « Update »). Le volume d'air y passe de 13 corps séparés à 9 : fentes, conduit et chambre communiquent maintenant.
+Le document Onshape « Silent Mic - Référence » contient l'assemblage `silent-mic-v3-galet-technical.step` (import du 20 novembre 2026, mis à jour le soir même par un clic droit sur l'onglet du fichier, « Update »).
 
-La détection d'interférences d'Onshape ne trouve aucune collision entre les 5 pièces imprimées. Onshape affiche cependant « Some interferences may be missing » à chaque passe, même sur deux pièces : son contrôle n'est donc pas une preuve complète. Les preuves principales restent les contrôles du script (`metrics.json` : aucune interférence, jeux chiffrés) et le contrôle d'étanchéité.
+Jusqu'au 20 novembre au soir, la coque arrière et le capot avant y étaient des « Composite parts » faits de 11 surfaces ouvertes, à cause du STEP défectueux décrit plus haut. Toute revue faite avant cette date sur ces deux pièces est sans valeur, y compris l'absence de collision annoncée alors.
 
-Onshape ne voit pas ce que les contrôles ci-dessus ont trouvé : des pièces qui ne se touchent pas peuvent quand même avoir un passage fermé.
+Le 20 novembre au soir, après correction, Onshape importe 50 vraies pièces (aucun composite, aucune surface) et l'assemblage compte 20 instances sans erreur. Sa détection de collisions, enfin sur de vrais solides, a trouvé un contact : le cône du pied du micro touchait le coin intérieur de la bride du capot avant à 6 h, sur 2,8 mm de large et 0,1 mm de profondeur (0,03 mm³, sous le seuil de 0,1 mm³ que le script appliquait). Le pied est depuis dégagé de 0,85 mm, mesuré à l'export, et le seuil du script est descendu à 0,005 mm³. **Reste à faire** : recharger cette dernière version dans Onshape et relancer la détection (session Onshape expirée le 21 novembre).
+
+Onshape ne voit pas les défauts de passage trouvés par le contrôle d'étanchéité : des pièces qui ne se touchent pas peuvent quand même avoir un évent fermé.
 
 ## Points ouverts
 
@@ -143,4 +152,5 @@ Onshape ne voit pas ce que les contrôles ci-dessus ont trouvé : des pièces qu
 - **Accroche du coussin : ruban double face.** Décision de Clément du 20 novembre 2026. Le scratch du prototype v2 laisse un jour tout autour (calcul : de -3 à 11 dB(A) au lieu de 21). La lèvre élastique du coussin sur une gorge de la coque est réservée à une version de production : même étanchéité attendue, coussin plus simple à changer, mais gorge à ajuster au millimètre.
 - **Fentes de sortie** : passage de 1,7 mm imprimé en surplomb à 38°, sans support. À contrôler au souffle sur la pièce (voir « Contrôles avant impression »).
 - **Plafond de la baie** : pont d'environ 21 mm sans support, caché par la trappe.
+- **Qualité du volume du capot avant** : un bossage d'aimant garde une arête à tolérance large (0,8 mm) à la jonction de son contrefort. Sans effet sur le fichier d'impression, mais le volume relu varie de 0,2 à 0,6 %. À reprendre en dessinant le bossage d'un seul tenant.
 - **Dessous du coussin** : seulement posé sur l'appui, étanche par la pression de la main. Une fente de 0,5 mm sur 3 cm fait tomber l'atténuation calculée de 21 à 12 dB(A). Un anneau de ruban double face est en réserve, à trancher au test du capot (`bench/README.md`, étape 6).

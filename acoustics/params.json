@@ -114,7 +114,8 @@
             "type": "duct",
             "width": 10.71,
             "height": 4.5,
-            "length": 152.6,
+            "length": 146.5,
+            "_doc": "longueur equivalente calee sur l'ecoulement potentiel dans les pieces imprimees (cad/leak_check.py, conductivite 0.3035 mm) ; trajet de l'entree au centre des fentes : 155.7 mm",
             "minor_k": 1.5
           },
           {

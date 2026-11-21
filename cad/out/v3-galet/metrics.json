@@ -16,7 +16,7 @@
     84.0
   ],
   "nose_clearance_ymax_mm": 42.0,
-  "cavity_air_plus_foam_cm3": 191.0,
+  "cavity_air_plus_foam_cm3": 191.1,
   "cavity_air_only_cm3": 123.5,
   "foam_cm3": {
     "foam-disc": 35.3,
@@ -113,6 +113,7 @@
     "cover": 4
   },
   "interferences": [],
+  "pedestal_to_front_mm": 0.85,
   "curvature": [
     {
       "type": "BSPLINE",
@@ -174,11 +175,11 @@
   "flat_faces_note": "plans > 35 mm : appui du coussin (couvert par le coussin, voulu plat) et face arriere du dos (maquette)",
   "mass_g_solid_pla": {
     "front": 57.7,
-    "rear": 104.9,
+    "rear": 104.8,
     "cover": 14.8,
     "collar-insert-14mm": 8.2,
     "ring_petg": 1.9,
-    "total": 187.5
+    "total": 187.4
   },
   "warn": [
     "longueur entree -> centre des fentes 155.7 mm < 175 (canal barrage a barrage 182.2)",

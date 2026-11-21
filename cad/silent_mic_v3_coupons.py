@@ -109,6 +109,33 @@ def pocket_down(x, y, z0):
     return cyl.union(roof)
 
 
+def step_ready(shape):
+    """Toutes les surfaces en NURBS, pour un STEP que les autres logiciels savent relire."""
+    from OCP.BRepBuilderAPI import BRepBuilderAPI_NurbsConvert
+    return cq.Workplane("XY").newObject([cq.Shape.cast(BRepBuilderAPI_NurbsConvert(shape.val().wrapped, True).Shape())])
+
+
+def step_solids(path):
+    """Relit un STEP."""
+    return cq.importers.importStep(str(path))
+
+
+def export_step(shape, path):
+    """Ecrit le STEP et le relit : il doit redonner les memes solides fermes.
+    Ecrit tel quel, le STEP de la coque arriere et du capot avant perdait les faces reglees sur des
+    courbes decalees (gorge, fentes, entree du conduit, rainures) : relu, ce n'etait plus un solide,
+    et Onshape l'importait en surfaces ouvertes (constate le 20 nov. 2026). Dans ce cas on reecrit en
+    NURBS : memes surfaces (ecart mesure nul), mais le volume qu'OCCT recalcule dessus varie jusqu'a
+    1 %, d'ou la tolerance. Renvoie la forme reellement ecrite, a reutiliser dans l'assemblage."""
+    n0, v0 = shape.solids().size(), vol(shape)
+    for ready, tol in ((shape, 1e-4), (step_ready(shape), 1e-2)):
+        cq.exporters.export(ready, str(path))
+        back = step_solids(path)
+        if back.solids().size() == n0 >= 1 and abs(vol(back) - v0) <= tol * v0:
+            return ready
+    raise AssertionError(f"{Path(path).name} : STEP relu en {back.solids().size()} solide(s) au lieu de {n0}, volume {vol(back):.0f} au lieu de {v0:.0f}")
+
+
 def clean_stl(path):
     """Retire les triangles degeneres qu'OCCT pose au sommet des cones (toits des poches d'aimant),
     puis exige un maillage ferme : chaque arete partagee par exactement deux faces."""
@@ -219,7 +246,7 @@ def export(out=HERE / "out" / "v3-galet" / "coupons"):
     def save(name, shape):
         t = time.perf_counter()
         assert shape.val().isValid() and shape.solids().size() == 1, name
-        cq.exporters.export(shape, str(out / f"{name}.step"))
+        export_step(shape, out / f"{name}.step")
         cq.exporters.export(shape, str(out / f"{name}.stl"), tolerance=LIN_TOL, angularTolerance=ANG_TOL)
         clean_stl(out / f"{name}.stl")
         bb = shape.val().BoundingBox()
