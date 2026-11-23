@@ -7,7 +7,8 @@
 > **Appui visage révisé le 23 novembre 2026.** Clément a essayé sa bouche sur le v2 imprimé : coussin écrasé d'environ moitié (28 à 15 mm), ses lèvres descendent un peu sous le fond du coussin. Le v3 avait perdu trois choses du v2 (`cad/whisper_mask_v0.py`) : l'assise creusée qui fait épouser les joues au coussin, la règle des 8 mm d'air entre le fond du coussin et le micro, et un bord rigide plus bas. Corrigé ainsi :
 > 1. **Assise courbe rapportée** (`cp.saddle_collar`) : une pièce posée à plat sur l'appui du capot avant et collée au ruban double face, comme le coussin. Son dessus est creusé en cylindre de 105 mm de rayon, comme le v2 : 4 mm d'épaisseur au centre, les côtés avancent vers les joues jusqu'à 13,8 mm de plus au bord. Le capot avant ne change pas.
 > 2. **Col bombé d'une pièce avec l'assise** : sa crête suit la courbe, 10 mm au-dessus du fond du coussin au centre, là où est la bouche, et plus haut sur les côtés (idée de Clément). Variantes d'essai à 8 et 14 mm.
-> 3. **Micro descendu de 20 mm, au fond de la chambre** : il tient sur son disque, 1 mm au-dessus des nervures du fond, et les deux couches de mousse sont entaillées autour de lui. Le disque d'acier de 30 mm se recoupe d'une bande de 10 mm en bas, toute sous le bas du micro : la surface sous l'aimant ne change pas. Avec la bonnette à la cote mesurée (48 mm du bas du micro au haut des poils), le haut des poils est à 18 mm sous le fond du coussin au centre, 10 mm de mieux que la règle du v2. `export()` refuse le modèle sous 8 mm. La longueur du corps ne change pas.
+> 3. **Micro descendu de 20 mm, au fond de la chambre** : il tient sur son disque, 1 mm au-dessus des nervures du fond, et les deux couches de mousse sont entaillées autour de lui. Le disque d'acier de 30 mm se recoupe d'une bande de 10 mm en bas, toute sous le bas du micro : la surface sous l'aimant ne change pas. Avec la bonnette à la cote mesurée (48 mm du bas du micro au haut des poils), le haut des poils serait à 18 mm sous le fond du coussin au centre, à longueur égale. `export()` refuse le modèle sous 8 mm.
+> 5. **Capot avant raccourci de 5 mm** (décision de Clément, meilleur compromis compacité / isolation) : le corps passe à 81 mm, 100,7 mm avec l'assise et le col (105,7 avant). La chambre perd 18 cm³ : 21,2 dB(A) au modèle 1D au lieu de 22,2 (estimation, non mesurée). Le haut des poils reste à 13 mm sous le fond du coussin, 5 mm de mieux que la règle du v2.
 >
 > 4. **Coussin aux cotes mesurées par Clément** (108 × 81 mm, ouverture 72,6 × 48,5, 28 mm d'épaisseur, contre 110 × 90 × 30 sur la fiche) : l'appui du capot passe de 104 × 84 à 104 × 77 mm, 2 mm sous le coussin de chaque côté, et le col suit la vraie ouverture (1 mm de jeu par côté, passage intérieur 66,6 × 42,5).
 >
@@ -40,7 +41,7 @@ Grammes calculés par Bambu Studio avec la densité réelle du filament (1,32) :
 
 | Plateau | Fichier | Contenu | Temps | Filament |
 |---|---|---|---|---|
-| 4 | `print/corps-capot-avant.3mf` | capot avant, appui du coussin sur le plateau, 4 colonnes de support | 1 h 43 | 53 g PLA |
+| 4 | `print/corps-capot-avant.3mf` | capot avant, appui du coussin sur le plateau, 4 colonnes de support | 1 h 36 | 47 g PLA |
 | 5 | `print/corps-coque-arriere.3mf` | coque arrière, face arrière sur le plateau | 2 h 21 | 76 g PLA |
 | 6 | `print/corps-trappe.3mf` | trappe (l'assise du corps est celle du plateau 2) | 20 min | 9 g PLA |
 | 7 | `print/corps-anneau-petg.3mf` | anneau lumineux | 11 min | 2 g PETG |
@@ -176,7 +177,7 @@ Trois coques s'empilent le long de l'axe : trappe, coque arrière, capot avant. 
 9. L'assise courbe (col de 10 mm) se colle sur l'appui du capot par un anneau continu de ruban double face, contour aligné sur celui du capot. Le coussin, voile de tissu découpé, se colle de même sur l'assise : le ruban le tient et ferme le jour.
 10. Le micro, bonnette DJI en place, entre par la bouche, haut du boîtier vers soi, et se pose debout contre la plaque, au fond de l'encoche de la mousse : son aimant le tient sur le disque d'acier.
 
-Au quotidien, rien ne s'ouvre : on sort le micro par la bouche pour le recharger, on le remet de même. On le prend par le haut de sa bonnette, à 28 mm sous la crête du col au centre : de chaque côté, une bande de 11 mm reste libre le long des 10,5 mm de fourrure qui dépassent du rebord intérieur du capot (contrôlé). Le boîtier lui-même est à 48 mm sous la crête.
+Au quotidien, rien ne s'ouvre : on sort le micro par la bouche pour le recharger, on le remet de même. On le prend par le haut de sa bonnette, à 23 mm sous la crête du col au centre : de chaque côté, une bande de 11 mm reste libre le long des 10,5 mm de fourrure qui dépassent du rebord intérieur du capot (contrôlé). Le boîtier lui-même est à 43 mm sous la crête.
 
 **Pour rouvrir le corps** (mise au point, changement de mousse) : sortir le micro, desserrer les 4 vis avec une clé six pans de 2 mm passée par la bouche, col et coussin en place (1,2 mm de jeu entre la clé et le col ; avec le coussin, il faut un tournevis six pans de 2 mm à lame d'au moins 60 mm et à tige de moins de 4,9 mm, une clé coudée bute sur le coussin). Les vis restent dans leurs puits, le capot se lève droit. Pas besoin de décoller le coussin.
 
@@ -187,13 +188,13 @@ Deux pièces seulement, dans une plaque de mousse polyuréthane à cellules ouve
 | Ordre | Pièce | Plaque | Quantité | Contour |
 |---|---|---|---|---|
 | 1 | Fond | 10 mm | 2 | ellipse 60 × 40 mm, une encoche droite à 6 h où passent la plaque et le micro |
-| 2 | Manchon avant | 10 mm | 1 | bande développée : secteur d'anneau de rayons 70 et 87 mm, 150°, 8 fentes de 2 × 13 mm côté joint, une par nervure des bossages de vis |
+| 2 | Manchon avant | 10 mm | 1 | bande développée : secteur d'anneau de rayons 58 et 70 mm, 187°, 8 fentes de 2 × 9 mm côté joint, une par nervure des bossages de vis |
 
 1. Poser le gabarit sur la plaque, le tenir à plat d'une main.
 2. Couper au cutter à lame neuve de 18 mm, lame verticale, en plusieurs passes légères le long du gabarit. Les encoches d'abord, le contour ensuite.
 3. Fond : couper deux fois le même contour. Manchon : le rayon intérieur (bord court, côté encoches) va vers le plan de joint ; les deux extrémités de la bande se rejoignent bout à bout en bas (6 h).
 
-Volumes découpés : fond 23,2 cm³ (deux couches), manchon 31,2 cm³. Pas de bonnette en mousse : c'est celle du DJI, sur le micro.
+Volumes découpés : fond 23,2 cm³ (deux couches), manchon 22,6 cm³. Pas de bonnette en mousse : c'est celle du DJI, sur le micro.
 
 Abandonnés par rapport à la version précédente, pour couper moins de pièces : la mousse des flancs arrière (6 encoches, 7 morceaux) et la couche du chanfrein du joint (8 encoches). Au modèle acoustique, retirer 9 cm³ de mousse coûte moins de 0,1 dB(A). Le manchon passe en revanche à une bande d'épaisseur constante de 10 mm (le passage d'air libre autour du micro reste de 1368 mm², plus de 20 fois la section du conduit).
 
@@ -240,10 +241,10 @@ Onshape ne voit pas les défauts de passage trouvés par le contrôle d'étanch�
 - **Longueur du filament LED non choisie.** Le tour de la rainure fait environ 21 cm.
 - **Levier de l'interrupteur** accessible par une fente de 4 × 2,2 mm sous la coque : à valider au doigt.
 - **Vissage du joint à essayer sur les éprouvettes** (`print/cols-et-joint.3mf`) : l'écrou doit se glisser dans sa fente, la tête fraisée s'asseoir au fond de son puits, les deux moitiés se toucher sans jour une fois serrées. L'éprouvette arrière porte aussi, dessous, un avant-trou de 2,7 mm : y visser une M3 × 10 pour vérifier que le filet de la trappe prend sans fendre la pièce.
-- **Micro plus profond que sur le v2** : haut du boîtier à 48 mm sous la crête du col, haut de la bonnette à 28 mm, pour garder les lèvres loin des poils sans allonger le corps. La prise par la bonnette se juge sur la pièce : si elle est malcommode, remonter le micro (`MIC_Z0`) coûte de la marge, pas d'isolation.
+- **Micro plus profond que sur le v2** : haut du boîtier à 43 mm sous la crête du col, haut de la bonnette à 23 mm, pour garder les lèvres loin des poils sans allonger le corps. La prise par la bonnette se juge sur la pièce : si elle est malcommode, remonter le micro (`MIC_Z0`) coûte de la marge, pas d'isolation.
 - **Serrage des vis** : rien ne limite le couple à part la main. Bossage contre bossage, le serrage s'arrête net ; forcer au-delà peut fendre un bossage entre deux couches.
 - **Accroche du coussin : ruban double face.** Décision de Clément du 20 novembre 2026. Le scratch du prototype v2 laisse un jour tout autour (calcul : de -3 à 11 dB(A) au lieu de 21). La lèvre élastique du coussin sur une gorge de la coque est réservée à une version de production : même étanchéité attendue, coussin plus simple à changer, mais gorge à ajuster au millimètre.
-- **Bonnette DJI : hauteur mesurée, largeur et épaisseur encore estimées.** Clément a mesuré le 23 novembre 2026 environ 48 mm du bas du micro au haut des poils, soit 20 mm au-dessus du boîtier : c'est la cote de la CAO depuis la révision de l'appui visage. Largeur et épaisseur restent estimées à 36 × 26 mm, avec une jupe de 9 mm sur le haut du boîtier ; il reste 3,4 mm jusqu'au capot et au col. La simulation de la visionneuse (bouton « Bouche »), calée sur l'essai du v2 (coussin de 28 mm écrasé à 15, lèvres juste sous son fond), donne 17,5 mm entre les lèvres et les poils ; visage en butée sur le col, 12,6 mm ; lèvres avancées de 22 mm au-delà des joues et visage en butée, encore 6,1 mm. Visage schématique : à confirmer sur la pièce. Les cotes se règlent par `BONNET` dans `cad/silent_mic_v3_galet.py`.
+- **Bonnette DJI : hauteur mesurée, largeur et épaisseur encore estimées.** Clément a mesuré le 23 novembre 2026 environ 48 mm du bas du micro au haut des poils, soit 20 mm au-dessus du boîtier : c'est la cote de la CAO depuis la révision de l'appui visage. Largeur et épaisseur restent estimées à 36 × 26 mm, avec une jupe de 9 mm sur le haut du boîtier ; il reste 3,4 mm jusqu'au capot et au col. La simulation de la visionneuse (bouton « Bouche »), calée sur l'essai du v2 (coussin de 28 mm écrasé à 15, lèvres juste sous son fond), donne 12,5 mm entre les lèvres et les poils ; visage en butée sur le col, 7,6 mm ; lèvres avancées de 22 mm au-delà des joues et visage en butée, encore 1,1 mm. Visage schématique : à confirmer sur la pièce. Les cotes se règlent par `BONNET` dans `cad/silent_mic_v3_galet.py`.
 - **Micro couché : écarté le 23 novembre 2026.** Couché dans le sens de la largeur, il heurte les 4 bossages de vis du joint ; dans le sens de la hauteur, ses 48 mm ne ressortent plus par le col (42 mm). Pour raccourcir le corps plus tard : d'après le modèle 1D (estimation, non mesurée), environ 1 dB(A) perdu par 5 à 6 mm retirés.
 - **Fentes de sortie** : passage de 1,7 mm imprimé en surplomb à 38°, sans support. À contrôler au souffle sur la pièce (voir « Contrôles avant impression »).
 - **Plafond de la baie** : pont de 31 mm dans son sens le plus court (36 × 31 mm), imprimé sans support et caché par la trappe. Les seuls supports de la coque restent sous le passage de la prise USB-C. Un fléchissement de quelques dixièmes est possible : à mesurer sur la pièce avant de commander l'électronique.

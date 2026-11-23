@@ -13,26 +13,26 @@
   "manchon": {
     "plaque_mm": 10.0,
     "quantite": 1,
-    "aire_mm2": 3125,
-    "volume_cm3": 31.2,
+    "aire_mm2": 2261,
+    "volume_cm3": 22.6,
     "gabarit_mm": [
-      167.4,
-      68.0
+      139.0,
+      73.3
     ],
     "note": "plaque de 10 mm, bord court (rayon interieur) vers le joint, raccord en bas (6 h)",
     "developpement": {
       "rayons_developpes_mm": [
-        70.4,
-        86.8
+        57.9,
+        69.5
       ],
-      "angle_deg": 149.7,
-      "hauteur_bande_mm": 16.4,
+      "angle_deg": 187.1,
+      "hauteur_bande_mm": 11.6,
       "encoches": 8,
       "encoche_mm": [
         2.0,
-        13.4
+        8.6
       ]
     }
   },
-  "total_volume_cm3": 54.4
+  "total_volume_cm3": 45.8
 }

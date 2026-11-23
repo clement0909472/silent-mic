@@ -33,7 +33,9 @@ from whisper_mask_v2_screwed import loft_ellipses
 # ---------- silhouette : une seule fonction a changer (outer_profile) ----------
 PROFILE = os.environ.get("SILENT_MIC_PROFILE", "evase")
 JOINT_S = 61.0  # plan de joint ; l'anneau lumineux loge juste derriere
-S_SEAT, S_REAR = 30.0, 116.0
+# appui du coussin a s = 35 : capot avant raccourci de 5 mm le 23 nov. 2026 (decision de Clement, environ 1 dB(A) de
+# moins au modele contre 5 mm de compacite) ; le corps garde son evasement, decale d'autant
+S_SEAT, S_REAR = 35.0, 116.0
 S_COVER = 108.0  # face arriere plane de la coque, fermee par le couvercle
 
 
@@ -46,7 +48,7 @@ def outer_profile(s):
     """Demi-axes (a, b) de la section exterieure a l'abscisse s (sections elliptiques)."""
     if PROFILE == "evase":
         if s < 60:
-            k = 1 - smoothstep((s - 30) / 18)
+            k = 1 - smoothstep((s - S_SEAT) / 18)
             return 42 + 10 * k, 33 + 5.5 * k  # appui 104 x 77 (cp.SEAT), 2 mm sous le coussin mesure
         g = min((s - 60) / 61.3, 1.0)
         f = (1 - g ** 2.4) ** (1 / 2.2)
@@ -274,8 +276,8 @@ def sections(s_list, d=0.0):
 
 # ================= enveloppe =================
 
-FRONT_SMOOTH = (30.0, 33.0, 36.0, 39.0, 42.0, 45.0, 48.0)
-FRONT_RULED = (48.0, 60.0, JOINT_S)
+FRONT_SMOOTH = tuple(S_SEAT + d for d in (0.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0))  # l'evasement, 18 mm
+FRONT_RULED = (S_SEAT + 18.0, 60.0, JOINT_S)
 REAR_S = (JOINT_S, 66.0, 72.0, 80.0, 88.0, 96.0, 102.0, S_COVER, 111.0, 113.5, S_REAR)
 
 
@@ -917,7 +919,7 @@ def export():
     m["cavity_air_plus_foam_cm3"] = round(v_cav, 1)
     m["cavity_air_only_cm3"] = round(v_cav - v_foam, 1)
     m["foam_cm3"] = {k: round(v, 1) for k, v in foam.items()} | {"total": round(v_foam, 1)}
-    assert v_cav >= 185.0, f"cavite {v_cav:.1f} cm3 < 185"
+    assert v_cav >= 170.0, f"cavite {v_cav:.1f} cm3 < 170"  # 185 avant le raccourcissement de 5 mm du 23 nov. 2026
     assert cav.solids().size() >= 1
     # section d'air libre (sans mousse ni pieces) le long de l'axe, de l'entree du conduit au coussin ;
     # la bonnette, en fourrure, laisse passer l'air : elle n'est pas comptee

@@ -29,7 +29,7 @@ from scipy import ndimage
 HERE = Path(__file__).resolve().parent
 OUT = HERE / "out" / "v3-galet"
 P = 0.25
-Z_SEAT, Z_RF, RING_H = 31.0, -47.0, 2.6
+Z_SEAT, Z_RF, RING_H = 26.0, -47.0, 2.6  # Z_SEAT de cad/silent_mic_v3_galet.py : 31 avant le capot raccourci de 5 mm
 LO = np.array([-58.03, -48.03, -58.03])  # decale : aucun plan de coupe ne tombe sur un sommet
 NX, NY, NZ = 464, 384, 432
 XC, YC, ZC = (LO[i] + (np.arange(n) + 0.5) * P for i, n in enumerate((NX, NY, NZ)))
