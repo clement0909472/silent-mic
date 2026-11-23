@@ -28,15 +28,16 @@ import whisper_mask_v2_screwed as v2
 # ---------- coussin d'oreillette ----------
 # Montage v0/v2 eprouve : l'ouverture du coussin s'enfile sur un collier rigide.
 PADS = {
-    "brainwavz": {"outer": v0.PAD_OUTER, "opening": v0.PAD_OPENING, "thickness": v0.PAD_THICKNESS},
+    # mesure par Clement sur son coussin le 23 nov. 2026 (fiche : 110 x 90, ouverture 70 x 50, 30 mm)
+    "brainwavz": {"outer": (108.0, 81.0), "opening": (72.6, 48.5), "thickness": 28.0},
     # Type Sony MDR-7506, cotes de fiches vendeur, non verifiees sur piece.
     "small-oval": {"outer": (100.0, 81.0), "opening": (60.0, 40.0), "thickness": 20.0},
 }
 PAD = PADS["brainwavz"]
-PAD_CLEARANCE = 2.0  # v0 : 2.5 ; 2.0 garde l'ouverture du collier a 62 x 42
+PAD_CLEARANCE = 1.0  # jeu par cote entre col et ouverture du coussin : col interieur 66.6 x 42.5
 COLLAR_WALL = 2.0
 COLLAR_ROUND = 0.95  # arrondi du sommet, quasi demi-rond sur 2 mm
-SEAT = (104.0, 84.0)
+SEAT = (104.0, 77.0)  # appui du coussin : 2 mm sous le coussin de chaque cote (demande de Clement, le plus compact)
 MIN_COLLAR_INNER = (62.0, 42.0)
 
 
@@ -81,15 +82,24 @@ BOSS_REAR_H = NUT_SKIN + NUT[1] + 1.2
 HEAD_WELL_R = SCREW[1] / 2 + 0.2  # puits de la tete et du tournevis
 PILOT_D = 2.7  # avant-trou d'une M3 qui taille son filet dans le PLA (trappe, hors volume acoustique)
 
+# ---------- assise courbe et col (23 nov. 2026) ----------
+# Clement : sur le v2 imprime, ses levres descendent un peu sous le fond du coussin, et l'assise du v2, creusee
+# en cylindre de 105 mm (axe vertical), fait epouser les joues au coussin. L'assise se rapporte sur l'appui plat
+# du capot (ruban double face, comme le coussin) : le capot garde son impression appui au plateau, sans support.
+FACE_RADIUS = v0.FACE_RADIUS
+SADDLE_T0 = 4.0  # epaisseur au centre, sous la bouche : le fond du coussin monte d'autant
+# hauteur du col au-dessus du fond du coussin, au centre. La crete suit la courbe : plus haute sur les cotes,
+# ou le coussin plie moins (idee de Clement). Coussin de 30 mm, environ 15 une fois comprime (Clement).
+SADDLE_COLLARS = (8.0, 10.0, 14.0)
+
 # ---------- capots d'essai ----------
-CAP_COLLARS = (3.0, 10.0, 16.0)
 CAP_DEPTH = 28.0  # interieur derriere l'appui : DJI 28.6 x 28 x 13.5 a plat + ecouteur
 CAP_WALL = 3.0
 CABLE_PORT = 5.5
 FLANGE_T, FLANGE_W, FLANGE_GAP = 1.2, 9.0, 0.2  # bride du collier amovible
 
 LIGHT_STEPS = (0.8, 1.2, 1.6, 2.0, 2.4)
-LIN_TOL, ANG_TOL = 0.1, 0.3
+LIN_TOL, ANG_TOL = 0.02, 0.1  # a 0.1 / 0.3, le maillage de l'assise courbe gravee restait ouvert (58 aretes)
 
 
 def ell_prism(w, h, z0, z1):
@@ -230,20 +240,37 @@ def flange_outer():
     return tuple(c + 2 * FLANGE_W for c in collar_inner())
 
 
-def collar_insert(height):
-    """Collier amovible : bride plate posee dans le logement, serree par le coussin."""
-    ci = collar_inner()
-    # bride biseautee a 38 deg (1.3 / 1) : va dans le logement droit du capot d'essai et dans le cone du corps
-    fo = flange_outer()
-    k = 2 * FLANGE_T / 1.3
-    flange = cq.Workplane("XY").newObject([cq.Solid.makeLoft([ell_wire(fo[0] - k, fo[1] - k, 0), ell_wire(*fo, FLANGE_T)], True)])
-    flange = flange.cut(ell_prism(*ci, -1, FLANGE_T + 1))
-    ins = flange.union(collar(FLANGE_T, height))
-    # hauteur gravee sur la bride, cote +x, lisible une fois le collier retire
-    x = (collar_outer()[0] / 2 + flange_outer()[0] / 2) / 2
-    label = (cq.Workplane(cq.Plane(origin=(x, 0, FLANGE_T), xDir=(0, 1, 0), normal=(0, 0, 1)))
+def face_sag(x):
+    """Avancee de l'assise vers le visage a l'abscisse x, par rapport au centre."""
+    return FACE_RADIUS - math.sqrt(FACE_RADIUS ** 2 - x * x)
+
+
+def below_face(depth):
+    """Tout ce qui est sous la surface cylindrique de rayon FACE_RADIUS (axe vertical y) dont le creux est a z = depth."""
+    zc = depth + FACE_RADIUS
+    cyl = cq.Solid.makeCylinder(FACE_RADIUS, 300, cq.Vector(0, -150, zc), cq.Vector(0, 1, 0))
+    return cq.Workplane("XY").box(300, 300, zc + 100, centered=(True, True, False)).translate((0, 0, -100)).cut(cq.Workplane("XY").newObject([cyl]))
+
+
+def saddle_collar(height, seat=SEAT):
+    """Assise du coussin et col d'une piece, dos plat (z = 0) pose sur l'appui plat du capot, imprime dos au plateau
+    sans support. Dessus creuse en cylindre de 105 mm comme le v2 ; crete du col a `height` au-dessus de l'assise,
+    partout. Le passage interieur garde l'ouverture du col (62 x 42) : la cle de 2 mm atteint toujours les vis."""
+    ci, co = collar_inner(), collar_outer()
+    base = ell_prism(*seat, 0, 60).intersect(below_face(SADDLE_T0))
+    rim = ell_prism(*co, 0, 60).intersect(below_face(SADDLE_T0 + height))
+    piece = base.union(rim).cut(ell_prism(*ci, -1, 61))
+    top = SADDLE_T0 + height - 0.01
+    try:  # crete arrondie, comme l'ancien col
+        piece = piece.edges(cq.selectors.BoxSelector((-80, -80, top), (80, 80, 100))).fillet(COLLAR_ROUND)
+    except Exception as exc:  # shortcut: crete vive si OCCT refuse le conge ; a reprendre a la main
+        print(f"conge de la crete refuse : {exc}")
+    # hauteur gravee sous l'assise, cote +x, dans le porte-a-faux au-dessus de l'ouverture du capot, hors de la bande
+    # du ruban adhesif : lisible piece retournee
+    x = (ci[0] / 2 + flange_outer()[0] / 2 - 1.5) / 2
+    label = (cq.Workplane(cq.Plane(origin=(x, 0, 0), xDir=(0, -1, 0), normal=(0, 0, -1)))
              .text(f"{height:g}", 5, -0.4, combine=False, halign="center", valign="center"))
-    return ins.cut(label)
+    return piece.cut(label)
 
 
 def pad_test_cap():
@@ -317,12 +344,12 @@ def export(out=HERE / "out" / "v3-galet" / "coupons"):
     print(f"construit capot en {time.perf_counter() - t:.1f} s", flush=True)
     assert CAP_DEPTH >= v0.MIC_SIZE[2] + 8.0, "place pour DJI a plat + ecouteur"
     save("pad-test-cap", cap)
-    for h in CAP_COLLARS:
-        ins = collar_insert(h)
+    for h in SADDLE_COLLARS:
+        ins = saddle_collar(h)
         z_seat = CAP_WALL + CAP_DEPTH
-        placed = ins.translate((0, 0, z_seat - FLANGE_T - 0.1))
-        assert vol(placed.intersect(cap)) < 1e-6, "collier / capot"
-        save(f"collar-insert-{h:g}mm", ins)
+        placed = ins.translate((0, 0, z_seat + 0.02))
+        assert vol(placed.intersect(cap)) < 1e-6, "assise / capot"
+        save(f"assise-col-{h:g}mm", ins)
     front, rear = joint_coupon_halves()
     assert vol(front.intersect(rear)) < 1e-6
     # imprimee comme le capot du corps : plan de joint en haut, fraisures vers le plateau

@@ -1,38 +1,49 @@
 {
-  "fond": {
+  "fond-bas": {
     "plaque_mm": 10.0,
-    "quantite": 2,
+    "quantite": 1,
     "aire_mm2": 1591,
-    "volume_cm3": 31.8,
+    "volume_cm3": 15.9,
     "gabarit_mm": [
       59.9,
       39.7
     ],
-    "note": "plaque de 10 mm, deux couches identiques, encoche vers le bas (6 h)"
+    "note": "plaque de 10 mm, couche du dessous, encoche vers le bas (6 h)"
+  },
+  "fond-haut": {
+    "plaque_mm": 10.0,
+    "quantite": 1,
+    "aire_mm2": 1162,
+    "volume_cm3": 11.6,
+    "gabarit_mm": [
+      59.9,
+      39.7
+    ],
+    "note": "plaque de 10 mm, couche du dessus, encoche longue du micro vers le bas (6 h)"
   },
   "manchon": {
     "plaque_mm": 10.0,
     "quantite": 1,
-    "aire_mm2": 3322,
-    "volume_cm3": 33.2,
+    "aire_mm2": 3125,
+    "volume_cm3": 31.2,
     "gabarit_mm": [
-      154.6,
-      74.1
+      167.4,
+      68.0
     ],
     "note": "plaque de 10 mm, bord court (rayon interieur) vers le joint, raccord en bas (6 h)",
     "developpement": {
       "rayons_developpes_mm": [
-        60.3,
-        77.4
+        70.4,
+        86.8
       ],
-      "angle_deg": 174.7,
-      "hauteur_bande_mm": 17.1,
+      "angle_deg": 149.7,
+      "hauteur_bande_mm": 16.4,
       "encoches": 8,
       "encoche_mm": [
         2.0,
-        14.1
+        13.4
       ]
     }
   },
-  "total_volume_cm3": 65.0
+  "total_volume_cm3": 58.7
 }

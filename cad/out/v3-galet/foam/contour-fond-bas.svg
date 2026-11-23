@@ -5,6 +5,6 @@
 <line x1="10" y1="76.69" x2="10" y2="80.69" stroke="black" stroke-width="0.3"/>
 <line x1="60" y1="76.69" x2="60" y2="80.69" stroke="black" stroke-width="0.3"/>
 <text x="64" y="80.19" font-size="4" font-family="sans-serif">50 mm : verifier a la regle avant de couper</text>
-<text x="10" y="8" font-size="5" font-family="sans-serif">FOND</text>
-<text x="10" y="14" font-size="3.5" font-family="sans-serif">x2 - plaque de 10 mm, deux couches identiques, encoche vers le bas (6 h)</text>
+<text x="10" y="8" font-size="5" font-family="sans-serif">FOND-BAS</text>
+<text x="10" y="14" font-size="3.5" font-family="sans-serif"> - plaque de 10 mm, couche du dessous, encoche vers le bas (6 h)</text>
 </svg>

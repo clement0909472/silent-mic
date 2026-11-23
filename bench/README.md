@@ -46,14 +46,14 @@ Les prises nez pincé disent ce que le nez laisse sortir quand la bouche est cou
 
 ## Test du capot d'essai : quel col choisir
 
-But : mesurer sur ton visage quelle hauteur de col (3, 10 ou 16 mm) laisse le moins sortir le son, avant d'imprimer le corps.
+But : mesurer sur ton visage quelle hauteur de col (assises de 8, 10 et 14 mm, `print/cols-et-joint.3mf` et `print/assises-variantes.3mf`) laisse le moins sortir le son, avant d'imprimer le corps. Sans le plateau des variantes, ne tester que l'assise de 10 mm (`--collars 10`) et passer directement à l'étape 6.
 
 1. `python bench/cap_test.py --make-noise` écrit `bench/bruit-rose.wav`. Le jouer en boucle dans un écouteur sans fil, à volume fixe et modéré.
 2. Découper le voile de tissu tendu au dos du coussin, au ras de l'ouverture : sinon le col bute dessus et le coussin ne se plaque pas. Garder le morceau, il peut servir de filtre anti-pop collé sur le haut du col.
-3. Mettre l'écouteur et l'émetteur DJI dans le capot, boucher le passage de câble avec de la pâte adhésive, poser le coussin autour du col. Pas de scratch : son épaisseur de fibres laisse un jour tout autour, qui fausserait la comparaison des cols. Le coussin tient par la pression de la main.
+3. Mettre l'écouteur et l'émetteur DJI dans le capot, boucher le passage de câble avec de la pâte adhésive, poser l'assise à plat sur le capot puis le coussin sur l'assise, autour du col. Pas de scratch : son épaisseur de fibres laisse un jour tout autour, qui fausserait la comparaison des cols. Assise et coussin tiennent par la pression de la main.
 4. `python bench/cap_test.py --inside "DJI" --outside "Yeti" --session capot-$(date +%Y%m%d)` : le script demande chaque col trois fois, 12 s par pose, capot plaqué sur le visage, bouche fermée. Environ 10 minutes.
 5. `python bench/cap_test.py --report bench/sessions/capot-AAAAMMJJ` donne la fuite par col.
 
-6. Refaire une courte session avec le meilleur col et le dessous du coussin collé au capot par un anneau de ruban double face : `python bench/cap_test.py --inside "DJI" --outside "Yeti" --session capot-colle-$(date +%Y%m%d) --collars 16`, puis `--report`. Le coussin est seulement posé sur son appui : si la fuite baisse nettement (plus que l'écart-type du rapport), le dessous fuyait et le ruban devient une étape du montage.
+6. Refaire une courte session avec le meilleur col et l'assise collée au capot et le coussin collé à l'assise, chacun par un anneau de ruban double face : `python bench/cap_test.py --inside "DJI" --outside "Yeti" --session capot-colle-$(date +%Y%m%d) --collars 10`, puis `--report`. Ils sont seulement posés : si la fuite baisse nettement (plus que l'écart-type du rapport), le dessous fuyait et le ruban devient une étape du montage.
 
-La fuite est le niveau dehors moins le niveau dedans : elle ne dépend pas du volume de l'écouteur. Plus elle est basse, mieux le col isole. Le modèle prévoit environ 12 dB(A) d'écart entre le col de 3 mm et celui de 16 mm. Un écart nul voudrait dire que le flanc du coussin n'est pas le chemin de fuite principal.
+La fuite est le niveau dehors moins le niveau dedans : elle ne dépend pas du volume de l'écouteur. Plus elle est basse, mieux le col isole. Le modèle prévoyait environ 12 dB(A) d'écart entre un col de 3 mm et un de 16 mm (estimation, non mesurée) ; entre 8 et 14 mm, l'écart attendu est plus faible. Un écart nul voudrait dire que le flanc du coussin n'est pas le chemin de fuite principal.

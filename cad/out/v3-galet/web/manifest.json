@@ -43,8 +43,8 @@
       ]
     },
     {
-      "file": "collar-insert-14mm.stl",
-      "label": "Collier amovible 14 mm",
+      "file": "assise-col.stl",
+      "label": "Assise courbe et col 10 mm",
       "role": "black",
       "explode": [
         0,
@@ -114,7 +114,7 @@
     },
     {
       "file": "foam-disc.stl",
-      "label": "Fond de mousse, 2 couches de 10 mm",
+      "label": "Fond de mousse, 2 couches de 10 mm, entaille du micro",
       "role": "foam",
       "explode": [
         0,

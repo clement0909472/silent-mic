@@ -3,7 +3,7 @@
  "pieces": 27,
  "noms": [
   "air-cavity-and-duct",
-  "collar-insert-14mm",
+  "assise-col",
   "cover",
   "front",
   "rear",
@@ -31,10 +31,10 @@
    "INTERFERE"
   ]
  ],
- "contacts_sans_recouvrement": 13,
+ "contacts_sans_recouvrement": 12,
  "exclus": [
   "air-cavity-and-duct"
  ],
- "controle_le": "2026-11-23 11:21",
- "duree_s": 147.8
+ "controle_le": "2026-11-23 16:55",
+ "duree_s": 69.4
 }

@@ -19,6 +19,7 @@ import tempfile
 import time
 
 import cadquery as cq
+import numpy as np
 
 
 HERE = Path(__file__).resolve().parent
@@ -46,7 +47,7 @@ def outer_profile(s):
     if PROFILE == "evase":
         if s < 60:
             k = 1 - smoothstep((s - 30) / 18)
-            return 42 + 10 * k, 33 + 9 * k
+            return 42 + 10 * k, 33 + 5.5 * k  # appui 104 x 77 (cp.SEAT), 2 mm sous le coussin mesure
         g = min((s - 60) / 61.3, 1.0)
         f = (1 - g ** 2.4) ** (1 / 2.2)
         return 42 * f, 33 * f
@@ -90,8 +91,12 @@ SCREW_T_DEG = (45, 135, 223, 317)
 
 # ---------- coussin et collier amovible ----------
 PAD = cp.PAD
-COLLAR_HEIGHT = 14.0
+# assise courbe et col d'une piece, posee sur l'appui plat (cp.saddle_collar) ; hauteur du col au-dessus du fond
+# du coussin, au centre : 10 mm retenus avec Clement le 23 nov. 2026 (coussin de 30 mm, environ 15 comprime)
+COLLAR_HEIGHT = 10.0
 COLLAR_INNER = cp.collar_inner()
+SADDLE_GAP = 0.02  # jeu sous l'assise : les controles d'interference ne voient pas le contact
+PAD_BASE = Z_SEAT + SADDLE_GAP + cp.SADDLE_T0  # fond du coussin au centre, sur l'assise
 LEDGE = 1.5  # appui de la bride du collier (seul porte-a-faux au-dessus du plateau)
 SEAT_OPENING = tuple(f - 2 * LEDGE for f in cp.flange_outer())
 OPENING_CHAMFER = (2.5, 1.0)  # largeur, hauteur : sous le bord de l'ouverture, face au plateau en impression (pente libre)
@@ -148,9 +153,11 @@ MIC_XC, MIC_YC = 0.0, 0.0  # boitier centre sur l'axe : la bonnette est centree 
 MOUNT_W, MOUNT_T = v0.MOUNT_WIDTH, v0.MOUNT_THICKNESS
 MIC_CLEARANCE = 1.0
 MIC_STACK_EXTRA = float(os.environ.get("SILENT_MIC_STACK_EXTRA", 0.0))  # clip ou aimant entre disque et boitier, a mesurer
-BONNET = (36.0, 26.0, 9.0, 22.0)  # bonnette DJI : largeur, epaisseur, recouvrement du boitier, depassement. Clement a mesure 48 mm du bas du micro au haut des poils (23 nov. 2026), soit 20 mm de depassement : 22 garde comme enveloppe prudente ; largeur et epaisseur restent estimees
-FINGER = 15.0  # largeur de doigt controlee de chaque cote du micro, pris par la bouche (capot visse)
-MOUTH_ABOVE_SEAT = 20.0  # coussin de 30 mm comprime : hypothese
+BONNET = (36.0, 26.0, 9.0, 20.0)  # bonnette DJI : largeur, epaisseur, recouvrement du boitier, depassement. Depassement mesure par Clement (48 mm du bas du micro au haut des poils, 23 nov. 2026) ; largeur et epaisseur estimees
+FINGER = 11.0  # largeur de doigt controlee de chaque cote de la bonnette, prise par la bouche (capot visse) ; le col elliptique laisse 11 mm sur toute l'epaisseur du boitier
+# regle du v2 (AIR_GAP_TARGET) : 8 mm d'air entre le fond du coussin et ce qui depasse du micro. Clement a constate
+# le 23 nov. 2026 sur le v2 imprime que ses levres descendent un peu sous le fond du coussin
+AIR_GAP = v0.AIR_GAP_TARGET
 PLA = 1.24e-3
 LIN_TOL, ANG_TOL = 0.02, 0.1  # a 0.1 / 0.3 rad, OCCT maillait la coque arriere 6 % trop petite
 WEB_TOL = (0.4, 0.6)
@@ -508,6 +515,8 @@ def build_floor_features():
     zt = FLOOR_TOP + FLOOR_RIB
     a, b = outer_profile(s_of(zt))
     ribs = box(-40, 40, -0.8, 0.8, FLOOR_TOP - 0.5, zt).union(box(-0.8, 0.8, -40, 40, FLOOR_TOP - 0.5, zt))
+    # nervure entaillee devant la plaque : depuis que le micro est abaisse, le bas du disque d'acier passe au ras du fond
+    ribs = ribs.cut(box(-16, 16, MOUNT_FACE_Y - 0.1, MOUNT_FACE_Y + 1.0, FLOOR_TOP - 1, zt + 1))
     return ribs.intersect(eprism(2 * a - 2, 2 * b - 2, FLOOR_TOP - 0.5, zt))
 
 
@@ -629,14 +638,15 @@ def build_ring():
     return ring(0.0, cp.RING_DEPTH, -RING_H, -0.1)
 
 
-def collar_insert_placed():
-    # la bride biseautee touche le cone quand son bord haut (flange_outer) rencontre le cone
-    return cp.collar_insert(COLLAR_HEIGHT).translate((0, 0, Z_SEAT - STEEP * cp.FLANGE_GAP - cp.FLANGE_T + 0.05))
+def saddle_placed():
+    return cp.saddle_collar(COLLAR_HEIGHT).translate((0, 0, Z_SEAT + SADDLE_GAP))  # dos plat sur l'appui plat du capot
 
 
 # ================= corps de reference =================
 
-MIC_Z0 = disc_top() + v0.FOAM_MIC_CLEARANCE  # bas du boitier, juste au-dessus du fond de mousse (comme le v2)
+# bas du boitier sur la couche basse du fond de mousse : la couche haute est entaillee autour du micro. Abaisse de
+# 10 mm le 23 nov. 2026 pour tenir la regle des 8 mm du v2 avec la bonnette (voir AIR_GAP)
+MIC_Z0 = FLOOR_TOP + FLOOR_RIB + FOAM_LAYER + v0.FOAM_MIC_CLEARANCE
 MIC_ZC = MIC_Z0 + v0.MIC_SIZE[1] / 2
 MOUNT_FACE_Y = MIC_YC - v0.MIC_SIZE[2] / 2 - v0.MIC_STEEL_DISC_THICKNESS  # face de la plaque qui porte le disque
 
@@ -665,10 +675,11 @@ def mic_disc():
 def build_mic_mount():
     """Plaque dressee sur le fond de la chambre (28 x 4 mm, comme le v2), imprimee avec la coque sans support.
     Le disque d'acier se colle sur sa face avant, le micro y tient par son aimant. Tout reste dans
-    l'ouverture du capot avant, qui se pose et se retire droit. Pied evase de 2 mm par face sur 3 mm :
+    l'ouverture du capot avant, qui se pose et se retire droit. Pied evase de 2 mm au dos sur 3 mm :
     decoller le micro fait travailler la plaque en flexion, a travers ses couches."""
     y0, y1, zf = MOUNT_FACE_Y - MOUNT_T, MOUNT_FACE_Y, FLOOR_TOP - 0.5
-    prof = [(y0 - 2.0, zf), (y1 + 2.0, zf), (y1 + 2.0, FLOOR_TOP), (y1, FLOOR_TOP + 3.0), (y1, mount_top()),
+    # evasement au dos seulement : depuis que le micro est abaisse, le disque descend jusqu'au pied cote micro
+    prof = [(y0 - 2.0, zf), (y1, zf), (y1, mount_top()),
             (y0, mount_top()), (y0, FLOOR_TOP + 3.0), (y0 - 2.0, FLOOR_TOP)]
     plate = cq.Workplane("YZ", origin=(MIC_XC - MOUNT_W / 2, 0, 0)).polyline(prof).close().extrude(MOUNT_W)
     return plate.edges("|Y and >Z").fillet(v0.MOUNT_EDGE_FILLET)
@@ -706,7 +717,7 @@ def inlet_notch():
     return box(bb.xmin - 3, bb.xmax + 3, -60, bb.ymax + 4, DUCT_BOTTOM - 2, 1)
 
 
-def disc_layer_shape():
+def disc_layer_shape(top=False):
     """Contour d'une couche du fond (decoupe dans une plaque de 10 mm) : ellipse de la cavite a la
     jonction des deux couches, moins 0.5 mm, et une seule encoche droite a 6 h qui degage la plaque
     du micro, le tunnel des fils et l'entree du conduit. Les deux couches sont identiques."""
@@ -714,26 +725,29 @@ def disc_layer_shape():
     a, b = cavity_half_axes(zj)
     ib = build_inlet().val().BoundingBox()
     half = max(MOUNT_W, v0.MIC_STEEL_DISC_DIAMETER) / 2 + 0.3  # le disque de 30 mm deborde de la plaque de 28
-    notch = (MIC_XC - half, max(ib.xmax + 1.0, MIC_XC + half), MOUNT_FACE_Y + 0.3)
+    # couche haute : l'encoche s'allonge jusque devant le micro, qui la traverse jusqu'a la couche basse
+    ny = mic_box().val().BoundingBox().ymax + 0.5 if top else MOUNT_FACE_Y + 0.3
+    notch = (MIC_XC - half, max(ib.xmax + 1.0, MIC_XC + half), ny)
     return a - 0.5, b - 0.5, notch
 
 
-def disc_layer(z0, h=FOAM_LAYER):
-    a, b, (nx0, nx1, ny) = disc_layer_shape()
+def disc_layer(z0, h=FOAM_LAYER, top=False):
+    a, b, (nx0, nx1, ny) = disc_layer_shape(top)
     return eprism(2 * a, 2 * b, z0, z0 + h).cut(box(nx0, nx1, -60, ny, z0 - 1, z0 + h + 1))
 
 
 def build_foam_disc(rear=None):
-    """Fond en deux couches de 10 mm identiques ; le corps de reference est la forme posee
+    """Fond en deux couches de 10 mm, la haute entaillee autour du micro ; le corps de reference est la forme posee
     (retaillee par le chanfrein sous le conduit, qui la retient)."""
     z0 = FLOOR_TOP + FLOOR_RIB
-    disc = disc_layer(z0).union(disc_layer(z0 + FOAM_LAYER)).intersect(rear_cavity_tool())
+    disc = disc_layer(z0).union(disc_layer(z0 + FOAM_LAYER, top=True)).intersect(rear_cavity_tool())
     return disc if rear is None else disc.cut(rear)
 
 
 def build_refs():
     lipo, charger, switch = bay_boxes()
-    pad = eprism(*PAD["outer"], Z_SEAT, Z_SEAT + PAD["thickness"]).cut(eprism(*PAD["opening"], Z_SEAT - 1, Z_SEAT + PAD["thickness"] + 1))
+    ring_pad = eprism(*PAD["outer"], Z_SEAT, Z_SEAT + 80).cut(eprism(*PAD["opening"], Z_SEAT - 1, Z_SEAT + 81))
+    pad = ring_pad.intersect(cp.below_face(PAD_BASE + PAD["thickness"])).cut(cp.below_face(PAD_BASE + SADDLE_GAP))
     # tete 0.1 mm au-dessus de sa portee dans la fraisure, ecrou 0.05 mm sous son plafond (position serree)
     jscrews = union_all(screw_solid(x, y, cp.BOSS_FRONT_H - 0.1, -1) for x, y in screw_xy())
     nut_z = -cp.NUT_SKIN - 2.4 - 0.05
@@ -764,6 +778,15 @@ def web_earpad(levels=13, n=2.6):
         outer_s.append((cw + 2 * w, ch + 2 * w, z, 0.0))
         inner_s.append((cw - 2 * w, ch - 2 * w, z, 0.0))
     return loft_ellipses(outer_s).cut(loft_ellipses(inner_s))
+
+
+def bend_stl(path, dz):
+    """Deplace en z chaque sommet d'un STL binaire de dz(x)."""
+    raw = path.read_bytes()
+    rec = np.dtype([("n", "<f4", 3), ("v", "<f4", (3, 3)), ("a", "<u2")])
+    tri = np.frombuffer(raw[84:], dtype=rec).copy()
+    tri["v"][..., 2] += dz(tri["v"][..., 0].astype(float))
+    path.write_bytes(raw[:84] + tri.tobytes())
 
 
 # ================= controles =================
@@ -851,8 +874,8 @@ def export():
 
     front_env, rear_env = build_envelope()
     front, rear, cover = build_front(front_env), build_rear(rear_env), build_cover(rear_env)
-    ring_, insert = build_ring(), collar_insert_placed()
-    parts = {"front": front, "rear": rear, "cover": cover, "ring": ring_, "collar-insert-14mm": insert}
+    ring_, insert = build_ring(), saddle_placed()
+    parts = {"front": front, "rear": rear, "cover": cover, "ring": ring_, "assise-col": insert}
     for n, p in parts.items():
         assert p.val().isValid() and p.solids().size() == 1, n
     t = time.perf_counter()
@@ -865,7 +888,7 @@ def export():
     bb = body.val().BoundingBox()
     m = {"profile": PROFILE, "joint_s": JOINT_S,
          "envelope_mm": [round(bb.xlen, 1), round(bb.ylen, 1), round(bb.zlen, 1)],
-         "length_with_collar_mm": round(bb.zlen + COLLAR_HEIGHT, 1),
+         "length_with_collar_mm": round(insert.val().BoundingBox().zmax - bb.zmin, 1),  # crete du col sur les cotes comprise
          "palm_section_mm": [2 * EJ[0], 2 * EJ[1]], "seat_mm": [round(2 * outer_profile(S_SEAT)[0], 1), round(2 * outer_profile(S_SEAT)[1], 1)]}
     assert bb.zlen <= 100.0 + 1e-6, "longueur sans coussin"
     # --- nez : rien de rigide au-dessus du haut de l'appui dans les 25 mm derriere lui
@@ -877,7 +900,7 @@ def export():
     # --- cavite (air + mousse) jusqu'au sommet du collier
     t = time.perf_counter()
     cav = front_cavity_tool().intersect(box(-70, 70, -70, 70, -1, Z_SEAT - cp.FLANGE_T - 0.1)).union(rear_cavity_tool())
-    cav = cav.union(eprism(*COLLAR_INNER, Z_SEAT - cp.FLANGE_T - 0.2, Z_SEAT + COLLAR_HEIGHT))
+    cav = cav.union(eprism(*COLLAR_INNER, Z_SEAT - cp.FLANGE_T - 0.2, PAD_BASE + COLLAR_HEIGHT))
     # les passages des vis sont exclus du volume d'air : les deux percages coaxiaux de meme rayon (capot, coque)
     # y laissaient une face invalide dans le STEP du volume d'air, refuse par cad/check_exports.py (0.4 cm3 en moins)
     plugs = union_all(cq.Workplane("XY", origin=(x, y, -(cp.SCREW_LEN - cp.BOSS_FRONT_H + 1.1))).circle(cp.SCREW[0] / 2 + 0.05)
@@ -889,8 +912,6 @@ def export():
     m["cavity_air_plus_foam_cm3"] = round(v_cav, 1)
     m["cavity_air_only_cm3"] = round(v_cav - v_foam, 1)
     m["foam_cm3"] = {k: round(v, 1) for k, v in foam.items()} | {"total": round(v_foam, 1)}
-    pad_zone = vol(eprism(*PAD["opening"], Z_SEAT, Z_SEAT + PAD["thickness"]).cut(insert)) / 1000
-    m["pad_zone_above_collar_info_cm3"] = round(pad_zone - math.pi / 4 * COLLAR_INNER[0] * COLLAR_INNER[1] * COLLAR_HEIGHT / 1000, 1)
     assert v_cav >= 185.0, f"cavite {v_cav:.1f} cm3 < 185"
     assert cav.solids().size() >= 1
     # section d'air libre (sans mousse ni pieces) le long de l'axe, de l'entree du conduit au coussin ;
@@ -964,28 +985,30 @@ def export():
              "rear_hors_plaque": min_distance(mic, rear.cut(grow(build_mic_mount(), 0.01))), "disque": min_distance(mic, refs["mic-disc"]),
              "bonnette_capot_et_col": min(min_distance(bonnet, front), min_distance(bonnet, insert)),
              "bonnette_plaque_et_disque": min(min_distance(bonnet, rear), min_distance(bonnet, refs["mic-disc"]))}
-    # doigts : capot visse, le micro se prend par la bouche. De chaque cote du boitier, une bande de 15 mm
-    # depuis le bas de la jupe de la bonnette jusqu'au bord du col, libre de toute piece rigide
+    # doigts : capot visse, le micro se prend par la bouche, par sa bonnette (abaisse de 10 mm le 23 nov. 2026, le
+    # boitier est au niveau du rebord du capot). De chaque cote de la bonnette, une bande de FINGER mm depuis le haut
+    # du boitier jusqu'a la crete du col, libre de toute piece rigide
     bbm = mic.val().BoundingBox()
-    z_rim = insert.val().BoundingBox().zmax
-    zf0 = bbm.zmax - BONNET[2]
-    sides = {"-x": box(bbm.xmin - FINGER, bbm.xmin - 0.01, bbm.ymin, bbm.ymax, zf0, z_rim),
-             "+x": box(bbm.xmax + 0.01, bbm.xmax + FINGER, bbm.ymin, bbm.ymax, zf0, z_rim)}
+    z_rim = PAD_BASE + COLLAR_HEIGHT  # crete du col au centre (plus haute sur les cotes)
+    zf0, xb = bbm.zmax + 1.0, MIC_XC + BONNET[0] / 2  # au-dessus du rebord du capot, qui finit au niveau du boitier
+    sides = {"-x": box(-xb - FINGER, -xb - 0.01, bbm.ymin, bbm.ymax, zf0, z_rim),
+             "+x": box(xb + 0.01, xb + FINGER, bbm.ymin, bbm.ymax, zf0, z_rim)}
     hard = union_all([front, insert, rear, ring_])
-    fingers = {k: {"hauteur_libre_mm": round(bbm.zmax - zf0, 1), "obstacle_mm3": round(vol(b.intersect(hard)), 1)}
+    fingers = {k: {"largeur_mm": FINGER, "hauteur_de_la_bande_mm": round(z_rim - zf0, 1), "obstacle_mm3": round(vol(b.intersect(hard)), 1)}
                for k, b in sides.items()}
-    lips = Z_SEAT + MOUTH_ABOVE_SEAT
+    top_bonnet = bonnet.val().BoundingBox().zmax
     m["mic"] = {"centre": [MIC_XC, round((bbm.ymin + bbm.ymax) / 2, 2), round(MIC_ZC, 2)],
                 "clearance_mm": {k: round(v, 2) for k, v in clear.items()}, "stack_extra_mm": MIC_STACK_EXTRA,
                 "acces_doigts_par_la_bouche": fingers, "haut_du_micro_au_dessus_du_joint_mm": round(bbm.zmax, 1),
                 "sous_le_bord_du_col_mm": {"haut_du_micro": round(z_rim - bbm.zmax, 1),
                                            "haut_de_la_bonnette": round(z_rim - bonnet.val().BoundingBox().zmax, 1)},
-                "levres_supposees_mm": {"au_dessus_de_l_appui": MOUTH_ABOVE_SEAT, "du_haut_du_micro": round(lips - bbm.zmax, 1),
-                                        "du_haut_de_la_bonnette": round(lips - bonnet.val().BoundingBox().zmax, 1)},
-                "bonnette_estimee_mm": list(BONNET)}
+                "sous_le_fond_du_coussin_au_centre_mm": {"haut_du_micro": round(PAD_BASE - bbm.zmax, 1),
+                                                         "haut_de_la_bonnette": round(PAD_BASE - top_bonnet, 1), "regle_v2": AIR_GAP},
+                "bonnette_mm": list(BONNET)}
+    assert PAD_BASE - top_bonnet >= AIR_GAP - 0.01, f"bonnette a {PAD_BASE - top_bonnet:.1f} mm sous le fond du coussin, regle du v2 : {AIR_GAP}"
     assert min(clear["front"], clear["insert"], clear["rear_hors_plaque"], clear["bonnette_capot_et_col"]) >= MIC_CLEARANCE - 0.01, clear
     assert clear["bonnette_plaque_et_disque"] >= 0.4, clear
-    assert all(f["obstacle_mm3"] < 0.01 and f["hauteur_libre_mm"] >= 9.0 for f in fingers.values()), fingers
+    assert all(f["obstacle_mm3"] < 0.01 and f["hauteur_de_la_bande_mm"] >= 9.0 for f in fingers.values()), fingers
     log("micro", t)
 
     # --- joint et vis
@@ -1082,7 +1105,7 @@ def export():
         "rear": rear.translate((0, 0, -Z_RF)),
         "cover": cover.rotate((0, 0, 0), (1, 0, 0), 180).translate((0, 0, Z_RF)),
         "ring": ring_.translate((0, 0, RING_H)),
-        "collar-insert-14mm": cp.collar_insert(COLLAR_HEIGHT),
+        "assise-col": cp.saddle_collar(COLLAR_HEIGHT),
     }
     for n, p in printed.items():
         pb = p.val().BoundingBox()
@@ -1098,7 +1121,7 @@ def export():
     # pieces imprimees opaques et de couleurs distinctes : en revue (Onshape), des coques transparentes
     # donnent l'impression de voir a travers la paroi
     colors = {"front": (0.35, 0.50, 0.65, 1.0), "rear": (0.80, 0.55, 0.10, 1.0), "cover": (0.30, 0.30, 0.32, 1.0),
-              "ring": (0.92, 0.92, 1.0, 0.6), "collar-insert-14mm": (0.20, 0.20, 0.22, 1.0)}
+              "ring": (0.92, 0.92, 1.0, 0.6), "assise-col": (0.20, 0.20, 0.22, 1.0)}
     for n, p in parts.items():
         assembly.add(written[n], name=n, color=cq.Color(*colors[n]))
     for n, p in refs.items():
@@ -1115,10 +1138,10 @@ def export():
     # eclate = ordre de montage : baie par l'arriere, le reste par le plan de joint, le micro en dernier par la bouche
     roles = {"front": ("Capot avant", "black", (0, 0, 135)), "rear": ("Coque arriere", "black", (0, 0, 0)),
              "cover": ("Couvercle de la baie", "black", (0, 0, -62)), "ring": ("Anneau lumineux", "translucent", (0, 0, 10)),
-             "collar-insert-14mm": ("Collier amovible 14 mm", "black", (0, 0, 150)),
+             "assise-col": (f"Assise courbe et col {COLLAR_HEIGHT:g} mm", "black", (0, 0, 150)),
              "mic": ("DJI Mic Mini 2", "electronics", (0, 0, 250)), "mic-disc": ("Disque acier 30 mm", "metal", (0, 0, 62)),
              "earpad": ("Coussin Brainwavz", "soft", (0, 0, 175)), "gasket": ("Joint mousse 3 x 2", "soft", (0, 0, 128)),
-             "led-filament": ("Filament LED", "electronics", (0, 0, 5)), "foam-disc": ("Fond de mousse, 2 couches de 10 mm", "foam", (0, 0, 45)),
+             "led-filament": ("Filament LED", "electronics", (0, 0, 5)), "foam-disc": ("Fond de mousse, 2 couches de 10 mm, entaille du micro", "foam", (0, 0, 45)),
              "foam-liner": ("Manchon de mousse 10 mm", "foam", (0, 0, 100)), "foam-liner-rear": ("Mousse des flancs arriere 8 mm", "foam", (0, 0, 58)),
              "bonnette": ("Bonnette DJI (encombrement estime)", "soft", (0, 0, 250)),
              "battery": ("LiPo 30 x 20 x 5", "electronics", (0, 0, -26)), "charger": ("Chargeur USB-C TP4056", "electronics", (0, 0, -44)),
@@ -1128,8 +1151,11 @@ def export():
     shown = dict(parts) | refs | {"earpad": web_earpad()}
     for n, p in shown.items():
         f = web / f"{n}.stl"
-        tol = WEB_TOL_FINE if n in ("front", "rear", "cover", "collar-insert-14mm") else WEB_TOL
+        tol = WEB_TOL_FINE if n in ("front", "rear", "cover", "assise-col") else WEB_TOL
         cq.exporters.export(p, str(f), tolerance=tol[0], angularTolerance=tol[1])
+        if n == "earpad":  # coussin arrondi dessine a plat, pose ensuite sur l'assise courbe : chaque sommet suit la courbe
+            r = cp.FACE_RADIUS
+            bend_stl(f, lambda x: PAD_BASE - Z_SEAT + r - np.sqrt(r * r - np.clip(x, -r, r) ** 2))
         assert f.stat().st_size < 1.5e6, (n, f.stat().st_size)
         label, role, ex = roles[n]
         manifest.append({"file": f.name, "label": label, "role": role, "explode": list(ex)})

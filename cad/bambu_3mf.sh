@@ -115,8 +115,9 @@ project capot-essai "$tmp/pla.json" "$c/pad-test-cap.stl"
 # 11 petits blocs de support qu'aucune piece ne demande seule
 # supports sur plateau seulement, comme au corps : un plot sous chaque tete de vis de l'eprouvette avant,
 # rien dans les logements d'ecrou de l'eprouvette arriere (leur plafond s'imprime en pont, comme dans la coque)
-SUP=plate project cols-et-joint "$tmp/pla.json" "$c/joint-coupon-rear.stl" "$c/joint-coupon-front.stl" \
-  "$c/collar-insert-16mm.stl" "$c/collar-insert-10mm.stl" "$c/collar-insert-3mm.stl"
+# l'assise de 10 mm sert d'abord sur le capot d'essai, puis sur le corps ; 8 et 14 mm pour comparer
+SUP=plate project cols-et-joint "$tmp/pla.json" "$c/joint-coupon-rear.stl" "$c/joint-coupon-front.stl" "$c/assise-col-10mm.stl"
+project assises-variantes "$tmp/pla.json" "$c/assise-col-8mm.stl" "$c/assise-col-14mm.stl"
 project lumiere-petg "$tmp/petg.json" "$c/light-coupon-petg.stl"
 fi
 if [ "$only" != essai ]; then
@@ -124,6 +125,7 @@ if [ "$only" != essai ]; then
   # capot : une colonne de support par puits de vis, debout sur le plateau dans l'ouverture du coussin
   SUP=plate project corps-capot-avant "$tmp/pla.json" "$b-front.stl"
   SUP=plate project corps-coque-arriere "$tmp/pla.json" "$b-rear.stl"
-  project corps-trappe-col "$tmp/pla.json" "$b-cover.stl" "$b-collar-insert-14mm.stl"
+  # l'assise du corps est celle de 10 mm du plateau cols-et-joint
+  project corps-trappe "$tmp/pla.json" "$b-cover.stl"
   project corps-anneau-petg "$tmp/petg.json" "$b-ring.stl"
 fi
