@@ -61,8 +61,11 @@ GROOVE_DEPTH = TONGUE[2] + GASKET[1] - GASKET_COMPRESSION
 # ---------- vis ----------
 # Le capot avant et la trappe se vissent (decision de Clement du 23 nov. 2026 : seul le micro, retire tous
 # les jours, tient par aimant). Vis M3 fraisees et ecrous prisonniers aux cotes du v2, deja imprime et monte.
-SCREW = (v2.M3_CLEARANCE_DIAMETER, v2.M3_HEAD_DIAMETER, v2.M3_HEAD_DEPTH)  # passage, tete, hauteur de fraisure
-NUT = (v2.M3_NUT_POCKET_DIAMETER, v2.M3_NUT_POCKET_DEPTH)  # logement d'ecrou : sur angles, hauteur
+# passage, tete, hauteur de fraisure. Fraisure a 90 deg, comme la tete d'une vis ISO 10642 : a 72 deg (cotes du
+# v2), la tete ne portait que sur l'arete du haut (relecture independante du 23 nov. 2026)
+SCREW = (v2.M3_CLEARANCE_DIAMETER, v2.M3_HEAD_DIAMETER, (v2.M3_HEAD_DIAMETER - v2.M3_CLEARANCE_DIAMETER) / 2)
+# logement d'ecrou : sur angles, hauteur. 2.8 pour un ecrou de 2.4 : le plafond, imprime en pont, flechit un peu
+NUT = (v2.M3_NUT_POCKET_DIAMETER, 2.8)
 SCREW_LEN = 10.0  # M3 x 10, tete comprise
 # axe des vis depuis la peau : a l'interieur de la rainure, rien ne traverse la paroi. A 13.9, une cle six pans
 # de 2 mm atteint chaque tete a travers le col en place (controle dans le corps) : on rouvre sans decoller le coussin
@@ -70,7 +73,7 @@ SCREW_OFFSET = 13.9
 BOSS_R = 5.0  # bossage rond de la coque arriere (ecrou)
 BOSS_HALF, BOSS_FAR = 4.6, 4.3  # bossage du capot : demi-largeur, et avancee vers la chambre depuis l'axe
 NUT_MOUTH = 3.3  # le logement d'ecrou est ferme par la peau jusque-la
-# bossage du capot : 3.2 mm de matiere sous la fraisure. A 4.5, presque au niveau du dessus de la bride du
+# bossage du capot : 3.7 mm de matiere sous la fraisure. A 4.5, presque au niveau du dessus de la bride du
 # capot (4.45), OCCT rendait un capot invalide
 BOSS_FRONT_H = 5.0
 NUT_SKIN = 1.2  # entre l'ecrou et le plan de joint : pont de 5.8 mm, 6 couches
@@ -324,8 +327,8 @@ def export(out=HERE / "out" / "v3-galet" / "coupons"):
     assert vol(front.intersect(rear)) < 1e-6
     # imprimee comme le capot du corps : plan de joint en haut, fraisures vers le plateau
     save("joint-coupon-front", front, front.rotate((0, 0, 0), (1, 0, 0), 180).translate((0, 0, front.val().BoundingBox().zmax)))
-    # impression languette en haut : on garde l'orientation du corps (z vers le haut)
-    save("joint-coupon-rear", rear)
+    # impression languette en haut : on garde l'orientation du corps (z vers le haut), posee a z = 0
+    save("joint-coupon-rear", rear, rear.translate((0, 0, -rear.val().BoundingBox().zmin)))
     save("light-coupon-petg", light_coupon())
     (out / "coupons.json").write_text(json.dumps({"gasket_compression_mm": comp, "parts": report}, indent=2))
     print(f"OK compression joint {comp:.2f} mm, sorties {out}")

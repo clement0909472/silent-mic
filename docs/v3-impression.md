@@ -110,6 +110,20 @@ Non retenus : le recouvrement du ruban LED et du manchon de mousse avec les coqu
 
 **À vérifier sur la pièce imprimée.** Souffler dans l'entrée du conduit (dans la paroi de la coque arrière, en bas à droite quand on la regarde de face) : l'air doit sortir par les 4 fentes, sous l'anneau. Une fente obstruée par un fil se dégage avec une lame fine.
 
+### Troisième relecture indépendante, sur l'assemblage vissé (23 novembre 2026)
+
+Même méthode : un agent sans accès à mes conclusions, sur les STL seuls. **Rien de bloquant.** Il confirme par ses propres mesures l'étanchéité (chambre isolée dès que l'entrée du conduit est bouchée, perçages des vis tous à l'intérieur de la chambre, 4,9 mm au moins jusqu'à l'extérieur), la pose droite du capot, la longueur des vis (la tige traverse tout l'écrou, 1 mm de marge au fond), le serrage en compression, et la sortie du micro par la bouche.
+
+| Constat | Mesure | Suite |
+|---|---|---|
+| **Fraisures à 72° pour des vis à 90°** | pente 0,72 au capot et à la trappe : la tête ne portait que sur l'arête du haut | corrigé : fraisures à 90°, 3,7 mm de matière sous la tête au capot |
+| Bord de la fraisure du capot imprimé en porte-à-faux | 0,3 à 1 mm au-dessus du puits | une colonne de support par puits porte la première couche ; la tête porte plus bas, sur le cône |
+| Logement d'écrou juste en hauteur | 2,6 mm pour un écrou de 2,4, sous un plafond en pont | corrigé : 2,8 mm |
+| Éprouvette de joint avant différente du vrai bossage | elle reproduit la vis, la fraisure, sa fermeture en trois couches et son support, pas les deux nervures de 1,3 mm ni le puits de 26 mm | laissé tel quel : ces deux points ne se jugeront que sur le capot |
+| Éprouvette arrière pas posée à z = 0 | de -8 à +2 mm | corrigé |
+| Outil pour rouvrir, coussin en place | tête à 56 mm sous le haut du coussin, qui passe à 5,8 mm de l'axe | noté au montage : tournevis six pans de 2 mm, lame de 60 mm au moins, tige de moins de 4,9 mm |
+| Siège du col et dessous du coussin fermés par simple contact | entre z = 29,6 et 31 | déjà en point ouvert (ruban double face) |
+
 ## Montage
 
 Trois coques s'empilent le long de l'axe : trappe, coque arrière, capot avant. Elles se vissent. Seul le micro reste amovible. La vue « Montage » de la visionneuse montre les étapes.
@@ -150,7 +164,7 @@ Trois coques s'empilent le long de l'axe : trappe, coque arrière, capot avant. 
 
 Au quotidien, rien ne s'ouvre : on sort le micro par la bouche pour le recharger, on le remet de même. Son haut est à 28,3 mm sous le bord du col (11,8 mm d'après la CAO du v2) et le haut de la bonnette à 6,3 mm : on le tire par la bonnette, ou on le pince par ses petits côtés, qui gardent 15 mm libres de chaque côté jusqu'au bord du col.
 
-**Pour rouvrir le corps** (mise au point, changement de mousse) : sortir le micro, desserrer les 4 vis avec une clé six pans de 2 mm passée par la bouche, col et coussin en place (1,2 mm de jeu entre la clé et le col, lame d'au moins 60 mm avec le coussin). Les vis restent dans leurs puits, le capot se lève droit. Pas besoin de décoller le coussin.
+**Pour rouvrir le corps** (mise au point, changement de mousse) : sortir le micro, desserrer les 4 vis avec une clé six pans de 2 mm passée par la bouche, col et coussin en place (1,2 mm de jeu entre la clé et le col ; avec le coussin, il faut un tournevis six pans de 2 mm à lame d'au moins 60 mm et à tige de moins de 4,9 mm, une clé coudée bute sur le coussin). Les vis restent dans leurs puits, le capot se lève droit. Pas besoin de décoller le coussin.
 
 ## Découper la mousse
 
@@ -196,6 +210,8 @@ Jusqu'au 20 novembre au soir, la coque arrière et le capot avant y étaient des
 Le 20 novembre au soir, après correction, Onshape importe 50 vraies pièces (aucun composite, aucune surface) et l'assemblage compte 20 instances sans erreur. Sa détection de collisions, enfin sur de vrais solides, a trouvé un contact : le cône du pied du micro touchait le coin intérieur de la bride du capot avant à 6 h, sur 2,8 mm de large et 0,1 mm de profondeur (0,03 mm³, sous le seuil de 0,1 mm³ que le script appliquait). Le pied est depuis dégagé de 0,85 mm, mesuré à l'export, et le seuil du script est descendu à 0,005 mm³. Ce pied a ensuite été remplacé par la plaque dressée du micro.
 
 Le 21 novembre, la version au micro debout est rechargée (49 pièces, 20 instances sans erreur, micro et disque réinsérés). Détection de collisions sur la coque arrière, le capot avant, la trappe, l'anneau, le col, le micro, son disque et la bonnette, refaite après l'abaissement de la plaque : **aucune interférence**, sans avertissement d'Onshape.
+
+Le 23 novembre, l'assemblage vissé est importé comme un assemblage neuf, « silent-mic-v3-galet-technical (1) » (l'ancien, mis à jour sur place, perdait les vis et les écrous, et les réinsérer à la main les plaçait mal). Détection de collisions sur la coque arrière, le capot avant, la trappe, l'anneau, le col, le micro, son disque, la bonnette, les 4 vis du joint, les 4 écrous et les 2 vis de trappe : **aucune interférence**. Ce contrôle porte sur la version aux fraisures à 72° ; celle à 90° n'y est pas encore repassée (le recalcul des collisions sur son STEP ne trouve rien).
 
 Onshape ne voit pas les défauts de passage trouvés par le contrôle d'étanchéité : des pièces qui ne se touchent pas peuvent quand même avoir un évent fermé.
 

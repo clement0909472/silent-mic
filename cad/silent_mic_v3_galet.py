@@ -451,7 +451,8 @@ def rear_screw_cut():
 def screw_solid(x, y, z_head, up, shank_r=1.5):
     """Vis M3 x 10 fraisee de reference : dessus de la tete a z_head, tige vers +z (up = 1) ou -z (up = -1)."""
     d = cq.Vector(0, 0, up)
-    head = wp(cq.Solid.makeCone(cp.SCREW[1] / 2 - 0.2, shank_r, 1.65, cq.Vector(x, y, z_head), d))
+    rh = cp.SCREW[1] / 2 - 0.2
+    head = wp(cq.Solid.makeCone(rh, shank_r, rh - shank_r, cq.Vector(x, y, z_head), d))  # tete a 90 deg
     shank = wp(cq.Solid.makeCylinder(shank_r, cp.SCREW_LEN - 1.0, cq.Vector(x, y, z_head + up * 1.0), d))
     return head.union(shank)
 
@@ -733,11 +734,12 @@ def build_foam_disc(rear=None):
 def build_refs():
     lipo, charger, switch = bay_boxes()
     pad = eprism(*PAD["outer"], Z_SEAT, Z_SEAT + PAD["thickness"]).cut(eprism(*PAD["opening"], Z_SEAT - 1, Z_SEAT + PAD["thickness"] + 1))
-    jscrews = union_all(screw_solid(x, y, cp.BOSS_FRONT_H, -1) for x, y in screw_xy())
-    nut_z = -cp.NUT_SKIN - cp.NUT[1] + 0.1
+    # tete 0.1 mm au-dessus de sa portee dans la fraisure, ecrou 0.05 mm sous son plafond (position serree)
+    jscrews = union_all(screw_solid(x, y, cp.BOSS_FRONT_H - 0.1, -1) for x, y in screw_xy())
+    nut_z = -cp.NUT_SKIN - 2.4 - 0.05
     jnuts = union_all(cq.Workplane("XY", origin=(x, y, nut_z)).polygon(6, 6.35).extrude(2.4).rotate((x, y, 0), (x, y, 1), 90)
                       for x, y in screw_xy()).cut(jscrews)
-    cscrews = union_all(screw_solid(x, y, COVER_HEAD_Z, 1, cp.PILOT_D / 2 - 0.1) for x, y in COVER_SCREW_XY)
+    cscrews = union_all(screw_solid(x, y, COVER_HEAD_Z + 0.1, 1, cp.PILOT_D / 2 - 0.1) for x, y in COVER_SCREW_XY)
     return {
         "mic": mic_box(), "mic-disc": mic_disc(), "bonnette": bonnet_envelope(), "earpad": pad,
         "gasket": ring(GROOVE[0] + 0.1, GROOVE[1] - 0.1, TONGUE[2], GROOVE_DEPTH),
