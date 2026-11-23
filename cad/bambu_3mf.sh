@@ -24,23 +24,47 @@ flat = base | {k: v for k, v in user.items() if k != "inherits"}
 flat.pop("inherits", None)
 flat["type"] = "filament"
 json.dump(flat, open(f"{tmp}/pla.json", "w"), indent=1)
-# PETG translucide systeme : la CLI ne resout pas "inherits" pour un fichier charge par chemin
+# ce que l'interface inscrit pour ce filament dans ses propres projets : son parent et les cles qu'il change
+meta = ("name", "inherits", "from", "filament_settings_id", "setting_id", "version", "filament_id", "base_id")
+json.dump({"inherits": user.get("inherits", ""), "diff": sorted(k for k, v in user.items() if k in base and base[k] != v and k not in meta)},
+          open(f"{tmp}/pla-declare.json", "w"))
+# La CLI ne resout pas "inherits" pour un fichier charge par chemin : un prereglage systeme passe tel quel
+# n'apporte que ses quelques cles propres, et tout le reste prend les valeurs par defaut du trancheur.
+# Jusqu'au 23 nov. 2026 la machine et le procede etaient passes ainsi : G-code de demarrage generique
+# (G28 seul, sans la sequence de l'A1 mini), accelerations de 500 a 1000 mm/s2, parois a 60 mm/s.
+# Chaque prereglage systeme est donc aplati ici avec toute sa chaine d'heritage.
 import glob
-by_name = {}
-for f in glob.glob(f"{p}/filament/*.json"):
-    try:
-        d = json.load(open(f))
-        by_name[d.get("name")] = d
-    except Exception:
-        pass
-def resolve(name):
-    d = by_name[name]
-    return (resolve(d["inherits"]) if d.get("inherits") else {}) | d
-petg = resolve("Bambu PETG Translucent @BBL A1M")
-petg.pop("inherits", None)
+def system(kind):
+    out = {}
+    for f in glob.glob(f"{p}/{kind}/**/*.json", recursive=True):
+        try:
+            d = json.load(open(f))
+            out[d.get("name")] = d
+        except Exception:
+            pass
+    def resolve(name):
+        d = out[name]
+        full = resolve(d["inherits"]) if d.get("inherits") else {}
+        # les sequences de G-code de l'A1 mini (demarrage, fin, changement de couche) sont dans des modeles inclus
+        for inc in d.get("include", []):
+            full |= {k: v for k, v in resolve(inc).items() if k not in ("name", "instantiation")}
+        return full | d
+    return resolve
+def flat(kind, name):
+    d = system(kind)(name)
+    d.pop("inherits", None)
+    d.pop("include", None)
+    return d
+petg = flat("filament", "Bambu PETG Translucent @BBL A1M")
 petg["type"] = "filament"
 json.dump(petg, open(f"{tmp}/petg.json", "w"), indent=1)
-proc = json.load(open(f"{p}/process/0.20mm Standard @BBL A1M.json"))
+machine = flat("machine", "Bambu Lab A1 mini 0.4 nozzle")
+# la sequence de demarrage de l'A1 mini fait plus de 10 000 caracteres ; la generique tient en deux lignes
+assert "M1002" in machine["machine_start_gcode"] and len(machine["machine_start_gcode"]) > 5000 and len(machine) > 100, "prereglage machine A1 mini incomplet"
+json.dump(machine, open(f"{tmp}/machine.json", "w"), indent=1)
+proc = flat("process", "0.20mm Standard @BBL A1M")
+assert len(proc) > 150, "prereglage de procede incomplet"
+json.dump(proc, open(f"{tmp}/process-system.json", "w"), indent=1)  # reference pour les ecarts declares dans le 3MF
 proc.update(wall_loops="4", sparse_infill_density="20%", seam_position="aligned", curr_bed_type="Textured PEI Plate")
 for name, sup in (("process-off", "0"), ("process-auto", "1"), ("process-plate", "1")):
     q = dict(proc, enable_support=sup)
@@ -54,7 +78,7 @@ EOF
 project() {  # nom filament stl...
   local name=$1 fil=$2
   shift 2
-  local machine="$p/machine/Bambu Lab A1 mini 0.4 nozzle.json"
+  local machine="$tmp/machine.json"
   # 1) controle : supports automatiques actifs, ponts courts non supportes
   "$app/MacOS/BambuStudio" --load-settings "$machine;$tmp/process-auto.json" --load-filaments "$fil" \
     --arrange 1 --orient 0 --slice 0 --outputdir "$tmp/$name-auto" --export-3mf "$name.3mf" "$@" > "$tmp/$name-auto.log" 2>&1
@@ -67,6 +91,10 @@ project() {  # nom filament stl...
   "$app/MacOS/BambuStudio" --load-settings "$machine;$proc" --load-filaments "$fil" \
     --arrange 1 --orient 0 --slice 0 --outputdir "$tmp/$name" --export-3mf "$name.3mf" "$@" > "$tmp/$name.log" 2>&1
   cp "$tmp/$name/$name.3mf" "$out/$name.3mf"
+  # Bambu Studio, a l'ouverture, recharge le procede systeme par son nom et n'y applique que les cles
+  # declarees dans different_settings_to_system : sans elles, l'interface perdait les 4 parois, les 20 %
+  # de remplissage et les supports. On y inscrit donc les cles du projet qui different du procede systeme.
+  /usr/bin/python3 cad/bambu_3mf_declare.py "$out/$name.3mf" "$tmp/process-system.json" "${fil%.json}-declare.json"
   # 3) preuve : le 3MF livre se rouvre et se retranche a l'identique
   "$app/MacOS/BambuStudio" --slice 0 --outputdir "$tmp/$name-re" "$out/$name.3mf" > "$tmp/$name-re.log" 2>&1
   local info pred weight re_t

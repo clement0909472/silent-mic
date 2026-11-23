@@ -10,15 +10,17 @@
 
 Bambu Lab A1 mini, buse 0,4 mm, couches de 0,20 mm, 4 périmètres, 20 % de remplissage, couture alignée, plaque PEI texturée. PLA : préréglage « ELEGOO PLA Mat Flow Rate Calibrated » de Clément (débit 1,029, densité 1,32). PETG : « Bambu PETG Translucent @BBL A1M ». Fichiers dans `cad/out/v3-galet/`.
 
+> **Projets 3MF refaits le 23 novembre 2026.** Jusque-là, `cad/bambu_3mf.sh` passait à la ligne de commande les préréglages système de la machine et du procédé sans leur chaîne d'héritage. Les fichiers embarquaient donc une configuration générique : G-code de démarrage réduit à un retour à l'origine (sans la séquence de l'A1 mini : chauffe, nivellement, purge), parois à 60 mm/s, accélérations de 500 mm/s². Et à l'ouverture dans Bambu Studio, l'interface rechargeait le procédé standard en ignorant les 4 parois, les 20 % de remplissage et les supports. Les deux défauts sont corrigés : préréglages aplatis avec tout leur héritage, et écarts au procédé système inscrits dans le projet comme le fait l'interface. Les temps ci-dessous sont ceux du vrai profil A1 mini.
+
 ### Pièces d'essai : projets Bambu Studio prêts à imprimer
 
-Dans `print/`, trois projets 3MF tranchés, réglages embarqués. Chaque plateau est d'abord tranché avec supports automatiques (« ne pas supporter les ponts ») pour voir ce que le trancheur réclame : rien pour le capot d'essai, les cols et la lumière ; un plot de 3 mm sous chacune des deux têtes de vis de l'éprouvette de joint avant, posé sur le plateau comme au corps. Ils se rouvrent et se retranchent à l'identique en ligne de commande. On les ouvre dans Bambu Studio, on choisit l'imprimante, on lance. Régénération : `cad/bambu_3mf.sh` (lit le préréglage de Clément sans le modifier).
+Dans `print/`, trois projets 3MF tranchés, réglages embarqués. Chaque plateau est d'abord tranché avec supports automatiques (« ne pas supporter les ponts ») pour voir ce que le trancheur réclame : rien pour le capot d'essai, les cols et la lumière ; un plot de 3 mm sous chacune des deux têtes de vis de l'éprouvette de joint avant, posé sur le plateau comme au corps. Ils se rouvrent et se retranchent à l'identique en ligne de commande. On les ouvre dans Bambu Studio (il affiche une fenêtre « Préréglage personnalisé » parce que le filament est le tien : valider), on vérifie dans l'onglet Supports que « Activer les supports » et « Sur plateau uniquement » sont cochés pour le plateau des éprouvettes et celui du capot avant, et « Boucles de paroi » à 4 dans l'onglet Résistance, puis on lance. Régénération : `cad/bambu_3mf.sh` (lit le préréglage de Clément sans le modifier).
 
 | Plateau | Fichier | Contenu | Temps | Filament |
 |---|---|---|---|---|
-| 1 | `print/capot-essai.3mf` | capot d'essai du coussin | 3 h 15 | 66 g PLA |
-| 2 | `print/cols-et-joint.3mf` | cols de 3, 10 et 16 mm, éprouvettes de joint avant et arrière (2 vis, 2 écrous) | 1 h 48 | 30 g PLA |
-| 3 | `print/lumiere-petg.3mf` | éprouvette de lumière | 5 min | 1 g PETG |
+| 1 | `print/capot-essai.3mf` | capot d'essai du coussin | 1 h 51 | 70 g PLA |
+| 2 | `print/cols-et-joint.3mf` | cols de 3, 10 et 16 mm, éprouvettes de joint avant et arrière (2 vis, 2 écrous) | 1 h 01 | 31 g PLA |
+| 3 | `print/lumiere-petg.3mf` | éprouvette de lumière | 10 min | 1 g PETG |
 
 Grammes calculés par Bambu Studio avec la densité réelle du filament (1,32) : le tableau OrcaSlicer précédent comptait 1,24, d'où environ 6 % de moins.
 
@@ -26,10 +28,10 @@ Grammes calculés par Bambu Studio avec la densité réelle du filament (1,32) :
 
 | Plateau | Fichier | Contenu | Temps | Filament |
 |---|---|---|---|---|
-| 4 | `print/corps-capot-avant.3mf` | capot avant, appui du coussin sur le plateau, 4 colonnes de support | 3 h 27 | 53 g PLA |
-| 5 | `print/corps-coque-arriere.3mf` | coque arrière, face arrière sur le plateau | 4 h 44 | 72 g PLA |
-| 6 | `print/corps-trappe-col.3mf` | trappe et col de 14 mm | 52 min | 17 g PLA |
-| 7 | `print/corps-anneau-petg.3mf` | anneau lumineux | 6 min | 2 g PETG |
+| 4 | `print/corps-capot-avant.3mf` | capot avant, appui du coussin sur le plateau, 4 colonnes de support | 1 h 46 | 56 g PLA |
+| 5 | `print/corps-coque-arriere.3mf` | coque arrière, face arrière sur le plateau | 2 h 27 | 78 g PLA |
+| 6 | `print/corps-trappe-col.3mf` | trappe et col de 14 mm | 33 min | 17 g PLA |
+| 7 | `print/corps-anneau-petg.3mf` | anneau lumineux | 11 min | 2 g PETG |
 
 Mêmes réglages que les pièces d'essai. Le corps ne s'imprime qu'après le test des cols (`bench/README.md`) et l'essai des éprouvettes de joint. Régénération : `cad/bambu_3mf.sh corps`.
 
