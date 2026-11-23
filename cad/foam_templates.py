@@ -39,9 +39,9 @@ def ellipse_points(a, b, n=180):
 
 # ---------- pieces ----------
 
-def disc_piece(top=False):
-    """Couche du fond, coupee dans la plaque de 10 mm ; la haute a une encoche allongee ou descend le micro."""
-    a, b, (nx0, nx1, ny) = g.disc_layer_shape(top)
+def disc_piece():
+    """Couche du fond, a couper deux fois dans la plaque de 10 mm ; l'encoche loge la plaque et le micro."""
+    a, b, (nx0, nx1, ny) = g.disc_layer_shape()
     pts = []
     for x, y in ellipse_points(a, b, 240):
         if nx0 < x < nx1 and y < ny:
@@ -174,8 +174,9 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     sleeve_pts, sleeve_info, sleeve_label = sleeve_piece()
     pieces = [
-        ("fond-bas", disc_piece(), "", 10.0, 1, "plaque de 10 mm, couche du dessous, encoche vers le bas (6 h)", None),
-        ("fond-haut", disc_piece(top=True), "", 10.0, 1, "plaque de 10 mm, couche du dessus, encoche longue du micro vers le bas (6 h)", None),
+        # nom grave dans le haut de la piece : l'encoche du micro occupe le centre
+        ("fond", disc_piece(), "x2", 10.0, 2, "plaque de 10 mm, deux couches identiques, encoche du micro vers le bas (6 h)",
+         (0.0, 0.55 * g.disc_layer_shape()[1], 0.0, 5.0)),
         ("manchon", sleeve_pts, "", 10.0, 1, "plaque de 10 mm, bord court (rayon interieur) vers le joint, raccord en bas (6 h)", sleeve_label),
     ]
     report = {}

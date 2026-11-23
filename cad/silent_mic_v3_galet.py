@@ -644,9 +644,10 @@ def saddle_placed():
 
 # ================= corps de reference =================
 
-# bas du boitier sur la couche basse du fond de mousse : la couche haute est entaillee autour du micro. Abaisse de
-# 10 mm le 23 nov. 2026 pour tenir la regle des 8 mm du v2 avec la bonnette (voir AIR_GAP)
-MIC_Z0 = FLOOR_TOP + FLOOR_RIB + FOAM_LAYER + v0.FOAM_MIC_CLEARANCE
+# bas du boitier juste au-dessus des nervures du fond : les deux couches de mousse sont entaillees autour du micro.
+# Abaisse de 20 mm le 23 nov. 2026, pour eloigner la bonnette des levres sans allonger le corps (voir AIR_GAP). Le
+# disque d'acier est recoupe sous le micro (mic_disc) : la partie qui porte l'aimant ne change pas
+MIC_Z0 = FLOOR_TOP + FLOOR_RIB + MIC_CLEARANCE  # 1 mm au-dessus des nervures, comme partout ailleurs
 MIC_ZC = MIC_Z0 + v0.MIC_SIZE[1] / 2
 MOUNT_FACE_Y = MIC_YC - v0.MIC_SIZE[2] / 2 - v0.MIC_STEEL_DISC_THICKNESS  # face de la plaque qui porte le disque
 
@@ -666,10 +667,15 @@ def mount_top():
     return MIC_Z0 + v0.MIC_SIZE[1] - BONNET[2] - 0.5
 
 
+DISC_CUT_Z = FLOOR_TOP + 0.5  # le disque de 30 mm est recoupe a la cisaille : 0.5 mm au-dessus du fond
+
+
 def mic_disc():
-    """Disque d'acier colle au ras du haut de la plaque : son centre est sous celui du boitier, l'aimant reste dessus."""
+    """Disque d'acier colle au ras du haut de la plaque, recoupe en bas a DISC_CUT_Z : la bande retiree est toute
+    sous le bas du micro, la surface sous l'aimant ne change pas."""
     r = v0.MIC_STEEL_DISC_DIAMETER / 2
-    return wp(cq.Solid.makeCylinder(r, v0.MIC_STEEL_DISC_THICKNESS, cq.Vector(MIC_XC, MOUNT_FACE_Y, mount_top() - r), cq.Vector(0, 1, 0)))
+    disc = wp(cq.Solid.makeCylinder(r, v0.MIC_STEEL_DISC_THICKNESS, cq.Vector(MIC_XC, MOUNT_FACE_Y, mount_top() - r), cq.Vector(0, 1, 0)))
+    return disc.intersect(box(-40, 40, -40, 40, DISC_CUT_Z, 40))
 
 
 def build_mic_mount():
@@ -717,30 +723,29 @@ def inlet_notch():
     return box(bb.xmin - 3, bb.xmax + 3, -60, bb.ymax + 4, DUCT_BOTTOM - 2, 1)
 
 
-def disc_layer_shape(top=False):
+def disc_layer_shape():
     """Contour d'une couche du fond (decoupe dans une plaque de 10 mm) : ellipse de la cavite a la
     jonction des deux couches, moins 0.5 mm, et une seule encoche droite a 6 h qui degage la plaque
-    du micro, le tunnel des fils et l'entree du conduit. Les deux couches sont identiques."""
+    du micro, le micro lui-meme, le tunnel des fils et l'entree du conduit. Les deux couches sont identiques."""
     zj = FLOOR_TOP + FLOOR_RIB + FOAM_LAYER
     a, b = cavity_half_axes(zj)
     ib = build_inlet().val().BoundingBox()
     half = max(MOUNT_W, v0.MIC_STEEL_DISC_DIAMETER) / 2 + 0.3  # le disque de 30 mm deborde de la plaque de 28
-    # couche haute : l'encoche s'allonge jusque devant le micro, qui la traverse jusqu'a la couche basse
-    ny = mic_box().val().BoundingBox().ymax + 0.5 if top else MOUNT_FACE_Y + 0.3
-    notch = (MIC_XC - half, max(ib.xmax + 1.0, MIC_XC + half), ny)
+    # l'encoche va jusque devant le micro, qui traverse les deux couches jusqu'aux nervures du fond
+    notch = (MIC_XC - half, max(ib.xmax + 1.0, MIC_XC + half), mic_box().val().BoundingBox().ymax + 0.5)
     return a - 0.5, b - 0.5, notch
 
 
-def disc_layer(z0, h=FOAM_LAYER, top=False):
-    a, b, (nx0, nx1, ny) = disc_layer_shape(top)
+def disc_layer(z0, h=FOAM_LAYER):
+    a, b, (nx0, nx1, ny) = disc_layer_shape()
     return eprism(2 * a, 2 * b, z0, z0 + h).cut(box(nx0, nx1, -60, ny, z0 - 1, z0 + h + 1))
 
 
 def build_foam_disc(rear=None):
-    """Fond en deux couches de 10 mm, la haute entaillee autour du micro ; le corps de reference est la forme posee
+    """Fond en deux couches de 10 mm identiques, entaillees autour du micro ; le corps de reference est la forme posee
     (retaillee par le chanfrein sous le conduit, qui la retient)."""
     z0 = FLOOR_TOP + FLOOR_RIB
-    disc = disc_layer(z0).union(disc_layer(z0 + FOAM_LAYER, top=True)).intersect(rear_cavity_tool())
+    disc = disc_layer(z0).union(disc_layer(z0 + FOAM_LAYER)).intersect(rear_cavity_tool())
     return disc if rear is None else disc.cut(rear)
 
 
@@ -985,18 +990,19 @@ def export():
              "rear_hors_plaque": min_distance(mic, rear.cut(grow(build_mic_mount(), 0.01))), "disque": min_distance(mic, refs["mic-disc"]),
              "bonnette_capot_et_col": min(min_distance(bonnet, front), min_distance(bonnet, insert)),
              "bonnette_plaque_et_disque": min(min_distance(bonnet, rear), min_distance(bonnet, refs["mic-disc"]))}
-    # doigts : capot visse, le micro se prend par la bouche, par sa bonnette (abaisse de 10 mm le 23 nov. 2026, le
-    # boitier est au niveau du rebord du capot). De chaque cote de la bonnette, une bande de FINGER mm depuis le haut
-    # du boitier jusqu'a la crete du col, libre de toute piece rigide
+    # doigts : capot visse, le micro se prend par la bouche, par le haut de sa bonnette (micro abaisse le 23 nov. 2026).
+    # De chaque cote de la bonnette, une bande de FINGER mm jusqu'a la crete du col, libre de toute piece rigide ; on
+    # mesure de combien elle descend le long de la bonnette avant de toucher le rebord interieur du capot
     bbm = mic.val().BoundingBox()
     z_rim = PAD_BASE + COLLAR_HEIGHT  # crete du col au centre (plus haute sur les cotes)
-    zf0, xb = bbm.zmax + 1.0, MIC_XC + BONNET[0] / 2  # au-dessus du rebord du capot, qui finit au niveau du boitier
-    sides = {"-x": box(-xb - FINGER, -xb - 0.01, bbm.ymin, bbm.ymax, zf0, z_rim),
-             "+x": box(xb + 0.01, xb + FINGER, bbm.ymin, bbm.ymax, zf0, z_rim)}
-    hard = union_all([front, insert, rear, ring_])
-    fingers = {k: {"largeur_mm": FINGER, "hauteur_de_la_bande_mm": round(z_rim - zf0, 1), "obstacle_mm3": round(vol(b.intersect(hard)), 1)}
-               for k, b in sides.items()}
     top_bonnet = bonnet.val().BoundingBox().zmax
+    xb, hard = MIC_XC + BONNET[0] / 2, union_all([front, insert, rear, ring_])
+    band = lambda z0: [box(-xb - FINGER, -xb - 0.01, bbm.ymin, bbm.ymax, z0, z_rim), box(xb + 0.01, xb + FINGER, bbm.ymin, bbm.ymax, z0, z_rim)]
+    zf0 = bbm.zmax + 1.0
+    while zf0 < top_bonnet and max(vol(b.intersect(hard)) for b in band(zf0)) > 0.01:
+        zf0 += 0.5
+    fingers = {"largeur_mm": FINGER, "prise_le_long_de_la_bonnette_mm": round(top_bonnet - zf0, 1),
+               "haut_de_la_bonnette_sous_la_crete_mm": round(z_rim - top_bonnet, 1)}
     m["mic"] = {"centre": [MIC_XC, round((bbm.ymin + bbm.ymax) / 2, 2), round(MIC_ZC, 2)],
                 "clearance_mm": {k: round(v, 2) for k, v in clear.items()}, "stack_extra_mm": MIC_STACK_EXTRA,
                 "acces_doigts_par_la_bouche": fingers, "haut_du_micro_au_dessus_du_joint_mm": round(bbm.zmax, 1),
@@ -1008,7 +1014,7 @@ def export():
     assert PAD_BASE - top_bonnet >= AIR_GAP - 0.01, f"bonnette a {PAD_BASE - top_bonnet:.1f} mm sous le fond du coussin, regle du v2 : {AIR_GAP}"
     assert min(clear["front"], clear["insert"], clear["rear_hors_plaque"], clear["bonnette_capot_et_col"]) >= MIC_CLEARANCE - 0.01, clear
     assert clear["bonnette_plaque_et_disque"] >= 0.4, clear
-    assert all(f["obstacle_mm3"] < 0.01 and f["hauteur_de_la_bande_mm"] >= 9.0 for f in fingers.values()), fingers
+    assert fingers["prise_le_long_de_la_bonnette_mm"] >= 8.0, fingers
     log("micro", t)
 
     # --- joint et vis
@@ -1139,9 +1145,9 @@ def export():
     roles = {"front": ("Capot avant", "black", (0, 0, 135)), "rear": ("Coque arriere", "black", (0, 0, 0)),
              "cover": ("Couvercle de la baie", "black", (0, 0, -62)), "ring": ("Anneau lumineux", "translucent", (0, 0, 10)),
              "assise-col": (f"Assise courbe et col {COLLAR_HEIGHT:g} mm", "black", (0, 0, 150)),
-             "mic": ("DJI Mic Mini 2", "electronics", (0, 0, 250)), "mic-disc": ("Disque acier 30 mm", "metal", (0, 0, 62)),
+             "mic": ("DJI Mic Mini 2", "electronics", (0, 0, 250)), "mic-disc": ("Disque acier 30 mm, recoupe en bas", "metal", (0, 0, 62)),
              "earpad": ("Coussin Brainwavz", "soft", (0, 0, 175)), "gasket": ("Joint mousse 3 x 2", "soft", (0, 0, 128)),
-             "led-filament": ("Filament LED", "electronics", (0, 0, 5)), "foam-disc": ("Fond de mousse, 2 couches de 10 mm, entaille du micro", "foam", (0, 0, 45)),
+             "led-filament": ("Filament LED", "electronics", (0, 0, 5)), "foam-disc": ("Fond de mousse, 2 couches de 10 mm entaillees", "foam", (0, 0, 45)),
              "foam-liner": ("Manchon de mousse 10 mm", "foam", (0, 0, 100)), "foam-liner-rear": ("Mousse des flancs arriere 8 mm", "foam", (0, 0, 58)),
              "bonnette": ("Bonnette DJI (encombrement estime)", "soft", (0, 0, 250)),
              "battery": ("LiPo 30 x 20 x 5", "electronics", (0, 0, -26)), "charger": ("Chargeur USB-C TP4056", "electronics", (0, 0, -44)),

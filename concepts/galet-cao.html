@@ -63,7 +63,7 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
       <li>Calé sur ton essai du v2 : coussin écrasé de moitié (28 à 15 mm), lèvres juste sous le fond du coussin.</li>
       <li>Assise courbe comme le v2 (rayon 105 mm) : le coussin avance vers les joues. Le col la suit, 10 mm au-dessus du coussin au centre, plus haut sur les côtés.</li>
       <li>Visage schématique de même courbure, lèvres en relief. Ce n'est pas ton visage.</li>
-      <li>Bonnette à ta cote mesurée : 48 mm du bas du micro au haut des poils. Micro abaissé de 10 mm dans la mousse du fond.</li>
+      <li>Bonnette à ta cote mesurée : 48 mm du bas du micro au haut des poils. Micro descendu au fond de la chambre, dans une entaille de la mousse.</li>
     </ol>
     <ol class="legend" id="legend">
       <li>La bouche souffle dans la chambre garnie de mousse.</li>
@@ -127,7 +127,7 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
     air: { label: "Trajet d'air", color: "#2f7dff", o: { transparent: true, opacity: 0.22, depthWrite: false, side: THREE.DoubleSide } },
   };
   // les quatre pieces imprimees en noir recoivent des teintes voisines, pour lire les jonctions
-  const TINTS = { "front.stl": "#5d6a86", "rear.stl": "#46506a", "cover.stl": "#343c50", "assise-col.stl": "#7b88a6" };
+  const TINTS = { "front.stl": "#5d6a86", "rear.stl": "#46506a", "cover.stl": "#343c50", "assise-col.stl": "#7b88a6", "bonnette.stl": "#e8d9b0" };   // bonnette claire : elle se distingue de la mousse
   const device = new THREE.Group(); scene.add(device);
   device.rotation.set(0, Math.PI / 2, 0);    // z du modele (vers le visage) a l'horizontale, y du modele en haut
   const parts = [];
@@ -183,7 +183,7 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
     for (const p of parts) {
       if (p.role === "air") { p.mesh.visible = state.air; continue; }
       const [face, back] = p.mesh.children, m = face.material, o = AIR_OPACITY[p.role], ghost = state.air && !state.cut && o !== undefined;
-      const keep = !state.air || state.cut || ghost || p.role === "translucent" || p.file === "mic.stl";
+      const keep = !state.air || state.cut || ghost || p.role === "translucent" || p.file === "mic.stl" || p.file === "bonnette.stl";
       m.userData.env ??= m.envMapIntensity;
       Object.assign(m, { transparent: ghost, opacity: ghost ? o : 1, depthWrite: !ghost, envMapIntensity: ghost ? 0 : m.userData.env, needsUpdate: true });
       face.visible = keep; back.visible = keep && !ghost;

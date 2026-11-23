@@ -1,25 +1,14 @@
 {
-  "fond-bas": {
+  "fond": {
     "plaque_mm": 10.0,
-    "quantite": 1,
-    "aire_mm2": 1591,
-    "volume_cm3": 15.9,
-    "gabarit_mm": [
-      59.9,
-      39.7
-    ],
-    "note": "plaque de 10 mm, couche du dessous, encoche vers le bas (6 h)"
-  },
-  "fond-haut": {
-    "plaque_mm": 10.0,
-    "quantite": 1,
+    "quantite": 2,
     "aire_mm2": 1162,
-    "volume_cm3": 11.6,
+    "volume_cm3": 23.2,
     "gabarit_mm": [
       59.9,
       39.7
     ],
-    "note": "plaque de 10 mm, couche du dessus, encoche longue du micro vers le bas (6 h)"
+    "note": "plaque de 10 mm, deux couches identiques, encoche du micro vers le bas (6 h)"
   },
   "manchon": {
     "plaque_mm": 10.0,
@@ -45,5 +34,5 @@
       ]
     }
   },
-  "total_volume_cm3": 58.7
+  "total_volume_cm3": 54.4
 }
