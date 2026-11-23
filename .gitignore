@@ -20,3 +20,4 @@ bench/sessions/
 concepts/parts.json
 # Compte rendu ecrit par la CLI Bambu Studio dans le dossier courant
 /result.json
+cad/.onshape.local.json

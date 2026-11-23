@@ -1,0 +1,40 @@
+{
+ "step": "silent-mic-v3-galet-technical.step",
+ "pieces": 27,
+ "noms": [
+  "air-cavity-and-duct",
+  "collar-insert-14mm",
+  "cover",
+  "front",
+  "rear",
+  "ref-battery",
+  "ref-bonnette",
+  "ref-charger",
+  "ref-cover-screws",
+  "ref-earpad",
+  "ref-foam-disc",
+  "ref-foam-liner",
+  "ref-gasket",
+  "ref-joint-nuts",
+  "ref-joint-screws",
+  "ref-led-filament",
+  "ref-mic",
+  "ref-mic-disc",
+  "ref-switch",
+  "ring"
+ ],
+ "recouvrements": [],
+ "recouvrements_avec_corps_souples_info": [
+  [
+   "rear",
+   "ref-foam-disc",
+   "INTERFERE"
+  ]
+ ],
+ "contacts_sans_recouvrement": 13,
+ "exclus": [
+  "air-cavity-and-duct"
+ ],
+ "controle_le": "2026-11-23 11:21",
+ "duree_s": 147.8
+}
