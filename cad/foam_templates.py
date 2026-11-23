@@ -71,7 +71,7 @@ def mid_ellipse(z):
 
 def sleeve_piece():
     """Manchon avant developpe : secteur d'anneau (tronc de cone equivalent), raccord bout a bout
-    a 6 h, une encoche rectangulaire au pied de chaque contrefort d'aimant du capot."""
+    a 6 h, une fente de 2 mm pour chacune des deux nervures de chaque bossage de vis du capot."""
     z0, z1 = g.liner_z()
     (a0, b0), (a1, b1) = mid_ellipse(z0), mid_ellipse(z1)
     p0, p1 = g.ellipse_arc_length(a0, b0, 0.0), g.ellipse_arc_length(a1, b1, 0.0)
@@ -91,12 +91,15 @@ def sleeve_piece():
     # encoches des contreforts : largeur du bossage + 1 mm, hauteur jusqu'a leur retour dans la paroi
     # contrefort (g.build_front_bosses) : cercle de rayon BOSS_R a h, qui se reduit a 0.8 mm en rentrant
     # dans la paroi a zb ; l'encoche prend sa largeur au bas du manchon + 1 mm, jusqu'a zb
-    h = g.MAG_POCKET[1] + 1.2
-    zb = h + g.STEEP * ((g.MAG_OFFSET + g.BOSS_R) - 2.3)
-    r_bot = g.BOSS_R + (0.8 - g.BOSS_R) * (z0 - h) / (zb - h)
-    n_h = (min(zb, z1) - z0) * slant / dz
-    n_w = 2 * r_bot + 1.0
-    notches = sorted(f % 1.0 for f in (frac(a0, b0, math.radians(t)) for t in g.MAG_T_DEG))
+    # nervures (g.build_front_bosses) : 1.3 mm d'epaisseur, a 3.95 mm de part et d'autre de l'axe de la vis, elles
+    # traversent presque toute l'epaisseur du manchon sur toute sa hauteur. La fente s'arrete 3 mm avant le bord
+    # large : la bande reste d'un seul tenant, et la mousse entre deux nervures s'ecarte au passage de la vis
+    n_h = slant - 3.0
+    n_w = 2.0
+    off = (g.cp.HEAD_WELL_R + g.cp.BOSS_HALF) / 2
+    centres = [frac(a0, b0, math.radians(t)) for t in g.SCREW_T_DEG]
+    # theta et rho0 sont connus ici : une fente de chaque cote de l'axe
+    notches = sorted((f + sgn * off / (theta * rho0)) % 1.0 for f in centres for sgn in (-1, 1))
     pt = lambda rho, f: (rho * math.sin(theta * (f - 0.5)), -rho * math.cos(theta * (f - 0.5)))
     inner = []
     steps = 360
@@ -114,13 +117,13 @@ def sleeve_piece():
     inner.append(pt(rho0, 1 - f_gap0))
     outer = [pt(rho1, 1 - f_gap1 - i * (1 - 2 * f_gap1) / steps) for i in range(steps + 1)]
     # nom : au milieu du plus grand intervalle libre entre encoches, tangent a la bande
-    fs = sorted(f % 1.0 for f in (frac(a0, b0, math.radians(t)) for t in g.MAG_T_DEG))
+    fs = sorted(f % 1.0 for f in (frac(a0, b0, math.radians(t)) for t in g.SCREW_T_DEG))
     gaps = [(b - a, (a + b) / 2) for a, b in zip(fs, fs[1:]) if a > f_gap0 and b < 1 - f_gap0]
     fl = max(gaps)[1]
     lx, ly = pt((rho0 + rho1) / 2, fl)
     label_at = (lx, ly, math.degrees(theta * (fl - 0.5)), 4.0)
     info = {"rayons_developpes_mm": [round(rho0, 1), round(rho1, 1)], "angle_deg": round(math.degrees(theta), 1),
-            "hauteur_bande_mm": round(slant, 1), "encoches": len(g.MAG_T_DEG), "encoche_mm": [round(n_w, 1), round(n_h, 1)]}
+            "hauteur_bande_mm": round(slant, 1), "encoches": 2 * len(g.SCREW_T_DEG), "encoche_mm": [round(n_w, 1), round(n_h, 1)]}
     return inner + outer, info, label_at
 
 

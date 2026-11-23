@@ -34,19 +34,19 @@
       ]
     },
     "joint-coupon-front": {
-      "volume_cm3": 3.69,
+      "volume_cm3": 5.19,
       "size_mm": [
         40.0,
-        18.0,
-        6.0
+        19.0,
+        8.0
       ]
     },
     "joint-coupon-rear": {
-      "volume_cm3": 3.91,
+      "volume_cm3": 5.44,
       "size_mm": [
         40.0,
-        18.0,
-        8.0
+        19.0,
+        10.0
       ]
     },
     "light-coupon-petg": {

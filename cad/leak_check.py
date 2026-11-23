@@ -349,7 +349,7 @@ def figure(path, mat, lab, axes, res):
                  f"Fentes bouchées, la chambre est étanche : {'oui' if res['fentes_bouchees_chambre_etanche'] else 'NON'}.", fontsize=12)
     handles = [plt.Rectangle((0, 0), 1, 1, fc=colors[i], ec="#888888") for i in (1, 4, 5, 0, 2, 3, 6, 7)]
     fig.legend(handles, ["plastique imprimé", "chambre", "conduit et fentes", "air extérieur", "anneau lumineux", "joint mousse",
-                         "coussin et visage", "poche fermée (aimant)"], loc="lower center", ncol=8, fontsize=9.5, frameon=False)
+                         "coussin et visage", "poche fermée"], loc="lower center", ncol=8, fontsize=9.5, frameon=False)
     fig.tight_layout(rect=(0, 0.045, 1, 0.95))
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(path)

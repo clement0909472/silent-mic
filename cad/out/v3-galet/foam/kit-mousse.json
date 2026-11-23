@@ -13,8 +13,8 @@
   "manchon": {
     "plaque_mm": 10.0,
     "quantite": 1,
-    "aire_mm2": 2963,
-    "volume_cm3": 29.6,
+    "aire_mm2": 3322,
+    "volume_cm3": 33.2,
     "gabarit_mm": [
       154.6,
       74.1
@@ -29,10 +29,10 @@
       "hauteur_bande_mm": 17.1,
       "encoches": 8,
       "encoche_mm": [
-        6.2,
-        11.3
+        2.0,
+        14.1
       ]
     }
   },
-  "total_volume_cm3": 61.4
+  "total_volume_cm3": 65.0
 }

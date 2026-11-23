@@ -3,7 +3,7 @@
 """Silent Mic v3 galet : eprouvettes a imprimer avant le corps.
 
 - un capot d'essai du coussin d'oreillette et trois colliers amovibles (3, 10 et 16 mm) ;
-- eprouvette de joint (deux moities, deux poches d'aimant chacune, rainure de mousse) ;
+- eprouvette de joint (deux moities, deux vis M3 a ecrou prisonnier, rainure de mousse) ;
 - eprouvette de lumiere (bande translucide en marches de 0.8 a 2.4 mm).
 
 Ce module porte aussi les parametres du coussin et du joint, repris par le corps.
@@ -22,6 +22,7 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 import whisper_mask_v0 as v0
+import whisper_mask_v2_screwed as v2
 
 
 # ---------- coussin d'oreillette ----------
@@ -56,10 +57,26 @@ GROOVE = (5.9, 9.1)  # rainure du capot avant
 GASKET = (3.0, 2.0)  # bande de mousse a cellules fermees
 GASKET_COMPRESSION = 0.55
 GROOVE_DEPTH = TONGUE[2] + GASKET[1] - GASKET_COMPRESSION
-MAGNET = (6.0, 2.0)
-MAG_POCKET = (MAGNET[0] + 0.2, MAGNET[1] + 0.1)
-MAG_OFFSET = 12.9
-BOSS_R = MAG_POCKET[0] / 2 + 1.2
+
+# ---------- vis ----------
+# Le capot avant et la trappe se vissent (decision de Clement du 23 nov. 2026 : seul le micro, retire tous
+# les jours, tient par aimant). Vis M3 fraisees et ecrous prisonniers aux cotes du v2, deja imprime et monte.
+SCREW = (v2.M3_CLEARANCE_DIAMETER, v2.M3_HEAD_DIAMETER, v2.M3_HEAD_DEPTH)  # passage, tete, hauteur de fraisure
+NUT = (v2.M3_NUT_POCKET_DIAMETER, v2.M3_NUT_POCKET_DEPTH)  # logement d'ecrou : sur angles, hauteur
+SCREW_LEN = 10.0  # M3 x 10, tete comprise
+# axe des vis depuis la peau : a l'interieur de la rainure, rien ne traverse la paroi. A 13.9, une cle six pans
+# de 2 mm atteint chaque tete a travers le col en place (controle dans le corps) : on rouvre sans decoller le coussin
+SCREW_OFFSET = 13.9
+BOSS_R = 5.0  # bossage rond de la coque arriere (ecrou)
+BOSS_HALF, BOSS_FAR = 4.6, 4.3  # bossage du capot : demi-largeur, et avancee vers la chambre depuis l'axe
+NUT_MOUTH = 3.3  # le logement d'ecrou est ferme par la peau jusque-la
+# bossage du capot : 3.2 mm de matiere sous la fraisure. A 4.5, presque au niveau du dessus de la bride du
+# capot (4.45), OCCT rendait un capot invalide
+BOSS_FRONT_H = 5.0
+NUT_SKIN = 1.2  # entre l'ecrou et le plan de joint : pont de 5.8 mm, 6 couches
+BOSS_REAR_H = NUT_SKIN + NUT[1] + 1.2
+HEAD_WELL_R = SCREW[1] / 2 + 0.2  # puits de la tete et du tournevis
+PILOT_D = 2.7  # avant-trou d'une M3 qui taille son filet dans le PLA (trappe, hors volume acoustique)
 
 # ---------- capots d'essai ----------
 CAP_COLLARS = (3.0, 10.0, 16.0)
@@ -101,12 +118,52 @@ def teardrop_x(x0, zc, d, length):
     return prof.extrude(length)
 
 
-def pocket_down(x, y, z0):
-    """Poche d'aimant ouverte vers le plateau : toit conique a 45 deg au lieu d'un pont plat."""
-    r, d = MAG_POCKET[0] / 2, MAG_POCKET[1]
-    cyl = cq.Workplane("XY", origin=(x, y, z0 - 0.5)).circle(r).extrude(d + 0.5)
-    roof = cq.Workplane("XY").newObject([cq.Solid.makeCone(r, 0.0, r, cq.Vector(x, y, z0 + d), cq.Vector(0, 0, 1))])
-    return cyl.union(roof)
+def _lbox(x0, x1, half_y, z0, z1):
+    return cq.Workplane("XY").box(x1 - x0, 2 * half_y, z1 - z0, centered=(False, True, False)).translate((x0, 0, z0))
+
+
+def screw_hole_front(x, y, top, angle):
+    """Cote tete (capot avant, tete vers +z) : passage, fraisure au sommet du bossage, puis puits de la tete et
+    du tournevis jusqu'a top, ouvert vers la chambre (direction angle, en degres).
+    Le capot s'imprime joint en haut : le puits est sous le bossage. Ouvert vers la chambre, rien ne s'y ferme
+    dans le vide ; la face du bossage se ferme en trois couches de 0.2 : un pont droit entre les deux nervures
+    (fente restante), puis un carre, puis le rond de la fraisure. Un puits rond dans un contrefort plein donnait
+    un contour pose dans le vide, que le trancheur soutenait par une colonne de 24 mm dans chaque puits."""
+    r, rh, dh, rw, h = SCREW[0] / 2, SCREW[1] / 2, SCREW[2], HEAD_WELL_R, BOSS_FRONT_H
+    disc = lambda z0, z1: cq.Workplane("XY", origin=(0, 0, z0)).circle(rw).extrude(z1 - z0)
+    local = (cq.Workplane("XY", origin=(0, 0, -0.5)).circle(r).extrude(h + 0.5)
+             .union(cq.Workplane("XY").newObject([cq.Solid.makeCone(rh, r, dh, cq.Vector(0, 0, h), cq.Vector(0, 0, -1))]))
+             .union(_lbox(-rh, rh, rh, h - 0.4, h - 0.2))  # 2e couche : carre
+             .union(disc(h - 0.2, top)).union(_lbox(0, rh, rw, h - 0.2, h))  # 1re couche : pont au-dela de rh
+             .union(_lbox(0, BOSS_FAR + 1.0, rw, h, top)))  # puits ouvert vers la chambre, entre les nervures
+    return local.rotate((0, 0, 0), (0, 0, 1), angle).translate((x, y, 0))
+
+
+def screw_hole_rear(x, y, angle):
+    """Cote ecrou (coque arriere) : passage de la vis sous le plan de joint et logement d'ecrou M3 ouvert de
+    cote (direction angle, en degres) pour y glisser l'ecrou. Le serrage ecrase la peau de NUT_SKIN entre
+    l'ecrou et le bossage d'en face : rien ne travaille en traction a travers les couches.
+    La peau s'imprime en pont au-dessus du logement : le trou de la vis s'y ferme en trois couches de 0.2
+    (fente de toute la portee, carre, rond). Au-dela de NUT_MOUTH les parois du bossage rond sont trop minces
+    pour porter un pont : le logement y est ouvert jusqu'en haut."""
+    r = SCREW[0] / 2
+    depth = SCREW_LEN - BOSS_FRONT_H + 1.0
+    z0, z1 = -NUT_SKIN - NUT[1], -NUT_SKIN
+    half = NUT[0] * math.cos(math.radians(30)) / 2
+    local = (cq.Workplane("XY", origin=(0, 0, -depth)).circle(r).extrude(depth + z1)
+             .union(cq.Workplane("XY", origin=(0, 0, z1 + 0.4)).circle(r).extrude(-z1 - 0.4 + 0.5))
+             .union(cq.Workplane("XY", origin=(0, 0, z0)).polygon(6, NUT[0]).extrude(NUT[1]))  # un angle vers la fente
+             .union(_lbox(0, BOSS_R + 0.5, half, z0, z1)).union(_lbox(NUT_MOUTH, BOSS_R + 0.5, half, z0, 0.5))
+             .union(_lbox(-r, r, half, z1, z1 + 0.2)).union(_lbox(-r, r, r, z1 + 0.2, z1 + 0.4)))
+    return local.rotate((0, 0, 0), (0, 0, 1), angle).translate((x, y, 0))
+
+
+def pilot_hole(x, y, z0, depth):
+    """Avant-trou borgne ouvert vers -z (face posee sur le plateau), fond en pointe a 45 deg : a fond plat, le
+    trancheur y pose un support impossible a retirer."""
+    r = PILOT_D / 2
+    tip = cq.Workplane("XY").newObject([cq.Solid.makeCone(r, 0.0, r, cq.Vector(x, y, z0 + depth), cq.Vector(0, 0, 1))])
+    return cq.Workplane("XY", origin=(x, y, z0 - 0.5)).circle(r).extrude(depth + 0.5).union(tip)
 
 
 def step_ready(shape):
@@ -199,23 +256,22 @@ def pad_test_cap():
     return cap.cut(teardrop_x(SEAT[0] / 2 - CAP_WALL - 1, CAP_WALL + CABLE_PORT / 2 + 1.5, CABLE_PORT, CAP_WALL + 2))
 
 
-def joint_coupon_halves(length=40.0, width=18.0, thick=6.0):
-    """Troncon droit du joint : y = offset depuis la peau, z = 0 plan de joint."""
+def joint_coupon_halves(length=40.0, width=19.0, thick=8.0):
+    """Troncon droit du joint : y = offset depuis la peau, z = 0 plan de joint. Deux vis M3 fraisees et leurs
+    ecrous prisonniers, comme au corps, et un avant-trou d'essai (vis de la trappe) sous la moitie arriere."""
     def strip(y0, y1, z0, z1):
         return cq.Workplane("XY").box(length + 2, y1 - y0, z1 - z0).translate((0, (y0 + y1) / 2, (z0 + z1) / 2))
 
-    pockets = lambda z0, d, dia=MAG_POCKET[0]: (
-        cq.Workplane("XY", origin=(0, MAG_OFFSET, min(z0, z0 + d))).pushPoints([(-10, 0), (10, 0)])
-        .circle(dia / 2).extrude(abs(d)))
     front = cq.Workplane("XY").box(length, width, thick).translate((0, width / 2, thick / 2))
     front = front.cut(strip(GROOVE[0], GROOVE[1], -1, GROOVE_DEPTH))
-    for x in (-10, 10):
-        front = front.cut(pocket_down(x, MAG_OFFSET, 0))
     rear = cq.Workplane("XY").box(length, width, thick).translate((0, width / 2, -thick / 2))
     rear = rear.union(cq.Workplane("XY").box(length, TONGUE[1] - TONGUE[0], TONGUE[2] + 0.5)
                       .translate((0, (TONGUE[0] + TONGUE[1]) / 2, (TONGUE[2] - 0.5) / 2)))
     rear = rear.cut(strip(-1, REBATE, -RING_H, 1)).cut(strip(LED_CH[0], LED_CH[1], -LED_CH[2], 1))
-    rear = rear.cut(pockets(0, -MAG_POCKET[1]))
+    for x in (-10, 10):
+        front = front.cut(screw_hole_front(x, SCREW_OFFSET, thick + 1, 90))
+        rear = rear.cut(screw_hole_rear(x, SCREW_OFFSET, 90))  # fentes ouvertes sur le chant, cote chambre
+    rear = rear.cut(pilot_hole(0, SCREW_OFFSET, -thick, 5.0))
     return front, rear
 
 
@@ -243,11 +299,11 @@ def export(out=HERE / "out" / "v3-galet" / "coupons"):
     comp = check()
     report = {}
 
-    def save(name, shape):
+    def save(name, shape, printed=None):
         t = time.perf_counter()
         assert shape.val().isValid() and shape.solids().size() == 1, name
         export_step(shape, out / f"{name}.step")
-        cq.exporters.export(shape, str(out / f"{name}.stl"), tolerance=LIN_TOL, angularTolerance=ANG_TOL)
+        cq.exporters.export(printed or shape, str(out / f"{name}.stl"), tolerance=LIN_TOL, angularTolerance=ANG_TOL)
         clean_stl(out / f"{name}.stl")
         bb = shape.val().BoundingBox()
         report[name] = {"volume_cm3": round(vol(shape) / 1000, 2), "size_mm": [round(bb.xlen, 1), round(bb.ylen, 1), round(bb.zlen, 1)]}
@@ -266,7 +322,8 @@ def export(out=HERE / "out" / "v3-galet" / "coupons"):
         save(f"collar-insert-{h:g}mm", ins)
     front, rear = joint_coupon_halves()
     assert vol(front.intersect(rear)) < 1e-6
-    save("joint-coupon-front", front)
+    # imprimee comme le capot du corps : plan de joint en haut, fraisures vers le plateau
+    save("joint-coupon-front", front, front.rotate((0, 0, 0), (1, 0, 0), 180).translate((0, 0, front.val().BoundingBox().zmax)))
     # impression languette en haut : on garde l'orientation du corps (z vers le haut)
     save("joint-coupon-rear", rear)
     save("light-coupon-petg", light_coupon())

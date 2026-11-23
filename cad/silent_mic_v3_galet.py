@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: CERN-OHL-S-2.0
 # Copyright 2026 Clement Barberousse
 """Silent Mic v3 galet : coque en galet tenue en main, coussin d'oreillette sur un
-collier amovible, conduit annulaire d'un seul tour, joint a aimants.
+collier amovible, conduit annulaire d'un seul tour, joint visse (4 vis M3 par la bouche).
 
 Repere : x lateral, y vertical (haut +), z axe du corps (+ vers le visage).
 z = 0 : plan de joint capot avant / coque arriere. s = abscisse de la maquette
@@ -77,13 +77,16 @@ WALL = 3.0
 SEAT_PLATE = 3.0
 RING_H = 2.6
 LED_CH, TONGUE, GROOVE, GASKET = cp.LED_CH, cp.TONGUE, cp.GROOVE, cp.GASKET
-GROOVE_DEPTH, MAGNET, MAG_POCKET, BOSS_R = cp.GROOVE_DEPTH, cp.MAGNET, cp.MAG_POCKET, cp.BOSS_R
-REBATE, MAG_OFFSET = cp.REBATE, cp.MAG_OFFSET
+GROOVE_DEPTH, BOSS_R = cp.GROOVE_DEPTH, cp.BOSS_R
+REBATE, SCREW_OFFSET = cp.REBATE, cp.SCREW_OFFSET
 FLANGE_TOP = GROOVE_DEPTH + 1.0
 CAV_JOINT = 10.7  # offset de la cavite au joint et dans la bande du conduit
 CORBEL = 9.5  # chanfrein sous le conduit (arriere) : 7.5 mm sur 9.5, 38 deg ; 45 deg pile est refuse par Orca
 CORBEL_FRONT = 8.0  # sous la bride du capot : 43 deg, compromis avec l'angle du micro
-MAG_T_DEG = (0, 36, 72, 108, 144, 180, 225, 315)  # angles parametriques ; rien en bas (micro, pied, barrage)
+# 4 vis M3 (cp.SCREW) serrent le joint, tetes dans la chambre ; rien en bas (barrage, tunnel des fils, entree)
+# angles parametriques : en haut, les nervures des bossages restent hors du passage des doigts ; en bas, les
+# bossages restent a plus de 1.5 mm de la plaque du micro
+SCREW_T_DEG = (45, 135, 223, 317)
 
 # ---------- coussin et collier amovible ----------
 PAD = cp.PAD
@@ -129,10 +132,9 @@ LINER_T = 10.0
 MIN_PASSAGE = 1000.0
 TUNNEL_D = 2.6
 TUNNEL_OFFSET = 3.8
-# aimants de la trappe : entre les logements de la baie et le flanc bombe de la trappe. A (21.5, 9), leurs
-# poches crevaient la peau de la trappe (4 encoches visibles au dos) ; controle dans export().
-COVER_MAG_XY = ((-15.2, 10.6), (15.2, 10.6), (-19.6, -4.0), (19.6, -4.0))
-COVER_MAG_PROTRUDE = 0.9
+# vis de la trappe : entre les logements de la baie et le flanc bombe de la trappe ; controle dans export()
+COVER_SCREW_XY = ((-19.6, -4.0), (19.6, -4.0))
+COVER_HEAD_Z = Z_RF - 4.0  # dessus de la tete fraisee, au fond d'un puits ouvert au dos
 LIPO = (30.0, 20.0, 5.0)
 CHARGER = (17.5, 28.0, 4.0)  # x, y, z ; USB-C vers le bas
 SWITCH = (8.6, 3.6, 3.5)
@@ -147,7 +149,7 @@ MOUNT_W, MOUNT_T = v0.MOUNT_WIDTH, v0.MOUNT_THICKNESS
 MIC_CLEARANCE = 1.0
 MIC_STACK_EXTRA = float(os.environ.get("SILENT_MIC_STACK_EXTRA", 0.0))  # clip ou aimant entre disque et boitier, a mesurer
 BONNET = (36.0, 26.0, 9.0, 22.0)  # bonnette DJI : largeur, epaisseur, recouvrement du boitier, depassement. Estimation, a mesurer
-FINGER = 15.0  # largeur de doigt controlee de chaque cote du micro, capot avant retire
+FINGER = 15.0  # largeur de doigt controlee de chaque cote du micro, pris par la bouche (capot visse)
 MOUTH_ABOVE_SEAT = 20.0  # coussin de 30 mm comprime : hypothese
 PLA = 1.24e-3
 LIN_TOL, ANG_TOL = 0.02, 0.1  # a 0.1 / 0.3 rad, OCCT maillait la coque arriere 6 % trop petite
@@ -312,20 +314,16 @@ def section_point(t, d, z):
 
 
 def build_front_bosses():
-    """Bossages des aimants sous le joint, prolonges par un contrefort a 38 deg qui
-    rentre dans la paroi : aucune pointe pendante quand le capot est imprime appui en bas."""
-    h = MAG_POCKET[1] + 1.2
-    r_end, d_end = 0.8, 1.5
-    z_end = h + STEEP * ((MAG_OFFSET + BOSS_R) - (d_end + r_end))
-    out = []
-    for t in MAG_T_DEG:
-        x, y = eq_point(math.radians(t), MAG_OFFSET)[0]
-        xe, ye = section_point(math.radians(t), d_end, z_end)
-        cyl = cq.Workplane("XY", origin=(x, y, 0)).circle(BOSS_R).extrude(h)
-        but = wp(cq.Solid.makeLoft([cq.Workplane("XY", origin=(x, y, h)).circle(BOSS_R).wire().val(),
-                                    cq.Workplane("XY", origin=(xe, ye, z_end)).circle(r_end).wire().val()], True))
-        out.append(cyl.union(but))
-    return union_all(out)
+    """Bossages des vis du capot (imprime appui du coussin en bas, joint en haut) : un pave au-dessus du joint,
+    tenu par deux nervures de 1.3 mm qui montent a 38 deg jusqu'a la paroi et a la plaque d'appui. Entre les
+    nervures, le puits de la tete reste ouvert vers la chambre (voir cp.screw_hole_front)."""
+    h, far, half, rw = cp.BOSS_FRONT_H, cp.BOSS_FAR, cp.BOSS_HALF, cp.HEAD_WELL_R
+    z_end = Z_SEAT - SEAT_PLATE + 0.5
+    prof = [(-40.0, h - 0.01), (far, h - 0.01), (far - (z_end - h) / STEEP, z_end), (-40.0, z_end)]
+    local = box(-(SCREW_OFFSET - 9.0), far, -half, half, 0, h)
+    for yc in (-(rw + half) / 2, (rw + half) / 2):
+        local = local.union(cq.Workplane("XZ", origin=(0, yc, 0)).polyline(prof).close().extrude((half - rw) / 2, both=True))
+    return union_all(local.rotate((0, 0, 0), (0, 0, 1), ang).translate((x, y, 0)) for x, y, ang in screw_frames())
 
 
 def build_front(front_env):
@@ -334,7 +332,7 @@ def build_front(front_env):
     log("  cavite avant", t)
     shell = shell.union(build_front_bosses().intersect(front_env))
     log("  bossages", t)
-    shell = shell.cut(ring(GROOVE[0], GROOVE[1], -1, GROOVE_DEPTH)).cut(mag_pockets_up(-0.5, MAG_POCKET[1] + 0.5))
+    shell = shell.cut(ring(GROOVE[0], GROOVE[1], -1, GROOVE_DEPTH)).cut(front_screw_cut())
     log("capot avant", t)
     return shell
 
@@ -423,25 +421,50 @@ def build_shadow_groove():
     return skin.cut(keep.intersect(box(-70, 70, -70, 70, SHADOW_Z[0] - 1.0, z_top))).intersect(box(-60, 60, -60, 0, -30, 5))
 
 
-# ================= joint, aimants, tunnel =================
+# ================= joint, vis, tunnel =================
 
-def mag_xy():
-    return [eq_point(math.radians(t), MAG_OFFSET)[0] for t in MAG_T_DEG]
+def screw_xy():
+    return [eq_point(math.radians(t), SCREW_OFFSET)[0] for t in SCREW_T_DEG]
 
 
-def mag_pockets_up(z0, depth, dia=MAG_POCKET[0]):
-    return union_all(cq.Workplane("XY", origin=(x, y, z0)).circle(dia / 2).extrude(depth) for x, y in mag_xy())
+def screw_frames():
+    """Par vis : x, y et direction (degres) de la normale a la paroi, vers l'interieur de la chambre."""
+    out = []
+    for t in SCREW_T_DEG:
+        (x, y), (tx, ty) = eq_point(math.radians(t), SCREW_OFFSET)
+        out.append((x, y, math.degrees(math.atan2(tx, -ty))))
+    return out
+
+
+def front_screw_cut():
+    """Capot : passages, fraisures et puits des tetes, ouverts vers la bouche. Les vis se serrent par
+    l'ouverture de l'appui du coussin, col retire ; le manchon de mousse a une encoche a chaque puits."""
+    return union_all(cp.screw_hole_front(x, y, Z_SEAT + 1.0, ang) for x, y, ang in screw_frames())
+
+
+def rear_screw_cut():
+    """Coque arriere : passages des vis et logements d'ecrou, fentes tournees vers le plan y = 0 (loin de la
+    plaque du micro). Tout reste a l'interieur de la rainure du joint : aucun chemin de fuite ajoute."""
+    return union_all(cp.screw_hole_rear(x, y, -90 if y > 0 else 90) for x, y in screw_xy())
+
+
+def screw_solid(x, y, z_head, up, shank_r=1.5):
+    """Vis M3 x 10 fraisee de reference : dessus de la tete a z_head, tige vers +z (up = 1) ou -z (up = -1)."""
+    d = cq.Vector(0, 0, up)
+    head = wp(cq.Solid.makeCone(cp.SCREW[1] / 2 - 0.2, shank_r, 1.65, cq.Vector(x, y, z_head), d))
+    shank = wp(cq.Solid.makeCylinder(shank_r, cp.SCREW_LEN - 1.0, cq.Vector(x, y, z_head + up * 1.0), d))
+    return head.union(shank)
 
 
 def build_rear_bosses():
-    """Bossages des aimants, prolonges par un contrefort a 38 deg qui finit dans la paroi
+    """Bossages des ecrous, prolonges par un contrefort a 38 deg qui finit dans la paroi
     interieure du conduit (coque imprimee z vers le haut : pas de pointe pendante)."""
-    h = MAG_POCKET[1] + 1.2
+    h = cp.BOSS_REAR_H
     r_end, d_end = 0.8, 10.0
     out = []
-    for t in MAG_T_DEG:
-        x, y = eq_point(math.radians(t), MAG_OFFSET)[0]
-        z_end = -h - STEEP * ((MAG_OFFSET + BOSS_R) - (d_end + r_end))
+    for t in SCREW_T_DEG:
+        x, y = eq_point(math.radians(t), SCREW_OFFSET)[0]
+        z_end = -h - STEEP * ((SCREW_OFFSET + BOSS_R) - (d_end + r_end))
         xe, ye = section_point(math.radians(t), d_end, z_end)
         cyl = cq.Workplane("XY", origin=(x, y, -h)).circle(BOSS_R).extrude(h)
         but = wp(cq.Solid.makeLoft([cq.Workplane("XY", origin=(xe, ye, z_end)).circle(r_end).wire().val(),
@@ -543,20 +566,24 @@ def bay_cut():
     return bay.union(usb).union(lever)
 
 
-def cover_pockets(z0, depth, roof=0):
-    """Poches des aimants du couvercle ; roof = +1 ou -1 ajoute un toit conique a 45 deg
-    au fond (cote +z ou -z) pour une poche ouverte vers le plateau."""
-    r = MAG_POCKET[0] / 2 + 0.05
+def cover_screw_cut():
+    """Trappe : passage, fraisure et puits de tete des 2 vis, ouverts au dos (trappe imprimee face plane
+    sur le plateau : la fraisure s'ouvre vers le haut, sans surplomb)."""
+    r, rh, dh = cp.SCREW[0] / 2, cp.SCREW[1] / 2, cp.SCREW[2]
     out = []
-    for x, y in COVER_MAG_XY:
-        p = cq.Workplane("XY", origin=(x, y, z0)).circle(r).extrude(depth)
-        if roof:
-            base = z0 + depth if roof > 0 else z0
-            # toit conique depuis le plein rayon : un aimant de r 3.0 s'y enfonce de 0.15 mm au plus. Un epaulement
-            # plat reclamerait des supports ; la profondeur se regle au collage (aimant affleure a la cale)
-            p = p.union(wp(cq.Solid.makeCone(r, 0.0, r, cq.Vector(x, y, base), cq.Vector(0, 0, roof))))
-        out.append(p)
+    for x, y in COVER_SCREW_XY:
+        hole = cq.Workplane("XY", origin=(x, y, COVER_HEAD_Z)).circle(r).extrude(Z_RF - COVER_HEAD_Z + 0.5)
+        cone = wp(cq.Solid.makeCone(rh, r, dh, cq.Vector(x, y, COVER_HEAD_Z), cq.Vector(0, 0, 1)))
+        well = cq.Workplane("XY", origin=(x, y, Z_END - 1.0)).circle(cp.HEAD_WELL_R).extrude(COVER_HEAD_Z - Z_END + 1.0)
+        out.append(hole.union(cone).union(well))
     return union_all(out)
+
+
+def cover_pilots():
+    """Avant-trous borgnes dans le dos de la coque : les vis de la trappe y taillent leur filet. La baie est
+    hors du volume acoustique, la trappe ne serre aucun joint."""
+    depth = cp.SCREW_LEN - (Z_RF - COVER_HEAD_Z) + 1.0
+    return union_all(cp.pilot_hole(x, y, Z_RF, depth) for x, y in COVER_SCREW_XY)
 
 
 def build_rear(rear_env):
@@ -573,21 +600,25 @@ def build_rear(rear_env):
     shell = shell.cut(build_duct()).cut(build_inlet()).cut(build_slots()).cut(build_shadow_groove())
     log("  conduit, entree, fentes, gorge", t)
     shell = shell.cut(ring(-1.0, REBATE, -RING_H, 1)).cut(ring(LED_CH[0], LED_CH[1], -LED_CH[2], 1))
-    shell = shell.cut(mag_pockets_up(-MAG_POCKET[1], MAG_POCKET[1] + 1)).cut(build_tunnel())
-    shell = shell.cut(bay_cut()).cut(cover_pockets(Z_RF - 0.5, 0.5 + MAGNET[1] - COVER_MAG_PROTRUDE + 0.1, roof=1))
+    shell = shell.cut(rear_screw_cut()).cut(build_tunnel())
+    shell = shell.cut(bay_cut()).cut(cover_pilots())
     log("coque arriere", t)
     return shell
 
 
-def build_cover(rear_env, pockets=True):
+def build_cover(rear_env, holes=True):
     t = time.perf_counter()
     cover = rear_env.intersect(box(-70, 70, -70, 70, Z_END - 1, Z_RF))
     try:
         cover = cover.faces("<Z").edges().fillet(REAR_FILLET)
     except Exception as exc:  # shortcut: sans conge si OCCT refuse ; a reprendre a la main
         print(f"conge du dos refuse : {exc}")
-    if pockets:
-        cover = cover.cut(cover_pockets(Z_RF - 3.1, 3.2, roof=-1))
+    if holes:
+        cover = cover.cut(cover_screw_cut())
+        if not cover.val().isValid():  # les puits croisent le conge du dos : forme a reparer, volume inchange
+            v = vol(cover)
+            cover = wp(cover.val().fix())
+            assert abs(vol(cover) - v) < 1e-3 * v
     log("couvercle", t)
     return cover
 
@@ -662,7 +693,7 @@ def build_liner():
     # bande d'epaisseur constante (une plaque de 10 mm), sans rognage a l'ouverture : le passage libre est controle
     liner = outer.cut(inner)
     # la couche de 5 mm sur le chanfrein du joint est abandonnee : 8 encoches pour 4 cm3 (0.05 dB(A) au modele)
-    return liner.cut(build_front_bosses())
+    return liner.cut(build_front_bosses()).cut(front_screw_cut())
 
 
 def liner_z():
@@ -702,17 +733,18 @@ def build_foam_disc(rear=None):
 def build_refs():
     lipo, charger, switch = bay_boxes()
     pad = eprism(*PAD["outer"], Z_SEAT, Z_SEAT + PAD["thickness"]).cut(eprism(*PAD["opening"], Z_SEAT - 1, Z_SEAT + PAD["thickness"] + 1))
-    cmag = union_all(cq.Workplane("XY", origin=(x, y, Z_RF - COVER_MAG_PROTRUDE)).circle(MAGNET[0] / 2).extrude(MAGNET[1]) for x, y in COVER_MAG_XY)
-    csteel = union_all(cq.Workplane("XY", origin=(x, y, Z_RF - 3.1)).circle(MAGNET[0] / 2).extrude(MAGNET[1]) for x, y in COVER_MAG_XY)
+    jscrews = union_all(screw_solid(x, y, cp.BOSS_FRONT_H, -1) for x, y in screw_xy())
+    nut_z = -cp.NUT_SKIN - cp.NUT[1] + 0.1
+    jnuts = union_all(cq.Workplane("XY", origin=(x, y, nut_z)).polygon(6, 6.35).extrude(2.4).rotate((x, y, 0), (x, y, 1), 90)
+                      for x, y in screw_xy()).cut(jscrews)
+    cscrews = union_all(screw_solid(x, y, COVER_HEAD_Z, 1, cp.PILOT_D / 2 - 0.1) for x, y in COVER_SCREW_XY)
     return {
         "mic": mic_box(), "mic-disc": mic_disc(), "bonnette": bonnet_envelope(), "earpad": pad,
         "gasket": ring(GROOVE[0] + 0.1, GROOVE[1] - 0.1, TONGUE[2], GROOVE_DEPTH),
         "led-filament": ring(LED_CH[0] + 0.2, LED_CH[1] - 0.2, -LED_CH[2] + 0.1, -0.1),
         "foam-disc": build_foam_disc(), "foam-liner": build_liner(),
         "battery": lipo, "charger": charger, "switch": switch,
-        "joint-magnets": mag_pockets_up(-MAGNET[1] - 0.1, MAGNET[1], MAGNET[0]),
-        "joint-steel-discs": mag_pockets_up(0.1, MAGNET[1], MAGNET[0]),
-        "cover-magnets": cmag, "cover-steel-discs": csteel,
+        "joint-screws": jscrews, "joint-nuts": jnuts, "cover-screws": cscrews,
     }
 
 
@@ -844,7 +876,11 @@ def export():
     t = time.perf_counter()
     cav = front_cavity_tool().intersect(box(-70, 70, -70, 70, -1, Z_SEAT - cp.FLANGE_T - 0.1)).union(rear_cavity_tool())
     cav = cav.union(eprism(*COLLAR_INNER, Z_SEAT - cp.FLANGE_T - 0.2, Z_SEAT + COLLAR_HEIGHT))
-    cav = cav.cut(front).cut(rear).cut(insert).cut(build_tunnel()).cut(refs["mic"]).cut(refs["mic-disc"])
+    # les passages des vis sont exclus du volume d'air : les deux percages coaxiaux de meme rayon (capot, coque)
+    # y laissaient une face invalide dans le STEP du volume d'air, refuse par cad/check_exports.py (0.4 cm3 en moins)
+    plugs = union_all(cq.Workplane("XY", origin=(x, y, -(cp.SCREW_LEN - cp.BOSS_FRONT_H + 1.1))).circle(cp.SCREW[0] / 2 + 0.05)
+                      .extrude(cp.SCREW_LEN + 1.1 - cp.SCREW[2] + 0.05) for x, y in screw_xy())
+    cav = cav.cut(front).cut(rear).cut(insert).cut(build_tunnel()).cut(refs["mic"]).cut(refs["mic-disc"]).cut(plugs)
     v_cav = vol(cav) / 1000
     foam = {k: vol(refs[k]) / 1000 for k in ("foam-disc", "foam-liner")}
     v_foam = sum(foam.values())
@@ -926,17 +962,22 @@ def export():
              "rear_hors_plaque": min_distance(mic, rear.cut(grow(build_mic_mount(), 0.01))), "disque": min_distance(mic, refs["mic-disc"]),
              "bonnette_capot_et_col": min(min_distance(bonnet, front), min_distance(bonnet, insert)),
              "bonnette_plaque_et_disque": min(min_distance(bonnet, rear), min_distance(bonnet, refs["mic-disc"]))}
-    # doigts : de chaque cote du boitier, une bande de 15 mm au-dessus de la languette, capot avant retire
+    # doigts : capot visse, le micro se prend par la bouche. De chaque cote du boitier, une bande de 15 mm
+    # depuis le bas de la jupe de la bonnette jusqu'au bord du col, libre de toute piece rigide
     bbm = mic.val().BoundingBox()
-    zf0 = TONGUE[2] + 0.5
-    sides = {"-x": box(bbm.xmin - FINGER, bbm.xmin - 0.01, bbm.ymin, bbm.ymax, zf0, bbm.zmax),
-             "+x": box(bbm.xmax + 0.01, bbm.xmax + FINGER, bbm.ymin, bbm.ymax, zf0, bbm.zmax)}
-    fingers = {k: {"hauteur_libre_mm": round(bbm.zmax - zf0, 1), "obstacle_mm3": round(vol(b.intersect(rear.union(ring_))), 1)}
+    z_rim = insert.val().BoundingBox().zmax
+    zf0 = bbm.zmax - BONNET[2]
+    sides = {"-x": box(bbm.xmin - FINGER, bbm.xmin - 0.01, bbm.ymin, bbm.ymax, zf0, z_rim),
+             "+x": box(bbm.xmax + 0.01, bbm.xmax + FINGER, bbm.ymin, bbm.ymax, zf0, z_rim)}
+    hard = union_all([front, insert, rear, ring_])
+    fingers = {k: {"hauteur_libre_mm": round(bbm.zmax - zf0, 1), "obstacle_mm3": round(vol(b.intersect(hard)), 1)}
                for k, b in sides.items()}
     lips = Z_SEAT + MOUTH_ABOVE_SEAT
     m["mic"] = {"centre": [MIC_XC, round((bbm.ymin + bbm.ymax) / 2, 2), round(MIC_ZC, 2)],
                 "clearance_mm": {k: round(v, 2) for k, v in clear.items()}, "stack_extra_mm": MIC_STACK_EXTRA,
-                "acces_doigts_capot_retire": fingers, "haut_du_micro_au_dessus_du_joint_mm": round(bbm.zmax, 1),
+                "acces_doigts_par_la_bouche": fingers, "haut_du_micro_au_dessus_du_joint_mm": round(bbm.zmax, 1),
+                "sous_le_bord_du_col_mm": {"haut_du_micro": round(z_rim - bbm.zmax, 1),
+                                           "haut_de_la_bonnette": round(z_rim - bonnet.val().BoundingBox().zmax, 1)},
                 "levres_supposees_mm": {"au_dessus_de_l_appui": MOUTH_ABOVE_SEAT, "du_haut_du_micro": round(lips - bbm.zmax, 1),
                                         "du_haut_de_la_bonnette": round(lips - bonnet.val().BoundingBox().zmax, 1)},
                 "bonnette_estimee_mm": list(BONNET)}
@@ -945,16 +986,35 @@ def export():
     assert all(f["obstacle_mm3"] < 0.01 and f["hauteur_libre_mm"] >= 9.0 for f in fingers.values()), fingers
     log("micro", t)
 
-    # --- joint et aimants
-    # poches de la trappe : matiere restante vers sa peau exterieure et vers les logements de la baie
-    behind = box(-70, 70, -70, 70, Z_END - 3, Z_RF - 0.05)
-    skin_gap = min_distance(cover_pockets(Z_RF - 3.1, 3.2, roof=-1).intersect(behind), behind.cut(build_cover(rear_env, pockets=False)))
-    bay_gap = min_distance(cover_pockets(Z_RF, MAGNET[1] - COVER_MAG_PROTRUDE + 0.1, roof=1), bay_cut())
-    m["cover_magnet_walls_mm"] = {"to_cover_skin": round(skin_gap, 2), "to_bay_pockets": round(bay_gap, 2)}
-    assert skin_gap >= 1.0 and bay_gap >= 0.8, m["cover_magnet_walls_mm"]
+    # --- joint et vis
+    t = time.perf_counter()
+    # les percages ne doivent rien crever : ni l'exterieur, ni la rainure du joint, ni le conduit, ni la baie
+    fs, rs, pil = front_screw_cut(), rear_screw_cut(), cover_pilots()
+    gaps = {"capot_vers_exterieur": min_distance(fs, outside), "capot_vers_rainure": min_distance(fs, ring(GROOVE[0], GROOVE[1], -1, GROOVE_DEPTH)),
+            "coque_vers_exterieur": min_distance(rs, outside), "coque_vers_conduit": min_distance(rs, duct),
+            "trappe_vers_exterieur_et_baie": min_distance(pil, outside), "trappe_vers_chambre": min_distance(pil, cav)}
+    m["screw_walls_mm"] = {k: round(v, 2) for k, v in gaps.items()}
+    assert min(gaps["capot_vers_exterieur"], gaps["coque_vers_exterieur"], gaps["coque_vers_conduit"], gaps["trappe_vers_chambre"]) >= 1.5, m["screw_walls_mm"]
+    assert gaps["capot_vers_rainure"] >= 0.9 and gaps["trappe_vers_exterieur_et_baie"] >= 0.8, m["screw_walls_mm"]
+    # siege des vis de la trappe : 1 mm de matiere autour de la tete sur toute la hauteur sous le puits
+    seat = union_all(cq.Workplane("XY", origin=(x, y, COVER_HEAD_Z)).circle(cp.HEAD_WELL_R + 1.0).extrude(Z_RF - COVER_HEAD_Z) for x, y in COVER_SCREW_XY)
+    m["cover_seat_fill"] = round(vol(seat.intersect(build_cover(rear_env, holes=False))) / vol(seat), 4)
+    assert m["cover_seat_fill"] > 0.999, "siege d'une vis de trappe au bord de la peau"
+    # tournevis : un cylindre du diametre de la tete, de chaque vis jusqu'au-dela du col, ne rencontre ni le capot ni le manchon
+    driver = union_all(cq.Workplane("XY", origin=(x, y, cp.BOSS_FRONT_H + 0.05)).circle(cp.HEAD_WELL_R - 0.1).extrude(z_rim + 5.0 - cp.BOSS_FRONT_H)
+                       for x, y in screw_xy())
+    # cle six pans de 2 mm (2.3 sur angles, comptee a 2.6) : elle atteint chaque tete a travers le col en place,
+    # pour rouvrir sans decoller le coussin ; les vis desserrees restent dans leurs puits
+    key = union_all(cq.Workplane("XY", origin=(x, y, cp.BOSS_FRONT_H + 0.05)).circle(1.3).extrude(z_rim + 5.0 - cp.BOSS_FRONT_H) for x, y in screw_xy())
+    acc = {"capot": vol(driver.intersect(front)), "manchon": vol(driver.intersect(refs["foam-liner"])), "col_en_place_info": vol(driver.intersect(insert)),
+           "cle_2mm_col_en_place": vol(key.intersect(union_all([front, insert, refs["foam-liner"]]))),
+           "cle_2mm_jeu_au_col_mm": min_distance(key, insert)}
     m["gasket_compression_mm"] = round(comp, 2)
-    m["magnets"] = {"joint": len(mag_xy()), "cover": len(COVER_MAG_XY)}
-    assert len(mag_xy()) == 8 and refs["joint-magnets"].solids().size() == 8 and refs["joint-steel-discs"].solids().size() == 8
+    m["screws"] = {"joint": len(screw_xy()), "trappe": len(COVER_SCREW_XY), "acces_tournevis_obstacle_mm3": {k: round(v, 2) for k, v in acc.items()}}
+    assert acc["capot"] < 0.01 and acc["manchon"] < 0.01 and acc["cle_2mm_col_en_place"] < 0.01 and acc["cle_2mm_jeu_au_col_mm"] >= 1.0, acc
+    assert len(screw_xy()) == 4 and refs["joint-screws"].solids().size() == 4 and refs["joint-nuts"].solids().size() == 4
+    assert refs["cover-screws"].solids().size() == 2
+    log("vis", t)
 
     # --- interferences deux a deux
     t = time.perf_counter()
@@ -975,14 +1035,14 @@ def export():
     # demontage : chaque piece retiree au quotidien doit sortir en translation droite. Le 21 nov. 2026, sans
     # aucune interference au repos, la tete du pied et le micro debordaient de 5.5 mm au-dessus du corbeau
     # du capot avant : capot ni posable ni retirable (trouve par une relecture independante des STL).
-    steps = (1.0, 2.0, 4.0, 8.0, 14.0, 22.0, 32.0)
+    steps = (1.0, 2.0, 4.0, 8.0, 14.0, 22.0, 32.0, 45.0, 60.0)
     stays = union_all([rear, refs["mic"], refs["mic-disc"], refs["bonnette"]])
     mic_on = refs["mic"].union(refs["bonnette"])
-    held = rear.union(refs["mic-disc"])
-    # le micro, bonnette en place, se tire droit vers le visage ou se decolle du disque vers l'avant (+y) : 4 mm
-    # suffisent a liberer l'aimant, le boitier ne rencontre un bossage d'aimant de la coque qu'a 8 mm
+    held = union_all([rear, refs["mic-disc"], front, insert])
+    # capot visse : le micro, bonnette en place, sort droit par la bouche, ou se decolle d'abord du disque
+    # vers l'avant (+y), ou 4 mm suffisent a liberer l'aimant
     pulls = {"capot_avant_et_col_micro_en_place": (front.union(insert), stays, (0, 0, 1)),
-             "micro_et_bonnette_tires_droit": (mic_on, held, (0, 0, 1)), "micro_et_bonnette_decolles": (mic_on, held, (0, 1, 0)),
+             "micro_et_bonnette_par_la_bouche": (mic_on, held, (0, 0, 1)), "micro_et_bonnette_decolles": (mic_on, held, (0, 1, 0)),
              "trappe": (cover, rear, (0, 0, -1))}
     m["demontage_volume_commun_mm3"] = {k: {d: round(vol(p.translate(tuple(c * d for c in u)).intersect(q)), 2)
                                             for d in steps if u[1] == 0 or d <= 4.0} for k, (p, q, u) in pulls.items()}
@@ -1050,19 +1110,18 @@ def export():
 
     # --- web : STL grossiers et manifeste
     t = time.perf_counter()
-    # eclate = ordre de montage : baie par l'arriere, puis tout le reste par le plan de joint
+    # eclate = ordre de montage : baie par l'arriere, le reste par le plan de joint, le micro en dernier par la bouche
     roles = {"front": ("Capot avant", "black", (0, 0, 135)), "rear": ("Coque arriere", "black", (0, 0, 0)),
              "cover": ("Couvercle de la baie", "black", (0, 0, -62)), "ring": ("Anneau lumineux", "translucent", (0, 0, 10)),
              "collar-insert-14mm": ("Collier amovible 14 mm", "black", (0, 0, 150)),
-             "mic": ("DJI Mic Mini 2", "electronics", (0, 0, 66)), "mic-disc": ("Disque acier 30 mm", "metal", (0, 0, 62)),
+             "mic": ("DJI Mic Mini 2", "electronics", (0, 0, 250)), "mic-disc": ("Disque acier 30 mm", "metal", (0, 0, 62)),
              "earpad": ("Coussin Brainwavz", "soft", (0, 0, 175)), "gasket": ("Joint mousse 3 x 2", "soft", (0, 0, 128)),
              "led-filament": ("Filament LED", "electronics", (0, 0, 5)), "foam-disc": ("Fond de mousse, 2 couches de 10 mm", "foam", (0, 0, 45)),
              "foam-liner": ("Manchon de mousse 10 mm", "foam", (0, 0, 100)), "foam-liner-rear": ("Mousse des flancs arriere 8 mm", "foam", (0, 0, 58)),
-             "bonnette": ("Bonnette DJI (encombrement estime)", "soft", (0, 0, 66)),
+             "bonnette": ("Bonnette DJI (encombrement estime)", "soft", (0, 0, 250)),
              "battery": ("LiPo 30 x 20 x 5", "electronics", (0, 0, -26)), "charger": ("Chargeur USB-C TP4056", "electronics", (0, 0, -44)),
-             "switch": ("Interrupteur", "electronics", (0, 0, -44)), "joint-magnets": ("Aimants du joint 6 x 2", "metal", (0, 0, 3)),
-             "joint-steel-discs": ("Pastilles acier du joint", "metal", (0, 0, 131)), "cover-magnets": ("Aimants du couvercle", "metal", (0, 0, -5)),
-             "cover-steel-discs": ("Pastilles acier du couvercle", "metal", (0, 0, -57))}
+             "switch": ("Interrupteur", "electronics", (0, 0, -44)), "joint-screws": ("Vis M3 x 10 fraisees du joint", "metal", (0, 0, 160)),
+             "joint-nuts": ("Ecrous M3 du joint", "metal", (0, 0, 0)), "cover-screws": ("Vis M3 x 10 de la trappe", "metal", (0, 0, -80))}
     manifest = []
     shown = dict(parts) | refs | {"earpad": web_earpad()}
     for n, p in shown.items():

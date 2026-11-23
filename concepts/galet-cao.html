@@ -47,12 +47,12 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
     <p class="sub">Les vraies pièces à imprimer, avec les composants en place. Coupe et éclaté pour voir l'intérieur.</p>
     <ol class="legend" id="legend-asm" hidden>
       <li>Par l'arrière : la batterie, le chargeur USB-C et l'interrupteur se glissent dans la baie.</li>
-      <li>La trappe ferme la baie, tenue par 4 aimants.</li>
+      <li>La trappe ferme la baie, tenue par 2 vis.</li>
       <li>Par l'avant : deux couches de mousse au fond de la coque.</li>
       <li>Le ruban LED et l'anneau translucide se posent sur le bord de la coque.</li>
-      <li>Le micro se pose debout contre sa plaque, tenu par son aimant, bonnette en place.</li>
-      <li>Le capot avant, garni de son manchon de mousse, descend droit autour du micro : 8 aimants et un joint, aucune vis.</li>
+      <li>Le capot avant, garni de son manchon de mousse, se pose sur le joint : 4 vis serrées par la bouche dans les écrous de la coque.</li>
       <li>Le col se pose dans son logement, le coussin se colle autour par un anneau de ruban double face.</li>
+      <li>Le micro, bonnette en place, entre par la bouche et se pose debout contre sa plaque, tenu par son aimant. C'est la seule pièce qu'on retire au quotidien.</li>
     </ol>
     <ol class="legend" id="legend">
       <li>La bouche souffle dans la chambre garnie de mousse.</li>
@@ -69,7 +69,7 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
       <button id="t-cut" aria-pressed="false">Coupe</button>
       <button id="t-air" aria-pressed="true">Trajet d'air</button>
       <button id="t-asm" aria-pressed="false">Montage</button>
-      <button id="t-open" aria-pressed="false">Ouvert</button>
+      <button id="t-open" aria-pressed="false">Sans capot</button>
       <button id="t-spin" aria-pressed="false">Rotation</button>
     </div>
     <div class="grp"><span>Vue</span>
@@ -107,7 +107,7 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
     translucent: { label: "Anneau lumineux", color: "#4d9bff", o: { color: 0x8fc0ff, emissive: 0x2f7dff, emissiveIntensity: 1.6, roughness: 0.4 } },
     soft: { label: "Coussin et joint", color: "#8c7f73" },
     foam: { label: "Mousse", color: "#6f9a82", o: { roughness: 1, envMapIntensity: 0.1 } },
-    metal: { label: "Aimants et acier", color: "#d5d8de", o: { roughness: 0.3, metalness: 0.9, envMapIntensity: 0.8 } },
+    metal: { label: "Vis, écrous et acier", color: "#d5d8de", o: { roughness: 0.3, metalness: 0.9, envMapIntensity: 0.8 } },
     electronics: { label: "Micro et électronique", color: "#e0a03c" },
     air: { label: "Trajet d'air", color: "#2f7dff", o: { transparent: true, opacity: 0.22, depthWrite: false, side: THREE.DoubleSide } },
   };
@@ -149,7 +149,7 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
   }
   [V(0, 8, 68), off(tIn, 15, -8), off(Math.PI / 2, -5, FLOW.z), off(tAt(-26.35), -16, -1)].forEach((p, i) => tag(i + 1, p, flow));
   // Montage : l'eclate suit l'ordre de montage, une pastille par etape posee sur une piece de l'etape
-  const ASM = { "battery.stl": 1, "cover.stl": 2, "foam-disc.stl": 3, "ring.stl": 4, "mic.stl": 5, "front.stl": 6, "earpad.stl": 7 }, asmTags = [];
+  const ASM = { "battery.stl": 1, "cover.stl": 2, "foam-disc.stl": 3, "ring.stl": 4, "front.stl": 5, "earpad.stl": 6, "mic.stl": 7 }, asmTags = [];
   const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
   let flowT = 0;
   function moveHeads(dt) {
@@ -189,7 +189,7 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
   function view(name) {
     const D = { air: [0.5, 0.26, 0.9], avant: [0.78, 0.3, 0.55], profil: [0.02, 0.08, 1], dos: [-0.75, 0.3, -0.5] }[name];
     const d = new THREE.Vector3(...D).normalize(), tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-    const span = 150 + 2.6 * state.t * 100, dist = 1.15 * Math.max(span / 2 / tan, span / 2 / (tan * camera.aspect)) + 60;
+    const span = 150 + 3.4 * state.t * 100, dist = 1.15 * Math.max(span / 2 / tan, span / 2 / (tan * camera.aspect)) + 60;
     controls.target.set(51 * state.t, 66 * state.t, 0); camera.position.copy(d.multiplyScalar(dist)).add(controls.target); controls.update();   // l'eclate n'est pas centre sur la coque, et il passe sous la legende
   }
 
@@ -224,10 +224,10 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
     setExplode(on ? 1 : 0); device.rotation.y = Math.PI / 2; view(on ? "profil" : "avant");
   });
   toggle("t-spin", "spin");
-  // Ouvert : le geste de tous les jours, capot avant retire (toutes les pieces qui partent avec lui), micro accessible
+  // Sans capot : l'interieur, capot avant et tout ce qui part avec lui masques (le capot est visse : au quotidien, seul le micro sort, par la bouche)
   toggle("t-open", "open", () => {
     if (state.open && state.air) document.getElementById("t-air").click();
-    parts.forEach(p => { if (p.explode.z >= 100) { p.mesh.visible = !state.open; const c = document.getElementById("p-" + p.file.replace(/\W/g, "-")); if (c) c.checked = !state.open; } });
+    parts.forEach(p => { if (p.explode.z >= 100 && !/^(mic|bonnette)\./.test(p.file)) { p.mesh.visible = !state.open; const c = document.getElementById("p-" + p.file.replace(/\W/g, "-")); if (c) c.checked = !state.open; } });
     if (state.open) { device.rotation.y = Math.PI / 2; view("avant"); }
   });
   document.getElementById("explode").addEventListener("input", e => setExplode(e.target.value / 100));

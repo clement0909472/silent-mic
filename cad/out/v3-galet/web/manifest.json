@@ -59,7 +59,7 @@
       "explode": [
         0,
         0,
-        66
+        250
       ]
     },
     {
@@ -79,7 +79,7 @@
       "explode": [
         0,
         0,
-        66
+        250
       ]
     },
     {
@@ -163,43 +163,33 @@
       ]
     },
     {
-      "file": "joint-magnets.stl",
-      "label": "Aimants du joint 6 x 2",
+      "file": "joint-screws.stl",
+      "label": "Vis M3 x 10 fraisees du joint",
       "role": "metal",
       "explode": [
         0,
         0,
-        3
+        160
       ]
     },
     {
-      "file": "joint-steel-discs.stl",
-      "label": "Pastilles acier du joint",
+      "file": "joint-nuts.stl",
+      "label": "Ecrous M3 du joint",
       "role": "metal",
       "explode": [
         0,
         0,
-        131
+        0
       ]
     },
     {
-      "file": "cover-magnets.stl",
-      "label": "Aimants du couvercle",
+      "file": "cover-screws.stl",
+      "label": "Vis M3 x 10 de la trappe",
       "role": "metal",
       "explode": [
         0,
         0,
-        -5
-      ]
-    },
-    {
-      "file": "cover-steel-discs.stl",
-      "label": "Pastilles acier du couvercle",
-      "role": "metal",
-      "explode": [
-        0,
-        0,
-        -57
+        -80
       ]
     },
     {

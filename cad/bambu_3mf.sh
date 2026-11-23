@@ -46,7 +46,7 @@ for name, sup in (("process-off", "0"), ("process-auto", "1"), ("process-plate",
     q = dict(proc, enable_support=sup)
     if sup == "1":
         q.update(support_type="normal(auto)", bridge_no_support="1")
-    if name == "process-plate":  # coque arriere : rien dans la cavite, sous les butees du nid
+    if name == "process-plate":  # supports poses sur le plateau seulement : rien dans une cavite fermee ni dans un logement d'ecrou
         q["support_on_build_plate_only"] = "1"
     json.dump(q, open(f"{tmp}/{name}.json", "w"), indent=1)
 EOF
@@ -85,13 +85,16 @@ if [ "$only" != corps ]; then
 project capot-essai "$tmp/pla.json" "$c/pad-test-cap.stl"
 # ordre de chargement voulu : dans l'ordre inverse, le placement automatique faisait apparaitre
 # 11 petits blocs de support qu'aucune piece ne demande seule
-project cols-et-joint "$tmp/pla.json" "$c/joint-coupon-rear.stl" "$c/joint-coupon-front.stl" \
+# supports sur plateau seulement, comme au corps : un plot sous chaque tete de vis de l'eprouvette avant,
+# rien dans les logements d'ecrou de l'eprouvette arriere (leur plafond s'imprime en pont, comme dans la coque)
+SUP=plate project cols-et-joint "$tmp/pla.json" "$c/joint-coupon-rear.stl" "$c/joint-coupon-front.stl" \
   "$c/collar-insert-16mm.stl" "$c/collar-insert-10mm.stl" "$c/collar-insert-3mm.stl"
 project lumiere-petg "$tmp/petg.json" "$c/light-coupon-petg.stl"
 fi
 if [ "$only" != essai ]; then
   b=cad/out/v3-galet/silent-mic-v3-galet
-  project corps-capot-avant "$tmp/pla.json" "$b-front.stl"
+  # capot : une colonne de support par puits de vis, debout sur le plateau dans l'ouverture du coussin
+  SUP=plate project corps-capot-avant "$tmp/pla.json" "$b-front.stl"
   SUP=plate project corps-coque-arriere "$tmp/pla.json" "$b-rear.stl"
   project corps-trappe-col "$tmp/pla.json" "$b-cover.stl" "$b-collar-insert-14mm.stl"
   project corps-anneau-petg "$tmp/petg.json" "$b-ring.stl"
