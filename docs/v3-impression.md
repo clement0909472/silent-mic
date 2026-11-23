@@ -18,7 +18,9 @@
 
 ## Impression
 
-Bambu Lab A1 mini, buse 0,4 mm, couches de 0,20 mm, 4 périmètres, 20 % de remplissage, couture alignée, plaque PEI texturée. PLA : préréglage « ELEGOO PLA Mat Flow Rate Calibrated » de Clément (débit 1,029, densité 1,32). PETG : « Bambu PETG Translucent @BBL A1M ». Fichiers dans `cad/out/v3-galet/`.
+Bambu Lab A1 mini, buse 0,4 mm, couches de 0,20 mm, 4 périmètres, 20 % de remplissage (100 %, en rectiligne, pour les pièces qui ferment la chambre du corps : assises, capot avant, coque arrière), couture alignée, plaque PEI texturée. PLA : préréglage « ELEGOO PLA Mat Flow Rate Calibrated » de Clément (débit 1,029, densité 1,32). PETG : « Bambu PETG Translucent @BBL A1M ». Fichiers dans `cad/out/v3-galet/`.
+
+> **Pièces pleines depuis le 23 novembre 2026** (question de Clément sur les 20 %). Le modèle 1D ne voit pas d'effet de la paroi : même 4 fois moins raide, l'isolation reste à 21,2 dB(A), les fuites du joint et l'évent dominent (estimation, non mesurée). Une paroi pleine coûte peu et retire ce doute : plus de vide entre les périmètres, plus de peau mince qui vibre. Les éprouvettes de joint, le capot d'essai et la trappe gardent 20 % : ils servent à la forme ou ne touchent pas la chambre.
 
 > **Projets 3MF refaits le 23 novembre 2026.** Jusque-là, `cad/bambu_3mf.sh` passait à la ligne de commande les préréglages système de la machine et du procédé sans leur chaîne d'héritage. Les fichiers embarquaient donc une configuration générique : G-code de démarrage réduit à un retour à l'origine (sans la séquence de l'A1 mini : chauffe, nivellement, purge), parois à 60 mm/s, accélérations de 500 mm/s². Et à l'ouverture dans Bambu Studio, l'interface rechargeait le procédé standard en ignorant les 4 parois, les 20 % de remplissage et les supports. Les deux défauts sont corrigés : préréglages aplatis avec tout leur héritage, et écarts au procédé système inscrits dans le projet comme le fait l'interface. Les temps ci-dessous sont ceux du vrai profil A1 mini.
 
@@ -28,12 +30,14 @@ Dans `print/`, trois projets 3MF tranchés, réglages embarqués. Chaque plateau
 
 | Plateau | Fichier | Contenu | Temps | Filament |
 |---|---|---|---|---|
-| 1 | `print/capot-essai.3mf` | capot d'essai du coussin | 1 h 38 | 63 g PLA |
-| 2 | `print/cols-et-joint.3mf` | assise courbe et col de 10 mm (celle du corps), éprouvettes de joint avant et arrière (2 vis, 2 écrous) | 1 h 18 | 40 g PLA |
-| 2 bis | `print/assises-variantes.3mf` | assises à col de 8 et 14 mm, pour comparer (facultatif) | 1 h 48 | 59 g PLA |
+| 1 | `print/capot-essai.3mf` | capot d'essai du coussin et témoin de bonnette | 1 h 51 | 71 g PLA |
+| 2 | `print/cols-et-joint.3mf` | assise courbe et col de 10 mm (celle du corps), éprouvettes de joint avant et arrière (2 vis, 2 écrous) ; assise pleine | 1 h 53 | 66 g PLA |
+| 2 bis | `print/assises-variantes.3mf` | assises à col de 8 et 14 mm, pour comparer (facultatif), pleines | 2 h 43 | 103 g PLA |
 | 3 | `print/lumiere-petg.3mf` | éprouvette de lumière | 10 min | 1 g PETG |
 
 L'assise se pose à plat sur le capot d'essai comme sur le corps : leurs appuis ont le même contour (104 × 77 mm, 2 mm sous le coussin de chaque côté). Elle s'imprime dos au plateau, sans support (contrôlé couche par couche). Sa hauteur de col est gravée dessous.
+
+**Témoin de bonnette** (sur le plateau du capot d'essai, idée de Clément) : un plot ovale de 36 × 26 mm, haut de 19 mm, marqué « 13 ». Posé au fond du capot d'essai, centré sous le col, son dessus est exactement où sera le haut de la bonnette dans le corps : 13 mm sous le fond du coussin. Assise et coussin en place, appuyer le visage comme pour parler. Si les lèvres touchent le plot, elles toucheraient la bonnette. Pour mesurer la marge, glisser des cales dessous (pièces de monnaie, rondelles) jusqu'au contact : leur épaisseur est la marge. `export()` refuse le corps si sa marge s'écarte du témoin.
 
 Grammes calculés par Bambu Studio avec la densité réelle du filament (1,32) : le tableau OrcaSlicer précédent comptait 1,24, d'où environ 6 % de moins.
 
@@ -41,8 +45,8 @@ Grammes calculés par Bambu Studio avec la densité réelle du filament (1,32) :
 
 | Plateau | Fichier | Contenu | Temps | Filament |
 |---|---|---|---|---|
-| 4 | `print/corps-capot-avant.3mf` | capot avant, appui du coussin sur le plateau, 4 colonnes de support | 1 h 36 | 47 g PLA |
-| 5 | `print/corps-coque-arriere.3mf` | coque arrière, face arrière sur le plateau | 2 h 21 | 76 g PLA |
+| 4 | `print/corps-capot-avant.3mf` | capot avant, appui du coussin sur le plateau, 4 colonnes de support, plein | 1 h 52 | 56 g PLA |
+| 5 | `print/corps-coque-arriere.3mf` | coque arrière, face arrière sur le plateau, pleine | 3 h 11 | 108 g PLA |
 | 6 | `print/corps-trappe.3mf` | trappe (l'assise du corps est celle du plateau 2) | 20 min | 9 g PLA |
 | 7 | `print/corps-anneau-petg.3mf` | anneau lumineux | 11 min | 2 g PETG |
 
@@ -204,7 +208,7 @@ Abandonnés par rapport à la version précédente, pour couper moins de pièces
 |---|---|---|
 | Vis M3 × 10 mm à tête fraisée | acier noir, six pans creux de 2 mm (DIN 7991 / ISO 10642) | 6 |
 | Écrous M3 | hexagonaux standard, 5,5 mm sur plats, 2,4 mm d'épaisseur (DIN 934) | 4 |
-| Bande de mousse autocollante | cellules fermées, 3 mm de large, 2 mm d'épaisseur | 25 cm |
+| Bande de mousse autocollante | cellules fermées (néoprène ou EPDM), 2 mm d'épaisseur ; pas de bande de 3 mm de large toute faite : en recouper au cutter et à la règle métallique dans une bande plus large, par exemple [néoprène 30 mm × 2 mm, 10 m](https://www.amazon.fr/Caoutchouc-N%C3%A9opr%C3%A8ne-auto-adh%C3%A9sif-large-%C3%A9paisseur/dp/B008ASE91U) ou [EPDM 50 mm × 2 mm, 10 m](https://www.amazon.fr/d%C3%A9tanch%C3%A9it%C3%A9-caoutchouc-cellulaire-autocollante-mousse/dp/B0841LXXSQ) | 25 cm de lanière de 3 mm |
 | Mousse acoustique | polyuréthane à cellules ouvertes, plaque de 10 mm | une plaque A4 |
 | Ruban double face | mousse fine d'environ 1 mm, 10 à 12 mm de large | 40 cm par coussin |
 | PETG translucide | naturel ou transparent | 5 g |

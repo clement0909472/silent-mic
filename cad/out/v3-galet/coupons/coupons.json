@@ -33,6 +33,14 @@
         23.8
       ]
     },
+    "temoin-bonnette": {
+      "volume_cm3": 13.95,
+      "size_mm": [
+        36.1,
+        26.1,
+        19.1
+      ]
+    },
     "joint-coupon-front": {
       "volume_cm3": 5.2,
       "size_mm": [

@@ -1014,6 +1014,8 @@ def export():
                                                          "haut_de_la_bonnette": round(PAD_BASE - top_bonnet, 1), "regle_v2": AIR_GAP},
                 "bonnette_mm": list(BONNET)}
     assert PAD_BASE - top_bonnet >= AIR_GAP - 0.01, f"bonnette a {PAD_BASE - top_bonnet:.1f} mm sous le fond du coussin, regle du v2 : {AIR_GAP}"
+    # le temoin du capot d'essai reproduit cette marge : a refaire imprimer si elle change
+    assert abs(PAD_BASE - top_bonnet - cp.GAUGE_GAP) < 0.1, f"temoin de bonnette a {cp.GAUGE_GAP} mm, corps a {PAD_BASE - top_bonnet:.1f}"
     assert min(clear["front"], clear["insert"], clear["rear_hors_plaque"], clear["bonnette_capot_et_col"]) >= MIC_CLEARANCE - 0.01, clear
     assert clear["bonnette_plaque_et_disque"] >= 0.4, clear
     assert fingers["prise_le_long_de_la_bonnette_mm"] >= 8.0, fingers

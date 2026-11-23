@@ -92,6 +92,13 @@ SADDLE_T0 = 4.0  # epaisseur au centre, sous la bouche : le fond du coussin mont
 # ou le coussin plie moins (idee de Clement). Coussin de 30 mm, environ 15 une fois comprime (Clement).
 SADDLE_COLLARS = (8.0, 10.0, 14.0)
 
+# temoin de bonnette (idee de Clement, 23 nov. 2026) : pose au fond du capot d'essai, sous l'assise, son dessus est a
+# la hauteur du haut de la bonnette dans le corps, GAUGE_GAP sous le fond du coussin. On appuie le visage comme pour
+# parler : si les levres le touchent, la bonnette les toucherait. Des cales dessous (pieces, rondelles) mesurent la
+# marge reelle. GAUGE_GAP doit egaler la marge du corps (controle dans silent_mic_v3_galet.py)
+GAUGE_GAP = 13.0
+GAUGE_SIZE = (36.0, 26.0)  # encombrement estime de la bonnette DJI, comme BONNET dans le corps
+
 # ---------- capots d'essai ----------
 CAP_DEPTH = 28.0  # interieur derriere l'appui : DJI 28.6 x 28 x 13.5 a plat + ecouteur
 CAP_WALL = 3.0
@@ -286,6 +293,15 @@ def pad_test_cap():
     return cap.cut(teardrop_x(SEAT[0] / 2 - CAP_WALL - 1, CAP_WALL + CABLE_PORT / 2 + 1.5, CABLE_PORT, CAP_WALL + 2))
 
 
+def bonnet_gauge():
+    """Temoin pose a plat au fond du capot d'essai (z = CAP_WALL) ; dessus a GAUGE_GAP sous le fond du coussin."""
+    top = CAP_WALL + CAP_DEPTH + 0.02 + SADDLE_T0 - GAUGE_GAP  # appui du capot, jeu de l'assise, assise au centre
+    h = top - CAP_WALL
+    w = ell_prism(*GAUGE_SIZE, 0, h).faces(">Z").edges().fillet(1.0)
+    label = cq.Workplane("XY", origin=(0, 0, h)).text(f"{GAUGE_GAP:g}", 8, -0.6, combine=False, halign="center", valign="center")
+    return w.cut(label)
+
+
 def joint_coupon_halves(length=40.0, width=19.0, thick=8.0):
     """Troncon droit du joint : y = offset depuis la peau, z = 0 plan de joint. Deux vis M3 fraisees et leurs
     ecrous prisonniers, comme au corps, et un avant-trou d'essai (vis de la trappe) sous la moitie arriere."""
@@ -350,6 +366,10 @@ def export(out=HERE / "out" / "v3-galet" / "coupons"):
         placed = ins.translate((0, 0, z_seat + 0.02))
         assert vol(placed.intersect(cap)) < 1e-6, "assise / capot"
         save(f"assise-col-{h:g}mm", ins)
+    gauge = bonnet_gauge()
+    assert vol(gauge.translate((0, 0, CAP_WALL + 0.02)).intersect(cap)) < 1e-6, "temoin / capot"
+    assert max(GAUGE_SIZE[0] / collar_inner()[0], GAUGE_SIZE[1] / collar_inner()[1]) < 0.95, "temoin trop large pour le col"
+    save("temoin-bonnette", gauge)
     front, rear = joint_coupon_halves()
     assert vol(front.intersect(rear)) < 1e-6
     # imprimee comme le capot du corps : plan de joint en haut, fraisures vers le plateau

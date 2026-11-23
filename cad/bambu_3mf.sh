@@ -73,6 +73,9 @@ for name, sup in (("process-off", "0"), ("process-auto", "1"), ("process-plate",
     if name == "process-plate":  # supports poses sur le plateau seulement : rien dans une cavite fermee ni dans un logement d'ecrou
         q["support_on_build_plate_only"] = "1"
     json.dump(q, open(f"{tmp}/{name}.json", "w"), indent=1)
+    # pieces qui ferment la chambre du corps : pleines, sans vide entre les parois (question de Clement, 23 nov. 2026)
+    # (Bambu Studio refuse le motif en grille a 100 % : rectiligne)
+    json.dump(dict(q, sparse_infill_density="100%", sparse_infill_pattern="zig-zag"), open(f"{tmp}/{name}-solid.json", "w"), indent=1)
 EOF
 
 project() {  # nom filament stl...
@@ -88,6 +91,7 @@ project() {  # nom filament stl...
   # 2) projet livre : supports seulement si le controle en demande
   local proc="$tmp/process-off.json"
   [ "$need" = "true" ] && proc="$tmp/process-${SUP:-auto}.json"
+  [ "${SOLID:-0}" = 1 ] && proc="${proc%.json}-solid.json"
   "$app/MacOS/BambuStudio" --load-settings "$machine;$proc" --load-filaments "$fil" \
     --arrange 1 --orient 0 --slice 0 --outputdir "$tmp/$name" --export-3mf "$name.3mf" "$@" > "$tmp/$name.log" 2>&1
   cp "$tmp/$name/$name.3mf" "$out/$name.3mf"
@@ -110,21 +114,21 @@ project() {  # nom filament stl...
 only=${1:-tout}
 touch "$out/resume.txt"
 if [ "$only" != corps ]; then
-project capot-essai "$tmp/pla.json" "$c/pad-test-cap.stl"
+project capot-essai "$tmp/pla.json" "$c/pad-test-cap.stl" "$c/temoin-bonnette.stl"
 # ordre de chargement voulu : dans l'ordre inverse, le placement automatique faisait apparaitre
 # 11 petits blocs de support qu'aucune piece ne demande seule
 # supports sur plateau seulement, comme au corps : un plot sous chaque tete de vis de l'eprouvette avant,
 # rien dans les logements d'ecrou de l'eprouvette arriere (leur plafond s'imprime en pont, comme dans la coque)
 # l'assise de 10 mm sert d'abord sur le capot d'essai, puis sur le corps ; 8 et 14 mm pour comparer
-SUP=plate project cols-et-joint "$tmp/pla.json" "$c/joint-coupon-rear.stl" "$c/joint-coupon-front.stl" "$c/assise-col-10mm.stl"
-project assises-variantes "$tmp/pla.json" "$c/assise-col-8mm.stl" "$c/assise-col-14mm.stl"
+SOLID=1 SUP=plate project cols-et-joint "$tmp/pla.json" "$c/joint-coupon-rear.stl" "$c/joint-coupon-front.stl" "$c/assise-col-10mm.stl"
+SOLID=1 project assises-variantes "$tmp/pla.json" "$c/assise-col-8mm.stl" "$c/assise-col-14mm.stl"
 project lumiere-petg "$tmp/petg.json" "$c/light-coupon-petg.stl"
 fi
 if [ "$only" != essai ]; then
   b=cad/out/v3-galet/silent-mic-v3-galet
   # capot : une colonne de support par puits de vis, debout sur le plateau dans l'ouverture du coussin
-  SUP=plate project corps-capot-avant "$tmp/pla.json" "$b-front.stl"
-  SUP=plate project corps-coque-arriere "$tmp/pla.json" "$b-rear.stl"
+  SOLID=1 SUP=plate project corps-capot-avant "$tmp/pla.json" "$b-front.stl"
+  SOLID=1 SUP=plate project corps-coque-arriere "$tmp/pla.json" "$b-rear.stl"
   # l'assise du corps est celle de 10 mm du plateau cols-et-joint
   project corps-trappe "$tmp/pla.json" "$b-cover.stl"
   project corps-anneau-petg "$tmp/petg.json" "$b-ring.stl"
