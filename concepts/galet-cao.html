@@ -38,7 +38,7 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
 .stage.asm .parts { display: none; }   /* l'eclate de montage prend toute la largeur */
 .stage.mouth #g-explode, #g-crush, #g-lips, #g-gap { display: none; }
 .stage.mouth #g-crush, .stage.mouth #g-lips, .stage.mouth #g-gap { display: flex; }
-output { font: 500 12px var(--mono); min-width: 7ch; padding-right: 8px; }
+output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
 #gap { font: 500 13px var(--mono); padding: 6px 12px; white-space: nowrap; }
 #gap.ok { color: #6fd39a; } #gap.near { color: #f0b84a; } #gap.hit { color: #ff7a6e; }
 #status { position: absolute; left: 0; right: 0; top: 46%; text-align: center; color: var(--muted); pointer-events: none; }
@@ -60,9 +60,9 @@ output { font: 500 12px var(--mono); min-width: 7ch; padding-right: 8px; }
       <li>Le micro, bonnette en place, entre par la bouche et se pose debout contre sa plaque, tenu par son aimant. C'est la seule pièce qu'on retire au quotidien.</li>
     </ol>
     <ol class="legend" id="legend-mouth" hidden>
-      <li>Visage simplifié : un cylindre de 105 mm de rayon (la cote du v2), avec les lèvres en relief. Ce n'est pas ton visage.</li>
-      <li>Écrasement : le coussin fait 30 mm au repos. À 16 mm d'écrasement, le visage bute sur le col rigide.</li>
-      <li>Lèvres : leur avancée devant le plan qui va du dessous du nez au menton. Ordres de grandeur : 4 mm au repos, 10 mm lèvres en avant pour un « ou ».</li>
+      <li>Réglé sur ton essai du v2 : coussin écrasé à fond et lèvres en avant, soit les lèvres 2 mm sous le fond du coussin.</li>
+      <li>Visage encore schématique (cylindre de 105 mm de rayon, la cote du v2), posé sur un coussin plat. L'assise courbe du v2, qui épouse les joues, n'est pas reprise dans le v3 : à corriger.</li>
+      <li>Col en rouge : à cet écrasement, le col rigide de 14 mm appuierait sur le visage.</li>
       <li>Bonnette à ta cote mesurée : 48 mm du bas du micro au haut des poils.</li>
     </ol>
     <ol class="legend" id="legend">
@@ -84,8 +84,8 @@ output { font: 500 12px var(--mono); min-width: 7ch; padding-right: 8px; }
       <button id="t-mouth" aria-pressed="false">Bouche</button>
       <button id="t-spin" aria-pressed="false">Rotation</button>
     </div>
-    <div class="grp" id="g-crush"><span>Écrasement</span><input id="crush" type="range" min="0" max="16" step="0.1" value="10" aria-label="Écrasement du coussin, en millimètres"><output id="o-crush" for="crush"></output></div>
-    <div class="grp" id="g-lips"><span>Lèvres</span><input id="lips" type="range" min="0" max="14" step="0.5" value="4" aria-label="Avancée des lèvres, en millimètres"><output id="o-lips" for="lips"></output></div>
+    <div class="grp" id="g-crush"><span>Écrasement</span><input id="crush" type="range" min="0" max="26" step="0.5" value="22" aria-label="Écrasement du coussin, en millimètres"><output id="o-crush" for="crush"></output></div>
+    <div class="grp" id="g-lips"><span>Lèvres</span><input id="lips" type="range" min="0" max="14" step="0.5" value="10" aria-label="Avancée des lèvres, en millimètres"><output id="o-lips" for="lips"></output></div>
     <div class="grp" id="g-gap"><strong id="gap" role="status"></strong></div>
     <div class="grp"><span>Vue</span>
       <button data-view="avant">Avant</button><button data-view="profil">Profil</button><button data-view="dos">Dos</button>
@@ -131,7 +131,7 @@ output { font: 500 12px var(--mono); min-width: 7ch; padding-right: 8px; }
   const device = new THREE.Group(); scene.add(device);
   device.rotation.set(0, Math.PI / 2, 0);    // z du modele (vers le visage) a l'horizontale, y du modele en haut
   const parts = [];
-  const state = { cut: false, air: true, spin: false, open: false, t: 0, mouth: false, crush: 10, lips: 4 };
+  const state = { cut: false, air: true, spin: false, open: false, t: 0, mouth: false, crush: 22, lips: 10 };
 
   // Trajet d'air : fleches animees, vues a travers la coque. Cotes recopiees de cad/silent_mic_v3_galet.py
   // (section au milieu du conduit, offset du conduit, entree et fentes en abscisse depuis 6 h) : a recopier si elles changent.
@@ -219,9 +219,8 @@ output { font: 500 12px var(--mono); min-width: 7ch; padding-right: 8px; }
     }
     g.setAttribute("color", new THREE.BufferAttribute(tint, 3));
     skin.add(new THREE.Mesh(g, mat({ color: 0xffffff, vertexColors: true, roughness: 0.85 })), new THREE.Mesh(g, cap("#c8957a")));
-    const pos = pad.mesh.children[0].geometry.attributes.position, bonMat = bon.mesh.children[0].material;
-    M = { pos, pos0: pos.array.slice(), seat: pb.min.z, free: pb.max.z, bon: bb, top, bonMat, bonColor: bonMat.color.clone(), g, fp, front, stop: pb.max.z - box(col).max.z };
-    document.getElementById("crush").max = M.stop.toFixed(1);
+    const pos = pad.mesh.children[0].geometry.attributes.position, bonMat = bon.mesh.children[0].material, colMat = col.mesh.children[0].material;
+    M = { pos, pos0: pos.array.slice(), seat: pb.min.z, free: pb.max.z, bon: bb, top, bonMat, bonColor: bonMat.color.clone(), colMat, colColor: colMat.color.clone(), g, fp, front, stop: pb.max.z - box(col).max.z };
   }
   function mouthUpdate() {
     if (!M) return;
@@ -229,6 +228,8 @@ output { font: 500 12px var(--mono); min-width: 7ch; padding-right: 8px; }
     skin.visible = on; skin.position.z = -8 + zRef;
     for (let i = 0; i < a.length; i += 3) { const t = (a0[i + 2] - M.seat) / H; a[i + 2] = !on || t <= 0 ? a0[i + 2] : M.seat + t * (Math.min(M.free, zRef + cheek(a0[i])) - M.seat); }
     M.pos.needsUpdate = true;
+    const past = on && state.crush > M.stop + 0.05;   // le visage depasse le bord du col rigide
+    M.colMat.color.set(past ? "#ff5a4d" : M.colColor);
     if (!on) { M.bonMat.color.copy(M.bonColor); ruler.visible = false; return; }
     for (const i of M.front) M.fp.setZ(i, skinZ(M.fp.getX(i), M.fp.getY(i)));
     M.fp.needsUpdate = true; M.g.computeVertexNormals();
@@ -240,7 +241,7 @@ output { font: 500 12px var(--mono); min-width: 7ch; padding-right: 8px; }
     el.textContent = hit ? "Contact : lèvres " + fr(-gap) + " mm dans les poils" : "Marge lèvres-bonnette : " + fr(gap) + " mm";
     el.className = hit ? "hit" : gap < 3 ? "near" : "ok";
     M.bonMat.color.set(hit ? "#ff5a4d" : M.bonColor);
-    document.getElementById("o-crush").textContent = fr(state.crush) + " mm" + (state.crush >= M.stop - 0.05 ? " butée" : "");
+    document.getElementById("o-crush").textContent = fr(state.crush) + " mm" + (past ? " col enfoncé" : "");
     document.getElementById("o-lips").textContent = fr(state.lips) + " mm";
     window.__mouth = { gap, crush: state.crush, lips: state.lips, top: M.top, stop: M.stop };   // lu par le controle de la page
   }

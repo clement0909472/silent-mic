@@ -4,6 +4,13 @@
 
 > **Assemblage vissé depuis le 23 novembre 2026.** Décision de Clément : tout ce qui ne s'ouvre pas au quotidien se visse, pour tenir, pour fermer le joint à coup sûr et pour qu'on ne démonte pas l'appareil par mégarde. Le capot avant se serre sur la coque par 4 vis M3 fraisées à écrous prisonniers (mêmes cotes que le v2), la trappe par 2 vis. Seul le micro tient par son aimant : il entre et sort par la bouche, capot en place. Les 12 aimants et 12 pastilles du joint et de la trappe disparaissent.
 >
+> **Appui visage à réviser avant toute impression (23 novembre 2026).** Clément a essayé sa bouche sur le v2 imprimé : ses lèvres descendent un peu plus bas que le fond du coussin. Trois écarts du v3 par rapport au v2 (`cad/whisper_mask_v0.py`) en découlent, non vus jusque-là :
+> 1. **Assise du coussin plate.** Le v2 la creuse en cylindre de 105 mm de rayon (`FACE_RADIUS`) : ses côtés avancent vers les joues de 10 mm au milieu du coussin et de 15,6 mm à son bord. Le v3 l'a aplatie pour imprimer le capot avant appui sur le plateau.
+> 2. **Règle de distance au visage abandonnée.** Le v2 exige 8 mm d'air entre le fond du coussin et le devant du micro (`AIR_GAP_TARGET`), c'est-à-dire qu'il suppose le visage au fond du coussin. Le v3 supposait les lèvres à 20 mm au-dessus de l'appui (`MOUTH_ABOVE_SEAT`). Avec la bonnette, le haut des poils est 5,5 mm au-dessus du fond du coussin : contact certain.
+> 3. **Col rigide de 14 mm** là où le v2 n'a qu'un rebord de 3 mm : il appuierait sur le visage avant que le coussin soit écrasé comme sur le v2.
+>
+> Ne pas imprimer `print/capot-essai.3mf` ni les cols de `print/cols-et-joint.3mf` en l'état. Pistes : assise courbe rapportée sur le capot, col ramené sous l'épaisseur du coussin écrasé, micro couché sous sa bonnette.
+
 > **Support du micro repris le 21 novembre 2026.** Le micro est debout contre une plaque dressée au centre du fond, comme sur le v2, haut du boîtier vers la bouche, bonnette DJI en place (décision de Clément). Le capot avant se pose droit, et le micro coiffé de sa bonnette passe droit par la bouche (contrôlé dans la CAO, sur les fichiers d'impression et dans Onshape). Une seconde relecture indépendante a confirmé le démontage et l'étanchéité, et fait abaisser la plaque sous la bonnette. Clément a confirmé le 21 novembre 2026 que la jupe de sa bonnette DJI descend de moins de 9 mm sur le dos du micro et qu'elle est très molle : elle s'écrase au besoin. L'ancien pied, près de la paroi basse, bloquait le capot : voir « Relecture indépendante du 21 novembre 2026 ».
 
 ## Impression
