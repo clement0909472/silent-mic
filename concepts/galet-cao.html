@@ -36,8 +36,13 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
 .legend li::marker { color: var(--led); font: 800 12px var(--display); }
 #legend-asm { max-width: 46ch; }
 .stage.asm .parts { display: none; }   /* l'eclate de montage prend toute la largeur */
+.stage.mouth #g-explode, #g-crush, #g-lips, #g-gap { display: none; }
+.stage.mouth #g-crush, .stage.mouth #g-lips, .stage.mouth #g-gap { display: flex; }
+output { font: 500 12px var(--mono); min-width: 7ch; padding-right: 8px; }
+#gap { font: 500 13px var(--mono); padding: 6px 12px; white-space: nowrap; }
+#gap.ok { color: #6fd39a; } #gap.near { color: #f0b84a; } #gap.hit { color: #ff7a6e; }
 #status { position: absolute; left: 0; right: 0; top: 46%; text-align: center; color: var(--muted); pointer-events: none; }
-@media (max-width: 700px) { .parts { width: 168px; max-height: 38%; font-size: 12px; } .sub { display: none; } .legend { max-width: none; margin-right: 16px; font-size: 12px; padding: 8px 10px 8px 26px; } .stage.note .parts { display: none; } button { padding: 6px 9px; } }
+@media (max-width: 700px) { .parts { width: 168px; max-height: 38%; font-size: 12px; } .sub { display: none; } .legend { max-width: none; margin-right: 16px; font-size: 12px; padding: 8px 10px 8px 26px; } .stage.note .parts { display: none; } button { padding: 6px 9px; } .grp { flex-wrap: wrap; justify-content: center; border-radius: 20px; } }
 </style>
 
 <div class="stage" id="stage">
@@ -54,6 +59,12 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
       <li>Le col se pose dans son logement, le coussin se colle autour par un anneau de ruban double face.</li>
       <li>Le micro, bonnette en place, entre par la bouche et se pose debout contre sa plaque, tenu par son aimant. C'est la seule pièce qu'on retire au quotidien.</li>
     </ol>
+    <ol class="legend" id="legend-mouth" hidden>
+      <li>Visage simplifié : un cylindre de 105 mm de rayon (la cote du v2), avec les lèvres en relief. Ce n'est pas ton visage.</li>
+      <li>Écrasement : le coussin fait 30 mm au repos. À 16 mm d'écrasement, le visage bute sur le col rigide.</li>
+      <li>Lèvres : leur avancée devant le plan qui va du dessous du nez au menton. Ordres de grandeur : 4 mm au repos, 10 mm lèvres en avant pour un « ou ».</li>
+      <li>Bonnette à ta cote mesurée : 48 mm du bas du micro au haut des poils.</li>
+    </ol>
     <ol class="legend" id="legend">
       <li>La bouche souffle dans la chambre garnie de mousse.</li>
       <li>L'air entre dans le conduit par une ouverture en bas de la chambre.</li>
@@ -64,14 +75,18 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
   <p id="status">Chargement des pièces…</p>
   <div class="parts" id="parts"><h2>Pièces</h2></div>
   <div class="bar">
-    <div class="grp"><span>Éclaté</span><input id="explode" type="range" min="0" max="100" value="0" aria-label="Éclaté"></div>
+    <div class="grp" id="g-explode"><span>Éclaté</span><input id="explode" type="range" min="0" max="100" value="0" aria-label="Éclaté"></div>
     <div class="grp">
       <button id="t-cut" aria-pressed="false">Coupe</button>
       <button id="t-air" aria-pressed="true">Trajet d'air</button>
       <button id="t-asm" aria-pressed="false">Montage</button>
       <button id="t-open" aria-pressed="false">Sans capot</button>
+      <button id="t-mouth" aria-pressed="false">Bouche</button>
       <button id="t-spin" aria-pressed="false">Rotation</button>
     </div>
+    <div class="grp" id="g-crush"><span>Écrasement</span><input id="crush" type="range" min="0" max="16" step="0.1" value="10" aria-label="Écrasement du coussin, en millimètres"><output id="o-crush" for="crush"></output></div>
+    <div class="grp" id="g-lips"><span>Lèvres</span><input id="lips" type="range" min="0" max="14" step="0.5" value="4" aria-label="Avancée des lèvres, en millimètres"><output id="o-lips" for="lips"></output></div>
+    <div class="grp" id="g-gap"><strong id="gap" role="status"></strong></div>
     <div class="grp"><span>Vue</span>
       <button data-view="avant">Avant</button><button data-view="profil">Profil</button><button data-view="dos">Dos</button>
     </div>
@@ -116,7 +131,7 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
   const device = new THREE.Group(); scene.add(device);
   device.rotation.set(0, Math.PI / 2, 0);    // z du modele (vers le visage) a l'horizontale, y du modele en haut
   const parts = [];
-  const state = { cut: false, air: true, spin: false, open: false, t: 0 };
+  const state = { cut: false, air: true, spin: false, open: false, t: 0, mouth: false, crush: 10, lips: 4 };
 
   // Trajet d'air : fleches animees, vues a travers la coque. Cotes recopiees de cad/silent_mic_v3_galet.py
   // (section au milieu du conduit, offset du conduit, entree et fentes en abscisse depuis 6 h) : a recopier si elles changent.
@@ -162,7 +177,8 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
   function applyAir() {
     const asm = !state.air && state.t >= 0.5;
     flow.visible = state.air; document.getElementById("legend").hidden = !state.air; document.getElementById("legend-asm").hidden = !asm;
-    stage.classList.toggle("note", state.air || asm); stage.classList.toggle("asm", asm); asmTags.forEach(s => { s.visible = asm; });
+    document.getElementById("legend-mouth").hidden = !state.mouth;
+    stage.classList.toggle("note", state.air || asm || state.mouth); stage.classList.toggle("asm", asm); asmTags.forEach(s => { s.visible = asm; });
     document.getElementById("t-asm").setAttribute("aria-pressed", String(state.t >= 0.5));
     for (const p of parts) {
       if (p.role === "air") { p.mesh.visible = state.air; continue; }
@@ -172,6 +188,61 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
       Object.assign(m, { transparent: ghost, opacity: ghost ? o : 1, depthWrite: !ghost, envMapIntensity: ghost ? 0 : m.userData.env, needsUpdate: true });
       face.visible = keep; back.visible = keep && !ghost;
     }
+  }
+
+  // Bouche : un visage simplifie se pose sur le coussin, pour lire la marge entre les levres et le haut de la bonnette.
+  // Hypotheses : visage = cylindre vertical de rayon 105 mm (cote du v2, cad/whisper_mask_v0.py) avec les levres en relief ;
+  // chaque colonne du coussin s'ecrase jusqu'a la peau ; le visage bute sur le bord rigide du col. La bonnette est ramenee
+  // a la cote mesuree par Clement le 23 nov. 2026 : 48 mm du bas du micro au haut des poils (la CAO garde 50 mm).
+  const FACE = { R: 105, w: 150, h: 124, d: 46, stack: 48 }, skin = new THREE.Group(); skin.visible = false; device.add(skin);
+  const ridge = (x, y) => Math.sqrt(Math.max(0, 1 - (x / 26) ** 2)) * Math.max(Math.exp(-(((y - 5) / 5.5) ** 2)), Math.exp(-(((y + 5.5) / 6) ** 2)));   // les deux levres
+  const lipShape = (x, y) => 0.45 * Math.exp(-((x / 32) ** 2) - (y / 20) ** 2) + 0.55 * ridge(x, y);
+  let lipMax = 0; for (let y = -12; y <= 12; y += 0.25) lipMax = Math.max(lipMax, lipShape(0, y));
+  const cheek = x => FACE.R - Math.sqrt(FACE.R * FACE.R - x * x);            // recul de la joue a l'abscisse x
+  const skinZ = (x, y) => cheek(x) - state.lips * lipShape(x, y) / lipMax;    // peau, comptee depuis le plan nez-menton
+  const fr = v => v.toFixed(1).replace(".", ",");
+  // trait de cote entre les levres et le haut des poils, visible a travers les pieces
+  const ruler = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 1, 10).rotateX(Math.PI / 2), new THREE.MeshBasicMaterial({ depthTest: false, toneMapped: false }));
+  ruler.renderOrder = 12; ruler.visible = false; device.add(ruler);
+  let M = null;   // reperes lus sur les pieces chargees
+  function mouthSetup() {
+    const by = f => parts.find(p => p.file === f), box = p => { const g = p.mesh.children[0].geometry; g.computeBoundingBox(); return g.boundingBox; };
+    const pad = by("earpad.stl"), bon = by("bonnette.stl"), col = by("collar-insert-14mm.stl"), mic = by("mic.stl");
+    if (!(pad && bon && col && mic)) { document.getElementById("t-mouth").hidden = true; return; }
+    const pb = box(pad), bb = box(bon), top = box(mic).min.z + FACE.stack, k = (top - bb.min.z) / (bb.max.z - bb.min.z);
+    bon.mesh.scale.z = k; bon.base.z += bb.min.z * (1 - k); bon.mesh.position.copy(bon.base);   // pied de la bonnette fixe
+    const g = new THREE.BoxGeometry(FACE.w, FACE.h, FACE.d, 100, 84, 1); g.translate(0, 0, FACE.d / 2);
+    const fp = g.attributes.position, front = [], tint = new Float32Array(fp.count * 3), cs = new THREE.Color("#c8957a"), cl = new THREE.Color("#a04e58"), c = new THREE.Color();
+    for (let i = 0; i < fp.count; i++) {   // levres teintees, pour les reconnaitre
+      const isFront = fp.getZ(i) < 0.01; if (isFront) front.push(i);
+      c.copy(cs).lerp(cl, isFront ? Math.min(1, Math.max(0, (ridge(fp.getX(i), fp.getY(i)) - 0.35) / 0.3)) : 0).toArray(tint, i * 3);
+    }
+    g.setAttribute("color", new THREE.BufferAttribute(tint, 3));
+    skin.add(new THREE.Mesh(g, mat({ color: 0xffffff, vertexColors: true, roughness: 0.85 })), new THREE.Mesh(g, cap("#c8957a")));
+    const pos = pad.mesh.children[0].geometry.attributes.position, bonMat = bon.mesh.children[0].material;
+    M = { pos, pos0: pos.array.slice(), seat: pb.min.z, free: pb.max.z, bon: bb, top, bonMat, bonColor: bonMat.color.clone(), g, fp, front, stop: pb.max.z - box(col).max.z };
+    document.getElementById("crush").max = M.stop.toFixed(1);
+  }
+  function mouthUpdate() {
+    if (!M) return;
+    const on = state.mouth, zRef = M.free - state.crush, a = M.pos.array, a0 = M.pos0, H = M.free - M.seat;
+    skin.visible = on; skin.position.z = -8 + zRef;
+    for (let i = 0; i < a.length; i += 3) { const t = (a0[i + 2] - M.seat) / H; a[i + 2] = !on || t <= 0 ? a0[i + 2] : M.seat + t * (Math.min(M.free, zRef + cheek(a0[i])) - M.seat); }
+    M.pos.needsUpdate = true;
+    if (!on) { M.bonMat.color.copy(M.bonColor); ruler.visible = false; return; }
+    for (const i of M.front) M.fp.setZ(i, skinZ(M.fp.getX(i), M.fp.getY(i)));
+    M.fp.needsUpdate = true; M.g.computeVertexNormals();
+    // marge : plus petit ecart, au-dessus de l'emprise de la bonnette, entre la peau et le haut des poils
+    let gap = Infinity, gx = 0, gy = 0;
+    for (let x = M.bon.min.x; x <= M.bon.max.x; x += 1) for (let y = M.bon.min.y; y <= M.bon.max.y; y += 0.5) { const d = zRef + skinZ(x, y) - M.top; if (d < gap) { gap = d; gx = x; gy = y; } }
+    const el = document.getElementById("gap"), hit = gap <= 0;
+    ruler.visible = !hit; ruler.scale.z = Math.max(gap, 0.01); ruler.position.set(gx, gy, -8 + M.top + gap / 2); ruler.material.color.set(gap < 3 ? "#f0b84a" : "#6fd39a");
+    el.textContent = hit ? "Contact : lèvres " + fr(-gap) + " mm dans les poils" : "Marge lèvres-bonnette : " + fr(gap) + " mm";
+    el.className = hit ? "hit" : gap < 3 ? "near" : "ok";
+    M.bonMat.color.set(hit ? "#ff5a4d" : M.bonColor);
+    document.getElementById("o-crush").textContent = fr(state.crush) + " mm" + (state.crush >= M.stop - 0.05 ? " butée" : "");
+    document.getElementById("o-lips").textContent = fr(state.lips) + " mm";
+    window.__mouth = { gap, crush: state.crush, lips: state.lips, top: M.top, stop: M.stop };   // lu par le controle de la page
   }
 
   function ui() {
@@ -189,8 +260,8 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
   function view(name) {
     const D = { air: [0.5, 0.26, 0.9], avant: [0.78, 0.3, 0.55], profil: [0.02, 0.08, 1], dos: [-0.75, 0.3, -0.5] }[name];
     const d = new THREE.Vector3(...D).normalize(), tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-    const span = 150 + 3.4 * state.t * 100, dist = 1.15 * Math.max(span / 2 / tan, span / 2 / (tan * camera.aspect)) + 60;
-    controls.target.set(51 * state.t, 66 * state.t, 0); camera.position.copy(d.multiplyScalar(dist)).add(controls.target); controls.update();   // l'eclate n'est pas centre sur la coque, et il passe sous la legende
+    const span = 150 + 3.4 * state.t * 100 + (state.mouth ? 30 : 0), dist = 1.15 * Math.max(span / 2 / tan, span / 2 / (tan * camera.aspect)) + 60;
+    controls.target.set(51 * state.t + (state.mouth ? 20 : 0), 66 * state.t, 0); camera.position.copy(d.multiplyScalar(dist)).add(controls.target); controls.update();   // l'eclate n'est pas centre sur la coque, et il passe sous la legende
   }
 
   fetch("parts.json").then(r => { if (!r.ok) throw new Error("fichier des pièces introuvable"); return r.json(); }).then(man => {
@@ -207,7 +278,7 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
       if (ASM[p.file]) { g.computeBoundingBox(); asmTags.push(tag(ASM[p.file], V(0, 62, (g.boundingBox.min.z + g.boundingBox.max.z) / 2), mesh, 15)); }
       device.add(mesh); parts.push({ ...p, role, mesh, base: mesh.position.clone(), explode: new THREE.Vector3(...p.explode) });
     }
-    status.hidden = true; ui(); applyCut(); view("air");
+    status.hidden = true; ui(); mouthSetup(); applyCut(); view("air");
   }).catch(e => { status.textContent = "Les pièces n'ont pas pu être chargées (" + e.message + ")."; });
 
   const press = (el, on) => el.setAttribute("aria-pressed", String(on));
@@ -217,9 +288,21 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
     state.t = t; document.getElementById("explode").value = t * 100;
     parts.forEach(p => p.mesh.position.copy(p.base).addScaledVector(p.explode, t)); applyAir();
   }
-  toggle("t-air", "air", () => { if (state.air && state.t > 0) { setExplode(0); device.rotation.y = Math.PI / 2; view("air"); } else applyAir(); });
+  const mouthOff = () => { if (state.mouth) document.getElementById("t-mouth").click(); };
+  toggle("t-mouth", "mouth", () => {
+    stage.classList.toggle("mouth", state.mouth);
+    if (state.mouth) {   // lecture de profil, en coupe, appareil monte
+      if (state.t > 0) setExplode(0);
+      state.air = false; press(document.getElementById("t-air"), false);
+      state.cut = true; press(document.getElementById("t-cut"), true);
+    }
+    mouthUpdate(); applyCut();
+    if (state.mouth) { device.rotation.y = Math.PI / 2; view("profil"); }
+  });
+  for (const k of ["crush", "lips"]) document.getElementById(k).addEventListener("input", e => { state[k] = +e.target.value; mouthUpdate(); });
+  toggle("t-air", "air", () => { mouthOff(); if (state.air && state.t > 0) { setExplode(0); device.rotation.y = Math.PI / 2; view("air"); } else applyAir(); });
   document.getElementById("t-asm").addEventListener("click", () => {
-    const on = state.t < 0.5;
+    const on = state.t < 0.5; mouthOff();
     if (on && state.air) { state.air = false; press(document.getElementById("t-air"), false); }
     setExplode(on ? 1 : 0); device.rotation.y = Math.PI / 2; view(on ? "profil" : "avant");
   });
