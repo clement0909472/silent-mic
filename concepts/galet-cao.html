@@ -61,8 +61,8 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
     </ol>
     <ol class="legend" id="legend-mouth" hidden>
       <li>Calé sur ton essai du v2 : coussin écrasé de moitié (28 à 15 mm), lèvres juste sous le fond du coussin.</li>
-      <li>Assise courbe comme le v2 (rayon 105 mm) : le coussin avance vers les joues. Le col la suit, 10 mm au-dessus du coussin au centre, plus haut sur les côtés.</li>
-      <li>Visage schématique de même courbure, lèvres en relief. Ce n'est pas ton visage.</li>
+      <li>Assise retenue à l'essai des cales (rayon 53 mm, pointes arrondies) : le coussin enveloppe les joues. Le col la suit, 20 mm au-dessus d'elle partout : le visage s'y appuie avant que le coussin ne descende à 15 mm.</li>
+      <li>Visage schématique de même courbure que l'assise, lèvres en relief. Ce n'est pas ton visage.</li>
       <li>Bonnette à ta cote mesurée : 48 mm du bas du micro au haut des poils. Micro descendu au fond de la chambre, dans une entaille de la mousse.</li>
     </ol>
     <ol class="legend" id="legend">
@@ -191,14 +191,15 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
   }
 
   // Bouche : un visage simplifie se pose sur le coussin, pour lire la marge entre les levres et le haut de la bonnette.
-  // Hypotheses : visage = cylindre vertical de rayon 105 mm (cote du v2, cad/whisper_mask_v0.py), de meme courbure que
-  // l'assise, avec les levres en relief ; chaque colonne du coussin s'ecrase jusqu'a la peau ; le visage bute sur la crete
-  // du col, parallele a l'assise. Bonnette a la cote mesuree par Clement le 23 nov. 2026 (48 mm du bas du micro au haut des poils).
-  const FACE = { R: 105, w: 150, h: 124, d: 46, stack: 48 }, skin = new THREE.Group(); skin.visible = false; device.add(skin);
+  // Hypotheses : visage = cylindre vertical de meme courbure que l'assise (rayon 53 mm depuis le 24 nov. 2026, cp.BODY_SEAT ;
+  // 105 mm comme le v2 avant), plat au-dela du bord de l'assise (52 mm), avec les levres en relief ; chaque colonne du
+  // coussin s'ecrase jusqu'a la peau ; le visage bute sur la crete du col, parallele a l'assise. Bonnette a la cote mesuree
+  // par Clement le 23 nov. 2026 (48 mm du bas du micro au haut des poils).
+  const FACE = { R: 53.26, edge: 52, w: 150, h: 124, d: 46, stack: 48 }, skin = new THREE.Group(); skin.visible = false; device.add(skin);
   const ridge = (x, y) => Math.sqrt(Math.max(0, 1 - (x / 26) ** 2)) * Math.max(Math.exp(-(((y - 5) / 5.5) ** 2)), Math.exp(-(((y + 5.5) / 6) ** 2)));   // les deux levres
   const lipShape = (x, y) => 0.45 * Math.exp(-((x / 32) ** 2) - (y / 20) ** 2) + 0.55 * ridge(x, y);
   let lipMax = 0; for (let y = -12; y <= 12; y += 0.25) lipMax = Math.max(lipMax, lipShape(0, y));
-  const cheek = x => FACE.R - Math.sqrt(FACE.R * FACE.R - x * x);            // recul de la joue a l'abscisse x
+  const cheek = x => { const c = Math.min(Math.abs(x), FACE.edge); return FACE.R - Math.sqrt(FACE.R * FACE.R - c * c); };   // recul de la joue a l'abscisse x, comme le coussin bombe par cad/silent_mic_v3_galet.py
   const skinZ = (x, y) => cheek(x) - state.lips * lipShape(x, y) / lipMax;    // peau, comptee depuis le plan nez-menton
   const fr = v => v.toFixed(1).replace(".", ",");
   // trait de cote entre les levres et le haut des poils, visible a travers les pieces
