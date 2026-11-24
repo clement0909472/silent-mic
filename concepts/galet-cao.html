@@ -61,7 +61,7 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
     </ol>
     <ol class="legend" id="legend-mouth" hidden>
       <li>Calé sur ton essai du v2 : coussin écrasé de moitié (28 à 15 mm), lèvres juste sous le fond du coussin.</li>
-      <li>Assise retenue à l'essai des cales (rayon 53 mm, pointes arrondies) : le coussin enveloppe les joues. Le col la suit, 20 mm au-dessus d'elle partout : le visage s'y appuie avant que le coussin ne descende à 15 mm.</li>
+      <li>Assise retenue à l'essai des cales (rayon 53 mm, bords arrondis de 2 mm) : le coussin, posé dessus section par section, enveloppe les joues. Le col la suit, 20 mm au-dessus d'elle partout : le visage s'y appuie avant que le coussin ne descende à 15 mm.</li>
       <li>Visage schématique de même courbure que l'assise, lèvres en relief. Ce n'est pas ton visage.</li>
       <li>Bonnette à ta cote mesurée : 48 mm du bas du micro au haut des poils. Micro descendu au fond de la chambre, dans une entaille de la mousse.</li>
     </ol>
@@ -192,10 +192,33 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
 
   // Bouche : un visage simplifie se pose sur le coussin, pour lire la marge entre les levres et le haut de la bonnette.
   // Hypotheses : visage = cylindre vertical de meme courbure que l'assise (rayon 53 mm depuis le 24 nov. 2026, cp.BODY_SEAT ;
-  // 105 mm comme le v2 avant), plat au-dela du bord de l'assise (52 mm), avec les levres en relief ; chaque colonne du
+  // 105 mm comme le v2 avant), plat au-dela du bord de l'assise (52 mm), avec les levres en relief ; chaque section du
   // coussin s'ecrase jusqu'a la peau ; le visage bute sur la crete du col, parallele a l'assise. Bonnette a la cote mesuree
   // par Clement le 23 nov. 2026 (48 mm du bas du micro au haut des poils).
   const FACE = { R: 53.26, edge: 52, w: 150, h: 124, d: 46, stack: 48 }, skin = new THREE.Group(); skin.visible = false; device.add(skin);
+  // Coussin : exporte a plat par cad/silent_mic_v3_galet.py, pose ici sur l'assise. Chaque section de l'anneau monte en
+  // bloc a la hauteur de l'assise sous sa ligne moyenne, sans pivoter (le col, a 1 mm de son ouverture, le tient droit) ;
+  // cote pointes, la matiere qui passerait sous l'assise s'ecrase dessus. Cotes recopiees de cad/ (a reprendre si elles changent) :
+  // ligne moyenne du coussin (demi-axes), assise (rayon, pente plafonnee cp.SEAT_MAX_SLOPE, contour cp.SEAT).
+  const PAD = { a: 45.15, b: 32.375, R: 53.26, cap: THREE.MathUtils.degToRad(60), A: 52, B: 38.5, base: 0 };
+  const seatZ = x => { x = Math.abs(x); const xk = PAD.R * Math.sin(PAD.cap);
+    return x <= xk ? PAD.R - Math.sqrt(PAD.R * PAD.R - x * x) : PAD.R * (1 - Math.cos(PAD.cap)) + (x - xk) * Math.tan(PAD.cap); };
+  const padLift = (x, y) => {   // hauteur de l'assise sous la ligne moyenne de la section du sommet (x, y)
+    let lo = -10, hi = 10;   // decalage de l'ellipse du sommet par rapport a la ligne moyenne (demi-largeur de section 8,85)
+    for (let i = 0; i < 30; i++) { const d = (lo + hi) / 2; ((x / (PAD.a + d)) ** 2 + (y / (PAD.b + d)) ** 2 > 1) ? lo = d : hi = d; }
+    return seatZ(PAD.a * x / (PAD.a + lo));
+  };
+  // shortcut: ecrasement sur l'assise vive, 2 mm en retrait du contour (son arrondi de 2 mm n'est pas suivi)
+  const padZ = (x, y, h, lift, k) => { const z = PAD.base + lift + h * k;
+    return (x / (PAD.A - 2)) ** 2 + (y / (PAD.B - 2)) ** 2 <= 1 ? Math.max(z, PAD.base + seatZ(x)) : z; };
+  function bendPad(g, p) {   // pose le coussin plat et garde (hauteur dans le coussin, hauteur de l'assise) par sommet
+    let z0 = Infinity; for (let i = 2; i < p.length; i += 3) z0 = Math.min(z0, p[i]);
+    PAD.base = z0; const hl = new Float32Array(p.length / 3 * 2);
+    for (let i = 0, j = 0; i < p.length; i += 3, j += 2) {
+      hl[j] = p[i + 2] - z0; hl[j + 1] = padLift(p[i], p[i + 1]); p[i + 2] = padZ(p[i], p[i + 1], hl[j], hl[j + 1], 1);
+    }
+    g.setAttribute("pad", new THREE.BufferAttribute(hl, 2));
+  }
   const ridge = (x, y) => Math.sqrt(Math.max(0, 1 - (x / 26) ** 2)) * Math.max(Math.exp(-(((y - 5) / 5.5) ** 2)), Math.exp(-(((y + 5.5) / 6) ** 2)));   // les deux levres
   const lipShape = (x, y) => 0.45 * Math.exp(-((x / 32) ** 2) - (y / 20) ** 2) + 0.55 * ridge(x, y);
   let lipMax = 0; for (let y = -12; y <= 12; y += 0.25) lipMax = Math.max(lipMax, lipShape(0, y));
@@ -225,15 +248,16 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
     const cp = col.mesh.children[0].geometry.attributes.position; let rim = -Infinity;
     for (let i = 0; i < cp.count; i++) if (Math.abs(cp.getX(i)) < 3) rim = Math.max(rim, cp.getZ(i));
     const T = 28;   // epaisseur du coussin au repos, mesuree par Clement
-    M = { pos, pos0: pos.array.slice(), base: pb.min.z, T, bon: bb, top, bonMat, bonColor: bonMat.color.clone(), colMat, colColor: colMat.color.clone(), g, fp, front, stop: T - (rim - pb.min.z) };
+    M = { pos, pad: pad.mesh.children[0].geometry.attributes.pad.array, base: pb.min.z, T, bon: bb, top, bonMat, bonColor: bonMat.color.clone(), colMat, colColor: colMat.color.clone(), g, fp, front, stop: T - (rim - pb.min.z) };
     document.getElementById("crush").max = M.stop.toFixed(1);
   }
   function mouthUpdate() {
     if (!M) return;
-    const crush = Math.min(state.crush, M.stop), zRef = M.base + M.T - crush, a = M.pos.array, a0 = M.pos0, on = state.mouth;
+    const crush = Math.min(state.crush, M.stop), zRef = M.base + M.T - crush, a = M.pos.array, hl = M.pad, on = state.mouth;
     skin.visible = on; skin.position.z = -8 + zRef;
-    // coussin pose sur l'assise courbe : chaque colonne passe de 30 mm a l'ecart entre l'assise et la peau
-    for (let i = 0; i < a.length; i += 3) { const b = M.base + cheek(a0[i]), t = (a0[i + 2] - b) / M.T; a[i + 2] = !on ? a0[i + 2] : b + t * (M.T - crush); }
+    // coussin pose sur l'assise courbe : chaque section passe de 28 mm a l'ecart entre l'assise et la peau
+    const k = on ? (M.T - crush) / M.T : 1;
+    for (let i = 0, j = 0; i < a.length; i += 3, j += 2) a[i + 2] = padZ(a[i], a[i + 1], hl[j], hl[j + 1], k);
     M.pos.needsUpdate = true;
     const past = on && state.crush >= M.stop - 0.05;   // le visage repose sur la crete du col
     M.colMat.color.set(M.colColor);
@@ -277,7 +301,9 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
       const role = ROLES[p.role] ? p.role : "black";
       // sommets des triangles en float32, encodes en base64 par cad/web_bundle.py
       const bin = atob(p.positions), buf = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
-      let g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(buf.buffer), 3));
+      let g = new THREE.BufferGeometry(); const xyz = new Float32Array(buf.buffer);
+      if (p.file === "earpad.stl") bendPad(g, xyz);
+      g.setAttribute("position", new THREE.BufferAttribute(xyz, 3));
       g = THREE.BufferGeometryUtils.toCreasedNormals(THREE.BufferGeometryUtils.mergeVertices(g, 1e-3), THREE.MathUtils.degToRad(38));
       const hex = TINTS[p.file] || ROLES[role].color, mesh = new THREE.Group();
       mesh.add(new THREE.Mesh(g, mat(Object.assign({ color: new THREE.Color(hex) }, ROLES[role].o || {}))));

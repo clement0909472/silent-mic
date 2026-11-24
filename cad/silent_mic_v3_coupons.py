@@ -211,14 +211,27 @@ def export_step(shape, path):
     courbes decalees (gorge, fentes, entree du conduit, rainures) : relu, ce n'etait plus un solide,
     et Onshape l'importait en surfaces ouvertes (constate le 20 nov. 2026). Dans ce cas on reecrit en
     NURBS : memes surfaces (ecart mesure nul), mais le volume qu'OCCT recalcule dessus varie jusqu'a
-    1 %, d'ou la tolerance. Renvoie la forme reellement ecrite, a reutiliser dans l'assemblage."""
-    n0, v0 = shape.solids().size(), vol(shape)
+    1 %, d'ou la tolerance. Renvoie la forme reellement ecrite, a reutiliser dans l'assemblage.
+    Volumes en integration precise : sur l'assise arrondie de 2 mm, l'integration par defaut donnait 2,4 %
+    d'ecart au STEP en NURBS, et 1,6e-4 au STEP brut, pour des maillages identiques a 0,3 % pres (24 nov. 2026)."""
+    n0, v0 = shape.solids().size(), vol_precise(shape)
     for ready, tol in ((shape, 1e-4), (step_ready(shape), 1e-2)):
         cq.exporters.export(ready, str(path))
         back = step_solids(path)
-        if back.solids().size() == n0 >= 1 and abs(vol(back) - v0) <= tol * v0:
+        if back.solids().size() == n0 >= 1 and abs(vol_precise(back) - v0) <= tol * v0:
             return ready
-    raise AssertionError(f"{Path(path).name} : STEP relu en {back.solids().size()} solide(s) au lieu de {n0}, volume {vol(back):.0f} au lieu de {v0:.0f}")
+    raise AssertionError(f"{Path(path).name} : STEP relu en {back.solids().size()} solide(s) au lieu de {n0}, volume {vol_precise(back):.0f} au lieu de {v0:.0f}")
+
+
+def vol_precise(w, eps=1e-7):
+    from OCP.GProp import GProp_GProps
+    from OCP.BRepGProp import BRepGProp
+    total = 0.0
+    for s in w.solids().vals():
+        p = GProp_GProps()
+        BRepGProp.VolumeProperties_s(s.wrapped, p, eps)
+        total += p.Mass()
+    return total
 
 
 def clean_stl(path):
@@ -267,7 +280,10 @@ def below_face(depth, radius=FACE_RADIUS):
     return cq.Workplane("XY").box(300, 300, zc + 100, centered=(True, True, False)).translate((0, 0, -100)).cut(cq.Workplane("XY").newObject([cyl]))
 
 
-SEAT_MAX_SLOPE = 70.0  # deg : au-dela, le dessus de l'assise continue en droite (2 derniers mm de l'assise R53)
+# deg : au-dela, le dessus de l'assise continue en droite. 60 deg : courbe R53 intacte jusqu'a x = 46, sous toute la
+# ligne d'appui du coussin (x = 45), et pointe assez ouverte (30 deg) pour un arrondi de 2 mm (Clement, 24 nov. 2026 :
+# bords bien arrondis dans l'epaisseur). A 70 deg et 1 mm, la pointe n'etait qu'une levre de 2 mm, a 39,7 mm.
+SEAT_MAX_SLOPE = 60.0
 
 
 def below_face_capped(depth, radius, slope_deg=SEAT_MAX_SLOPE):
@@ -282,14 +298,15 @@ def below_face_capped(depth, radius, slope_deg=SEAT_MAX_SLOPE):
 def rounded_seat(seat, radius, r):
     """Assise aux aretes du haut du contour arrondies de r. Aux pointes de l'assise R53, le dessus presque vertical
     faisait avec le flanc une lame de 12 deg, coupante a l'essai (Clement, 24 nov. 2026), et le conge d'OCCT y
-    echoue. Plafonner la pente a SEAT_MAX_SLOPE ouvre l'angle a 20 deg, et le conge passe. (Un decale de toute
+    echoue. Plafonner la pente a SEAT_MAX_SLOPE ouvre l'angle (30 deg a 60), et le conge passe. (Un decale de toute
     l'assise arrondissait aussi, mais ses surfaces faussaient les booleens d'OCCT.)"""
     sharp = ell_prism(*seat, 0, 80).intersect(below_face_capped(SADDLE_T0, radius))
     top = [e for e in sharp.edges().vals() if e.geomType() != "LINE" and e.BoundingBox().zmin > 1.0]
     out = sharp.newObject(top).fillet(r)
     vif = ell_prism(*seat, 0, 80).intersect(below_face(SADDLE_T0, radius))
     assert out.val().isValid() and out.solids().size() == 1, "arrondi de l'assise"
-    assert vol(out.cut(vif)) < 0.01 and 0 < vol(vif.cut(out)) < 0.01 * vol(vif), "arrondi de l'assise : aretes seules"
+    # un conge rate d'OCCT retire des volumes absurdes ; un arrondi de 2 mm sur le tour en retire environ 1,5 %
+    assert vol(out.cut(vif)) < 0.01 and 0 < vol(sharp.cut(out)) < 0.03 * vol(sharp), "arrondi de l'assise : aretes seules"
     return out
 
 
@@ -349,7 +366,7 @@ BODY_SEAT_RADIUS = SHIM_ON
 for _ in range(SHIM_LAYERS):
     BODY_SEAT_RADIUS = radius_for_sag(SEAT[0] / 2, face_sag(SEAT[0] / 2, BODY_SEAT_RADIUS) + SHIM_RISE)
 BODY_SEAT = (20.0, BODY_SEAT_RADIUS, None)
-SEAT_EDGE_ROUND = 1.0  # bord de 2 mm arrondi, comme la crete du col
+SEAT_EDGE_ROUND = 2.0  # pointe : levre de 3,5 mm a 1 mm sous son sommet (2,1 a 1 mm d'arrondi)
 
 
 def body_saddle():

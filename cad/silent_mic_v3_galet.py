@@ -1168,9 +1168,8 @@ def export():
         if n == "assise-col":  # bord arrondi de l'assise : en maillage fin, 2.4 Mo
             tol = (0.15, 0.3)
         cq.exporters.export(p, str(f), tolerance=tol[0], angularTolerance=tol[1])
-        if n == "earpad":  # coussin arrondi dessine a plat, pose ensuite sur l'assise courbe : chaque sommet suit la courbe
-            r, half = SEAT_RADIUS, cp.SEAT[0] / 2  # au-dela du bord de l'assise, le coussin reste a sa hauteur
-            bend_stl(f, lambda x: PAD_BASE - Z_SEAT + r - np.sqrt(r * r - np.clip(x, -half, half) ** 2))
+        if n == "earpad":  # coussin arrondi a plat sur son fond ; la page le pose sur l'assise courbe (padZ de galet-cao.html)
+            bend_stl(f, lambda x: PAD_BASE - Z_SEAT + 0 * x)
         assert f.stat().st_size < 1.5e6, (n, f.stat().st_size)
         label, role, ex = roles[n]
         manifest.append({"file": f.name, "label": label, "role": role, "explode": list(ex)})
