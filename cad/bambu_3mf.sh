@@ -130,8 +130,6 @@ project cales-assise "$tmp/pla.json" "$c/cale-assise-r85-12mm.stl" "$c/cale-assi
 # puis encore 12 mm : seconde paire posee sur la premiere
 project cales-assise-2 "$tmp/pla.json" "$c/cale-assise-r60-12mm.stl" "$c/cale-assise-r60-12mm.stl"
 project lumiere-petg "$tmp/petg.json" "$c/light-coupon-petg.stl"
-# eprouvette de la glissiere du micro (rail en C, tirette courte, capuchon du corps) : a essayer avant la coque arriere
-SUP=off SOLID=1 project eprouvette-glissiere "$tmp/pla.json" "$c/glissiere-rail.stl" "$c/glissiere-tirette.stl" "cad/out/v3-galet/silent-mic-v3-galet-capuchon.stl"
 fi
 if [ "$only" != essai ]; then
   b=cad/out/v3-galet/silent-mic-v3-galet
@@ -143,7 +141,4 @@ if [ "$only" != essai ]; then
   # trappe pleine aussi : poids et sensation de produit fini (Clement, 24 nov. 2026)
   SOLID=1 project corps-trappe "$tmp/pla.json" "$b-cover.stl"
   project corps-anneau-petg "$tmp/petg.json" "$b-ring.stl"
-  # tirette du micro : profil a plat, pleine comme le reste. Le controle voit un surplomb sous l'ame (pont de 1.6 mm
-  # entre languette et aile) : un support y serait inretirable et gripperait la glissiere, donc aucun support
-  SUP=off SOLID=1 project corps-tirette "$tmp/pla.json" "$b-tirette.stl" "$b-capuchon.stl"
 fi

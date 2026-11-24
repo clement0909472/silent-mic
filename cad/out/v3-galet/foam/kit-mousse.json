@@ -2,8 +2,8 @@
   "fond": {
     "plaque_mm": 10.0,
     "quantite": 2,
-    "aire_mm2": 907,
-    "volume_cm3": 18.1,
+    "aire_mm2": 1162,
+    "volume_cm3": 23.2,
     "gabarit_mm": [
       59.9,
       39.7
@@ -34,5 +34,5 @@
       ]
     }
   },
-  "total_volume_cm3": 40.7
+  "total_volume_cm3": 45.8
 }

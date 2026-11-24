@@ -16,15 +16,15 @@
     77.0
   ],
   "nose_clearance_ymax_mm": 38.5,
-  "cavity_air_plus_foam_cm3": 199.3,
-  "cavity_air_only_cm3": 158.1,
+  "cavity_air_plus_foam_cm3": 201.1,
+  "cavity_air_only_cm3": 154.8,
   "foam_cm3": {
-    "foam-disc": 18.1,
+    "foam-disc": 23.2,
     "foam-liner": 23.1,
-    "total": 41.2
+    "total": 46.3
   },
   "free_passage_min_mm2": {
-    "area": 1437,
+    "area": 1488,
     "z": -4.2
   },
   "duct": {
@@ -69,9 +69,31 @@
       "largeur_mm": 11.0,
       "prise_le_long_de_la_bonnette_mm": 10.5,
       "haut_de_la_bonnette_sous_la_crete_mm": 33.0,
-      "tirette": {
-        "patte_sous_la_crete_locale_mm": 38.9,
-        "place_sous_le_crochet_mm": 7.5
+      "pince_de_la_bonnette": {
+        "doigts": {
+          "pouce": {
+            "rigide": {},
+            "souple": {
+              "bonnette": 181.6,
+              "manchon": 238.9
+            }
+          },
+          "index": {
+            "rigide": {},
+            "souple": {
+              "bonnette": 163.0,
+              "manchon": 18.8
+            }
+          }
+        },
+        "sortie_mm3": {
+          "5.0": 0.0,
+          "15.0": 0.0,
+          "30.0": 0.0,
+          "60.0": 0.0
+        },
+        "a_mm_sous_le_haut_des_poils": 5.0,
+        "fourrure_ecrasee_mm": 3.0
       }
     },
     "haut_du_micro_au_dessus_du_joint_mm": -3.0,
@@ -112,7 +134,6 @@
       "cle_2mm_jeu_au_col_mm": 2.21
     }
   },
-  "languette_dans_la_fourrure_mm3": 348.9,
   "interferences": [],
   "demontage_volume_commun_mm3": {
     "capot_avant_et_col_micro_en_place": {
@@ -142,11 +163,6 @@
       "2.0": 0.0,
       "4.0": 0.0
     },
-    "micro_decolle_au_dessus_de_la_tirette": {
-      "1.0": 0.0,
-      "2.0": 0.0,
-      "4.0": 0.0
-    },
     "trappe": {
       "1.0": 0.0,
       "2.0": 0.0,
@@ -158,27 +174,6 @@
       "45.0": 0.0,
       "60.0": 0.0
     }
-  },
-  "glissiere": {
-    "montee_mm3": {
-      "1.0": 0.0,
-      "4.0": 0.0,
-      "8.0": 0.0,
-      "14.0": 0.0,
-      "18.0": 0.0,
-      "21.9": 0.0
-    },
-    "au_dela_de_la_butee_mm3": 7.39,
-    "micro_libre_du_disque_en_haut": true,
-    "sortie_du_micro_mm3": {
-      "2.0": 0.0,
-      "8.0": 0.0,
-      "20.0": 0.0,
-      "40.0": 0.0,
-      "60.0": 0.0
-    },
-    "course_mm": 22.0,
-    "longueur_guidee_mm": 12.0
   },
   "curvature": [
     {
@@ -241,13 +236,11 @@
   "flat_faces_note": "plans > 35 mm : appui du coussin (couvert par le coussin, voulu plat) et face arriere du dos (maquette)",
   "mass_g_solid_pla": {
     "front": 48.8,
-    "rear": 101.0,
+    "rear": 98.8,
     "cover": 15.0,
     "assise-col": 78.6,
-    "tirette": 1.7,
-    "capuchon": 0.1,
     "ring_petg": 1.8,
-    "total": 247.0
+    "total": 243.0
   },
   "warn": [
     "longueur entree -> centre des fentes 155.7 mm < 175 (canal barrage a barrage 182.2)"

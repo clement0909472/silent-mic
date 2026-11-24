@@ -53,26 +53,6 @@
       ]
     },
     {
-      "file": "tirette.stl",
-      "label": "Tirette du micro (glissiere)",
-      "role": "black",
-      "explode": [
-        0,
-        0,
-        250
-      ]
-    },
-    {
-      "file": "capuchon.stl",
-      "label": "Capuchon du rail",
-      "role": "black",
-      "explode": [
-        0,
-        0,
-        120
-      ]
-    },
-    {
       "file": "mic.stl",
       "label": "DJI Mic Mini 2",
       "role": "electronics",
