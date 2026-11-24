@@ -40,7 +40,8 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
 .stage.mouth #g-crush, .stage.mouth #g-lips, .stage.mouth #g-gap { display: flex; }
 output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
 .stage.night { background: #000; }
-#g-light { display: none; } .stage.night #g-light { display: flex; }
+.stage.day { background: radial-gradient(ellipse at 50% 38%, #e4e6ea, #b9bdc4 75%); }
+#g-light, #g-amb { display: none; } .stage.lit #g-light, .stage.lit #g-amb { display: flex; }
 #gap { font: 500 13px var(--mono); padding: 6px 12px; white-space: nowrap; }
 #gap.ok { color: #6fd39a; } #gap.near { color: #f0b84a; } #gap.hit { color: #ff7a6e; }
 #status { position: absolute; left: 0; right: 0; top: 46%; text-align: center; color: var(--muted); pointer-events: none; }
@@ -68,9 +69,10 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
       <li>Bonnette à ta cote mesurée : 48 mm du bas du micro au haut des poils. Micro descendu au fond de la chambre, dans une entaille de la mousse.</li>
     </ol>
     <ol class="legend" id="legend-light" hidden>
-      <li>Pénombre, coques et coussin en noir mat : seul l'anneau translucide s'allume, éclairé par le filament LED caché derrière lui.</li>
-      <li>Bleu PS5 : bleu franc de manette. Bleu glacier : plus froid, presque blanc.</li>
-      <li>Baie non gainée : filament nu, la lumière sort par la prise USB-C et l'interrupteur (vue Dos). Gainé de noir, rien ne sort. Rendu indicatif : l'éprouvette tranche.</li>
+      <li>Coques et coussin en noir mat, anneau en PLA blanc éclairé par le filament LED caché derrière lui.</li>
+      <li>Ambiance : l'œil s'adapte, seul compte le rapport entre la LED et la lumière de la pièce renvoyée par l'anneau blanc. Pénombre 20 lux, pièce éclairée 300, près d'une fenêtre 1 000, dehors à l'ombre 10 000.</li>
+      <li>LED estimée à 100 cd/m² sur l'anneau (nOOds bleu à 50 mA derrière 2,5 mm de PLA blanc) : estimation de modèle, non mesurée. L'éprouvette de lumière la mesurera.</li>
+      <li>Baie éclairée (filament nu ou voyant du chargeur) : la lumière sort par la prise USB-C, la fente de l'interrupteur et trois petites ouvertures au ras de la trappe (vue Dos). Filament gainé de noir et baie sombre : rien ne sort.</li>
     </ol>
     <ol class="legend" id="legend">
       <li>La bouche souffle dans la chambre garnie de mousse.</li>
@@ -96,8 +98,12 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
     <div class="grp" id="g-lips"><span>Lèvres</span><input id="lips" type="range" min="0" max="22" step="0.5" value="15.5" aria-label="Avancée des lèvres, en millimètres"><output id="o-lips" for="lips"></output></div>
     <div class="grp" id="g-gap"><strong id="gap" role="status"></strong></div>
     <div class="grp" id="g-light"><span>LED</span>
-      <button data-led="ps5" aria-pressed="true">Bleu PS5</button><button data-led="glacier" aria-pressed="false">Bleu glacier</button>
-      <button id="t-leak" aria-pressed="false">Baie non gainée</button>
+      <button data-led="bleu" aria-pressed="true">Bleu 6149</button><button data-led="glacier" aria-pressed="false">Bleu glacier 6147</button>
+      <button id="t-leak" aria-pressed="false">Baie éclairée</button>
+    </div>
+    <div class="grp" id="g-amb"><span>Ambiance</span>
+      <button data-amb="nuit" aria-pressed="true">Pénombre</button><button data-amb="piece" aria-pressed="false">Pièce éclairée</button>
+      <button data-amb="fenetre" aria-pressed="false">Près d'une fenêtre</button><button data-amb="dehors" aria-pressed="false">Dehors à l'ombre</button>
     </div>
     <div class="grp"><span>Vue</span>
       <button data-view="avant">Avant</button><button data-view="profil">Profil</button><button data-view="dos">Dos</button>
@@ -151,7 +157,7 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
   const device = new THREE.Group(); scene.add(device);
   device.rotation.set(0, Math.PI / 2, 0);    // z du modele (vers le visage) a l'horizontale, y du modele en haut
   const parts = [];
-  const state = { cut: false, air: true, spin: false, open: false, t: 0, mouth: false, crush: 13, lips: 15.5, light: false, led: "ps5", leak: false };
+  const state = { cut: false, air: true, spin: false, open: false, t: 0, mouth: false, crush: 13, lips: 15.5, light: false, led: "bleu", amb: "nuit", leak: false };
 
   // Trajet d'air : fleches animees, vues a travers la coque. Cotes recopiees de cad/silent_mic_v3_galet.py
   // (section au milieu du conduit, offset du conduit, entree et fentes en abscisse depuis 6 h) : a recopier si elles changent.
@@ -205,7 +211,7 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
       const [face, back] = p.mesh.children, m = face.material, o = AIR_OPACITY[p.role], ghost = state.air && !state.cut && o !== undefined;
       const keep = !state.air || state.cut || ghost || p.role === "translucent" || p.file === "mic.stl" || p.file === "bonnette.stl";
       m.userData.env ??= m.envMapIntensity;
-      Object.assign(m, { transparent: ghost, opacity: ghost ? o : 1, depthWrite: !ghost, envMapIntensity: ghost ? 0 : m.userData.env * (state.light ? 0.3 : 1), needsUpdate: true });
+      Object.assign(m, { transparent: ghost, opacity: ghost ? o : 1, depthWrite: !ghost, envMapIntensity: ghost ? 0 : m.userData.env * (dim() ? 0.3 : 1), needsUpdate: true });
       face.visible = keep; back.visible = keep && !ghost;
     }
   }
@@ -300,33 +306,56 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
   // Eclairage : piece sombre, coques en PLA noir mat, anneau translucide allume par le filament LED, halo par bloom.
   // Les fuites possibles sont les ouvertures de la baie (prise USB-C, fente de l'interrupteur) si le filament y passe nu ;
   // positions calculees dans cad/silent_mic_v3_galet.py (bay_cut), repere des pieces, recentre de -8 en z comme elles.
-  const LED = { ps5: [0x1f5bff, 2.6], glacier: [0x9fe2ff, 1.3] };   // couleur, intensite : a luminance voisine
-  const LEAKS = [[0, -25.6, -52.4, 9], [15.3, -22.2, -52.7, 6]];   // x, y, z, taille
+  // Couleur des filaments en RVB lineaire. Bleu : LED bleue standard vers 465-470 nm (hypothese, Adafruit ne publie pas la
+  // longueur d'onde), soit le bleu le plus sature qu'un ecran sait montrer. Glacier : LED blanche froide teintee, plus pale.
+  const LED = { bleu: [0.0, 0.03, 1.0], glacier: [0.35, 0.76, 1.0] };
+  const L_LED = 100;   // cd/m2 sur la face de l'anneau : estimation de modele (nOOds a 50 mA, ~0,2 lm sortant, 6 cm2)
+  const AMB = { nuit: 20, piece: 300, fenetre: 1000, dehors: 10000 };   // eclairement de la piece, en lux
+  // x, y, z, largeur, hauteur : prise USB-C et levier de l'interrupteur (voulus), puis les trois ouvertures que
+  // cad/light_check.py trouve au ras de la trappe (fentes de 3 mm de part et d'autre de la prise, coin du logement
+  // de l'interrupteur) ; repere des pieces recentre de -8 en z
+  const LEAKS = [[0, -25.6, -52.4, 9, 9], [15.3, -22.2, -52.7, 6, 6], [-7.8, -22.4, -54.9, 4.5, 2], [7.8, -22.4, -54.9, 4.5, 2], [19.8, -17.3, -54.6, 3, 3]];
   const composer = new THREE.EffectComposer(renderer);
   composer.addPass(new THREE.RenderPass(scene, camera));
-  const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(512, 512), 1.4, 0.2, 0.3);
+  const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(512, 512), 1.4, 0.25, 0.08);   // seuil bas : un bleu sature a peu de luminance
   composer.addPass(bloom);
   composer.addPass(new THREE.ShaderPass(THREE.GammaCorrectionShader));
   const glowTex = (() => { const c = document.createElement("canvas"); c.width = c.height = 64; const x = c.getContext("2d");
     const g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(0.35, "rgba(255,255,255,0.45)"); g.addColorStop(1, "rgba(255,255,255,0)");
     x.fillStyle = g; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
-  const leaks = LEAKS.map(([x, y, z, sz]) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
-    sp.position.set(x, y, z); sp.scale.setScalar(sz); sp.visible = false; device.add(sp); return sp; });
+  const leaks = LEAKS.map(([x, y, z, w, hh]) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, transparent: true }));
+    sp.position.set(x, y, z); sp.scale.set(w, hh, 1); sp.visible = false; device.add(sp); return sp; });
   const lights0 = { key: key.intensity, rim: rim.intensity };
+  const dim = () => state.light && state.amb === "nuit";
+  // Teinte vue de l'anneau : lumiere de la piece renvoyee par le PLA blanc (albedo 0,8 : luminance 0,8 E / pi) plus la LED,
+  // additionnees en lineaire ; l'oeil s'adapte, donc seul le rapport compte. Quand la somme depasse l'ecran, on la reduit
+  // d'un bloc (et non canal par canal) : la teinte reste juste au lieu de virer au blanc.
+  function ringColor(led, lux) {
+    const ratio = L_LED / (0.8 * lux / Math.PI), Y = 0.2126 * led[0] + 0.7152 * led[1] + 0.0722 * led[2], W = 0.4;
+    const c = led.map(v => W + v * ratio * W / Y), top = Math.max(...c);
+    return { color: new THREE.Color().setRGB(...c.map(v => v / Math.max(top, 1))), ratio };
+  }
   function applyLight() {
-    const on = state.light, led = new THREE.Color(LED[state.led][0]).convertSRGBToLinear();   // la passe de rendu travaille en lineaire
-    stage.classList.toggle("night", on); renderer.setClearColor(0x000000, on ? 1 : 0); document.getElementById("legend-light").hidden = !on;
-    key.intensity = on ? 0.3 : lights0.key; rim.intensity = on ? 0.25 : lights0.rim;
-    applyAir();   // piece dans la penombre : reflets de l'environnement a 30 %, et la legende passe en note
+    const on = state.light, night = dim(), { color, ratio } = ringColor(LED[state.led], AMB[state.amb]);
+    stage.classList.toggle("lit", on); stage.classList.toggle("night", night); stage.classList.toggle("day", on && !night);
+    renderer.setClearColor(0x000000, night ? 1 : 0); document.getElementById("legend-light").hidden = !on;
+    key.intensity = night ? 0.3 : lights0.key; rim.intensity = night ? 0.25 : lights0.rim;
+    applyAir();   // penombre : reflets de l'environnement a 30 %, et la legende passe en note
     for (const p of parts) {
       const m = p.mesh.children[0].material; m.userData.base ??= { color: m.color.getHex(), emissive: m.emissive.getHex(), ei: m.emissiveIntensity };
       const b = m.userData.base;
-      if (p.role === "translucent") {   // anneau en PLA blanc translucide eclaire par l'arriere : on ne voit que la couleur de la LED
-        m.color.setHex(on ? 0x080808 : b.color); m.emissive.copy(on ? led : new THREE.Color(b.emissive)); m.emissiveIntensity = on ? LED[state.led][1] : b.ei;
-      } else if (p.role === "black" || p.role === "soft") m.color.setHex(on ? 0x15161a : b.color);   // vrai noir mat (coques, coussin en simili noir) au lieu des teintes de lecture
+      const capM = p.mesh.children[1]?.material;   // aplat des coupes, non eclaire : dans le noir il brillait (anneaux blancs aux puits de vis)
+      if (capM) { capM.userData.base ??= capM.color.getHex(); capM.color.setHex(on && p.role !== "translucent" ? 0x050506 : capM.userData.base); }
+      if (p.role === "translucent") {   // l'anneau n'est vu qu'a travers sa teinte calculee, hors tone mapping qui la blanchirait
+        m.color.setHex(on ? 0x000000 : b.color); m.emissive.copy(on ? color : new THREE.Color(b.emissive)); m.emissiveIntensity = on ? 1 : b.ei;
+        if (m.toneMapped === on) { m.toneMapped = !on; m.needsUpdate = true; }
+      } else if (p.role === "black" || p.role === "soft") m.color.setHex(on ? 0x0b0c0e : b.color);   // noir mat reel (albedo ~4,5 %) au lieu des teintes de lecture
+      else if (p.role === "metal") { m.userData.metal ??= m.metalness; m.color.setHex(on ? 0x111215 : b.color); m.metalness = on ? 0.3 : m.userData.metal; }   // vis noires du panier : plus de reflets d'acier que le halo grossissait
     }
-    leaks.forEach(sp => { sp.visible = on && state.leak; sp.material.color.copy(led); });
+    const leakColor = new THREE.Color().setRGB(...LED[state.led]);
+    leaks.forEach(sp => { sp.visible = on && state.leak; sp.material.color.copy(leakColor); sp.material.opacity = Math.min(1, ratio / 5); });
     document.querySelectorAll("[data-led]").forEach(b => press(b, b.dataset.led === state.led));
+    document.querySelectorAll("[data-amb]").forEach(b => press(b, b.dataset.amb === state.amb));
   }
 
   function ui() {
@@ -399,6 +428,7 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
   });
   toggle("t-leak", "leak", applyLight);
   document.querySelectorAll("[data-led]").forEach(b => b.addEventListener("click", () => { state.led = b.dataset.led; applyLight(); }));
+  document.querySelectorAll("[data-amb]").forEach(b => b.addEventListener("click", () => { state.amb = b.dataset.amb; applyLight(); }));
   // Sans capot : l'interieur, capot avant et tout ce qui part avec lui masques (le capot est visse : au quotidien, seul le micro sort, par la bouche)
   toggle("t-open", "open", () => {
     if (state.open && state.air) document.getElementById("t-air").click();
@@ -416,7 +446,7 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
     if (state.spin) device.rotation.y += dt * 0.3;
     if (state.air) moveHeads(dt);
     device.updateMatrixWorld(); clip.copy(localClip).applyMatrix4(device.matrixWorld);
-    controls.update(); if (state.light) composer.render(); else renderer.render(scene, camera); requestAnimationFrame(tick);
+    controls.update(); if (dim()) composer.render(); else renderer.render(scene, camera); requestAnimationFrame(tick);
   })(last);
   resize(); view("air");
 })();

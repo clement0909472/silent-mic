@@ -1,0 +1,127 @@
+{
+  "pas_mm": 0.25,
+  "jeux_de_moins_de_0_25_mm_fermes": {
+    "tunnel_relie_rainure_et_baie": true,
+    "chambre_dans_le_noir": true,
+    "sorties": [
+      {
+        "ou": "prise USB-C",
+        "voxels": 1152
+      },
+      {
+        "ou": "fente de l'interrupteur",
+        "voxels": 122
+      },
+      {
+        "ou": "AUTRE",
+        "x_mm": [
+          -9.3,
+          -6.3
+        ],
+        "y_mm": [
+          -22.3,
+          -21.5
+        ],
+        "z_mm": [
+          -47.0,
+          -46.8
+        ]
+      },
+      {
+        "ou": "AUTRE",
+        "x_mm": [
+          6.2,
+          9.2
+        ],
+        "y_mm": [
+          -22.3,
+          -21.5
+        ],
+        "z_mm": [
+          -47.0,
+          -46.8
+        ]
+      },
+      {
+        "ou": "AUTRE",
+        "x_mm": [
+          19.2,
+          20.0
+        ],
+        "y_mm": [
+          -17.0,
+          -16.5
+        ],
+        "z_mm": [
+          -47.0,
+          -46.3
+        ]
+      }
+    ]
+  },
+  "paroi_noire_min_mm": 1.43,
+  "paroi_noire_min_ou_mm": [
+    16.6,
+    -17.7,
+    -48.4
+  ],
+  "jeux_de_plus_de_0_25_mm": {
+    "tunnel_relie_rainure_et_baie": true,
+    "chambre_dans_le_noir": true,
+    "sorties": [
+      {
+        "ou": "prise USB-C",
+        "voxels": 1197
+      },
+      {
+        "ou": "fente de l'interrupteur",
+        "voxels": 146
+      },
+      {
+        "ou": "AUTRE",
+        "x_mm": [
+          -9.3,
+          -6.3
+        ],
+        "y_mm": [
+          -22.3,
+          -21.5
+        ],
+        "z_mm": [
+          -47.0,
+          -46.5
+        ]
+      },
+      {
+        "ou": "AUTRE",
+        "x_mm": [
+          6.2,
+          9.2
+        ],
+        "y_mm": [
+          -22.3,
+          -21.5
+        ],
+        "z_mm": [
+          -47.0,
+          -46.5
+        ]
+      },
+      {
+        "ou": "AUTRE",
+        "x_mm": [
+          19.2,
+          20.2
+        ],
+        "y_mm": [
+          -17.0,
+          -16.3
+        ],
+        "z_mm": [
+          -47.0,
+          -46.0
+        ]
+      }
+    ]
+  }
+}
