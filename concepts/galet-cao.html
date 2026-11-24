@@ -39,6 +39,8 @@ input[type="range"] { width: 130px; accent-color: var(--led); }
 .stage.mouth #g-explode, #g-crush, #g-lips, #g-gap { display: none; }
 .stage.mouth #g-crush, .stage.mouth #g-lips, .stage.mouth #g-gap { display: flex; }
 output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
+.stage.night { background: #000; }
+#g-light { display: none; } .stage.night #g-light { display: flex; }
 #gap { font: 500 13px var(--mono); padding: 6px 12px; white-space: nowrap; }
 #gap.ok { color: #6fd39a; } #gap.near { color: #f0b84a; } #gap.hit { color: #ff7a6e; }
 #status { position: absolute; left: 0; right: 0; top: 46%; text-align: center; color: var(--muted); pointer-events: none; }
@@ -65,6 +67,11 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
       <li>Visage schématique de même courbure que l'assise, lèvres en relief. Ce n'est pas ton visage.</li>
       <li>Bonnette à ta cote mesurée : 48 mm du bas du micro au haut des poils. Micro descendu au fond de la chambre, dans une entaille de la mousse.</li>
     </ol>
+    <ol class="legend" id="legend-light" hidden>
+      <li>Pénombre, coques et coussin en noir mat : seul l'anneau translucide s'allume, éclairé par le filament LED caché derrière lui.</li>
+      <li>Bleu PS5 : bleu franc de manette. Bleu glacier : plus froid, presque blanc.</li>
+      <li>Baie non gainée : filament nu, la lumière sort par la prise USB-C et l'interrupteur (vue Dos). Gainé de noir, rien ne sort. Rendu indicatif : l'éprouvette tranche.</li>
+    </ol>
     <ol class="legend" id="legend">
       <li>La bouche souffle dans la chambre garnie de mousse.</li>
       <li>L'air entre dans le conduit par une ouverture en bas de la chambre.</li>
@@ -82,11 +89,16 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
       <button id="t-asm" aria-pressed="false">Montage</button>
       <button id="t-open" aria-pressed="false">Sans capot</button>
       <button id="t-mouth" aria-pressed="false">Bouche</button>
+      <button id="t-light" aria-pressed="false">Éclairage</button>
       <button id="t-spin" aria-pressed="false">Rotation</button>
     </div>
     <div class="grp" id="g-crush"><span>Écrasement</span><input id="crush" type="range" min="0" max="18" step="0.5" value="13" aria-label="Écrasement du coussin, en millimètres"><output id="o-crush" for="crush"></output></div>
     <div class="grp" id="g-lips"><span>Lèvres</span><input id="lips" type="range" min="0" max="22" step="0.5" value="15.5" aria-label="Avancée des lèvres, en millimètres"><output id="o-lips" for="lips"></output></div>
     <div class="grp" id="g-gap"><strong id="gap" role="status"></strong></div>
+    <div class="grp" id="g-light"><span>LED</span>
+      <button data-led="ps5" aria-pressed="true">Bleu PS5</button><button data-led="glacier" aria-pressed="false">Bleu glacier</button>
+      <button id="t-leak" aria-pressed="false">Baie non gainée</button>
+    </div>
     <div class="grp"><span>Vue</span>
       <button data-view="avant">Avant</button><button data-view="profil">Profil</button><button data-view="dos">Dos</button>
     </div>
@@ -97,6 +109,14 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/utils/BufferGeometryUtils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/GammaCorrectionShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/MaskPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 <script>
 (() => {
   const stage = document.getElementById("stage"), canvas = document.getElementById("view"), status = document.getElementById("status");
@@ -131,7 +151,7 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
   const device = new THREE.Group(); scene.add(device);
   device.rotation.set(0, Math.PI / 2, 0);    // z du modele (vers le visage) a l'horizontale, y du modele en haut
   const parts = [];
-  const state = { cut: false, air: true, spin: false, open: false, t: 0, mouth: false, crush: 13, lips: 15.5 };
+  const state = { cut: false, air: true, spin: false, open: false, t: 0, mouth: false, crush: 13, lips: 15.5, light: false, led: "ps5", leak: false };
 
   // Trajet d'air : fleches animees, vues a travers la coque. Cotes recopiees de cad/silent_mic_v3_galet.py
   // (section au milieu du conduit, offset du conduit, entree et fentes en abscisse depuis 6 h) : a recopier si elles changent.
@@ -178,14 +198,14 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
     const asm = !state.air && state.t >= 0.5;
     flow.visible = state.air; document.getElementById("legend").hidden = !state.air; document.getElementById("legend-asm").hidden = !asm;
     document.getElementById("legend-mouth").hidden = !state.mouth;
-    stage.classList.toggle("note", state.air || asm || state.mouth); stage.classList.toggle("asm", asm); asmTags.forEach(s => { s.visible = asm; });
+    stage.classList.toggle("note", state.air || asm || state.mouth || state.light); stage.classList.toggle("asm", asm); asmTags.forEach(s => { s.visible = asm; });
     document.getElementById("t-asm").setAttribute("aria-pressed", String(state.t >= 0.5));
     for (const p of parts) {
       if (p.role === "air") { p.mesh.visible = state.air; continue; }
       const [face, back] = p.mesh.children, m = face.material, o = AIR_OPACITY[p.role], ghost = state.air && !state.cut && o !== undefined;
       const keep = !state.air || state.cut || ghost || p.role === "translucent" || p.file === "mic.stl" || p.file === "bonnette.stl";
       m.userData.env ??= m.envMapIntensity;
-      Object.assign(m, { transparent: ghost, opacity: ghost ? o : 1, depthWrite: !ghost, envMapIntensity: ghost ? 0 : m.userData.env, needsUpdate: true });
+      Object.assign(m, { transparent: ghost, opacity: ghost ? o : 1, depthWrite: !ghost, envMapIntensity: ghost ? 0 : m.userData.env * (state.light ? 0.3 : 1), needsUpdate: true });
       face.visible = keep; back.visible = keep && !ghost;
     }
   }
@@ -277,6 +297,38 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
     window.__mouth = { gap, crush: state.crush, lips: state.lips, top: M.top, stop: M.stop };   // lu par le controle de la page
   }
 
+  // Eclairage : piece sombre, coques en PLA noir mat, anneau translucide allume par le filament LED, halo par bloom.
+  // Les fuites possibles sont les ouvertures de la baie (prise USB-C, fente de l'interrupteur) si le filament y passe nu ;
+  // positions calculees dans cad/silent_mic_v3_galet.py (bay_cut), repere des pieces, recentre de -8 en z comme elles.
+  const LED = { ps5: [0x1f5bff, 2.6], glacier: [0x9fe2ff, 1.3] };   // couleur, intensite : a luminance voisine
+  const LEAKS = [[0, -25.6, -52.4, 9], [15.3, -22.2, -52.7, 6]];   // x, y, z, taille
+  const composer = new THREE.EffectComposer(renderer);
+  composer.addPass(new THREE.RenderPass(scene, camera));
+  const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(512, 512), 1.4, 0.2, 0.3);
+  composer.addPass(bloom);
+  composer.addPass(new THREE.ShaderPass(THREE.GammaCorrectionShader));
+  const glowTex = (() => { const c = document.createElement("canvas"); c.width = c.height = 64; const x = c.getContext("2d");
+    const g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(0.35, "rgba(255,255,255,0.45)"); g.addColorStop(1, "rgba(255,255,255,0)");
+    x.fillStyle = g; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
+  const leaks = LEAKS.map(([x, y, z, sz]) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+    sp.position.set(x, y, z); sp.scale.setScalar(sz); sp.visible = false; device.add(sp); return sp; });
+  const lights0 = { key: key.intensity, rim: rim.intensity };
+  function applyLight() {
+    const on = state.light, led = new THREE.Color(LED[state.led][0]).convertSRGBToLinear();   // la passe de rendu travaille en lineaire
+    stage.classList.toggle("night", on); renderer.setClearColor(0x000000, on ? 1 : 0); document.getElementById("legend-light").hidden = !on;
+    key.intensity = on ? 0.3 : lights0.key; rim.intensity = on ? 0.25 : lights0.rim;
+    applyAir();   // piece dans la penombre : reflets de l'environnement a 30 %, et la legende passe en note
+    for (const p of parts) {
+      const m = p.mesh.children[0].material; m.userData.base ??= { color: m.color.getHex(), emissive: m.emissive.getHex(), ei: m.emissiveIntensity };
+      const b = m.userData.base;
+      if (p.role === "translucent") {   // anneau en PLA blanc translucide eclaire par l'arriere : on ne voit que la couleur de la LED
+        m.color.setHex(on ? 0x080808 : b.color); m.emissive.copy(on ? led : new THREE.Color(b.emissive)); m.emissiveIntensity = on ? LED[state.led][1] : b.ei;
+      } else if (p.role === "black" || p.role === "soft") m.color.setHex(on ? 0x15161a : b.color);   // vrai noir mat (coques, coussin en simili noir) au lieu des teintes de lecture
+    }
+    leaks.forEach(sp => { sp.visible = on && state.leak; sp.material.color.copy(led); });
+    document.querySelectorAll("[data-led]").forEach(b => press(b, b.dataset.led === state.led));
+  }
+
   function ui() {
     const box = document.getElementById("parts");
     for (const p of parts) {
@@ -341,6 +393,12 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
     setExplode(on ? 1 : 0); device.rotation.y = Math.PI / 2; view(on ? "profil" : "avant");
   });
   toggle("t-spin", "spin");
+  toggle("t-light", "light", () => {
+    if (state.light) { mouthOff(); if (state.air) document.getElementById("t-air").click(); if (state.t > 0) setExplode(0); if (state.cut) document.getElementById("t-cut").click(); device.rotation.y = Math.PI / 2; view("avant"); }
+    applyLight();
+  });
+  toggle("t-leak", "leak", applyLight);
+  document.querySelectorAll("[data-led]").forEach(b => b.addEventListener("click", () => { state.led = b.dataset.led; applyLight(); }));
   // Sans capot : l'interieur, capot avant et tout ce qui part avec lui masques (le capot est visse : au quotidien, seul le micro sort, par la bouche)
   toggle("t-open", "open", () => {
     if (state.open && state.air) document.getElementById("t-air").click();
@@ -350,7 +408,7 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
   document.getElementById("explode").addEventListener("input", e => setExplode(e.target.value / 100));
   document.querySelectorAll("[data-view]").forEach(b => b.addEventListener("click", () => { device.rotation.y = Math.PI / 2; view(b.dataset.view); }));
 
-  function resize() { const r = stage.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); camera.aspect = r.width / Math.max(r.height, 1); camera.updateProjectionMatrix(); }
+  function resize() { const r = stage.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); composer.setSize(r.width, r.height); camera.aspect = r.width / Math.max(r.height, 1); camera.updateProjectionMatrix(); }
   new ResizeObserver(resize).observe(stage);
   let last = performance.now();
   (function tick(now) {
@@ -358,7 +416,7 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
     if (state.spin) device.rotation.y += dt * 0.3;
     if (state.air) moveHeads(dt);
     device.updateMatrixWorld(); clip.copy(localClip).applyMatrix4(device.matrixWorld);
-    controls.update(); renderer.render(scene, camera); requestAnimationFrame(tick);
+    controls.update(); if (state.light) composer.render(); else renderer.render(scene, camera); requestAnimationFrame(tick);
   })(last);
   resize(); view("air");
 })();
