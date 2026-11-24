@@ -33,6 +33,14 @@
         33.3
       ]
     },
+    "cale-assise-r85-12mm": {
+      "volume_cm3": 5.34,
+      "size_mm": [
+        32.2,
+        71.2,
+        27.4
+      ]
+    },
     "temoin-bonnette": {
       "volume_cm3": 13.95,
       "size_mm": [

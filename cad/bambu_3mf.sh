@@ -78,7 +78,8 @@ for name, sup in (("process-off", "0"), ("process-auto", "1"), ("process-plate",
     json.dump(dict(q, sparse_infill_density="100%", sparse_infill_pattern="zig-zag"), open(f"{tmp}/{name}-solid.json", "w"), indent=1)
 EOF
 
-project() {  # nom filament stl...
+project() {  # nom filament stl...   (ONLY=nom : ce seul plateau, les autres 3MF restent tels quels)
+  [ -n "${ONLY:-}" ] && [ "$ONLY" != "$1" ] && return 0
   local name=$1 fil=$2
   shift 2
   local machine="$tmp/machine.json"
@@ -122,8 +123,10 @@ project capot-essai "$tmp/pla.json" "$c/pad-test-cap.stl" "$c/temoin-bonnette.st
 # l'assise de 10 mm sert d'abord sur le capot d'essai, puis sur le corps
 SOLID=1 SUP=plate project cols-et-joint "$tmp/pla.json" "$c/joint-coupon-rear.stl" "$c/joint-coupon-front.stl" "$c/assise-col-10mm.stl"
 # essai du 24 nov. 2026 : col de 20 mm, assise plus courbee (rayons 85 et 70 au lieu de 105). Essai de forme a
-# 20 % (2 h 25 au lieu de 3 h 27 pleines) : l'assise retenue sera reimprimee pleine avec le corps
+# 20 % (2 h 15 au lieu de 3 h 27 pleines) : l'assise retenue sera reimprimee pleine avec le corps
 project assises-20mm "$tmp/pla.json" "$c/assise-col-20mm-r85.stl" "$c/assise-col-20mm-r70.stl"
+# essai suivant : bords encore 12 mm plus haut, par deux cales posees sur l'assise R85 deja imprimee (une par cote)
+project cales-assise "$tmp/pla.json" "$c/cale-assise-r85-12mm.stl" "$c/cale-assise-r85-12mm.stl"
 project lumiere-petg "$tmp/petg.json" "$c/light-coupon-petg.stl"
 fi
 if [ "$only" != essai ]; then

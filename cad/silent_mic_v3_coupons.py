@@ -93,6 +93,10 @@ SADDLE_T0 = 4.0  # epaisseur au centre, sous la bouche : le fond du coussin mont
 # (hauteur du col, rayon de l'assise). Essai du 24 nov. 2026 sur l'assise de 10 mm / 105 : taille juste, mais
 # pas assez courbee, et col a monter a 20 mm au moins (Clement). 85 : un peu plus courbe, 70 : nettement plus.
 SADDLE_COLLARS = ((10.0, FACE_RADIUS), (20.0, 85.0), (20.0, 70.0))
+# Essai du 24 nov. 2026 sur l'assise de 20 mm / 85 : bords encore a relever d'environ 12 mm (Clement). Plutot que
+# reimprimer l'assise, deux cales posees dessus, une de chaque cote, sous le coussin : dessous au rayon de l'assise
+# imprimee, dessus au rayon qui releve son bord de SHIM_RISE (60 mm environ), celui de l'assise suivante si ca plait.
+SHIM_ON, SHIM_RISE, SHIM_MIN, SHIM_CLEAR = 85.0, 12.0, 1.0, 0.5
 
 # temoin de bonnette (idee de Clement, 23 nov. 2026) : pose au fond du capot d'essai, sous l'assise, son dessus est a
 # la hauteur du haut de la bonnette dans le corps, GAUGE_GAP sous le fond du coussin. On appuie le visage comme pour
@@ -284,6 +288,27 @@ def saddle_collar(height, seat=SEAT, radius=FACE_RADIUS):
     return piece.cut(label)
 
 
+def radius_for_sag(x, sag):
+    """Rayon dont l'avancee vaut `sag` a l'abscisse x (inverse de face_sag)."""
+    return (x * x + sag * sag) / (2 * sag)
+
+
+def saddle_shim(on=SHIM_ON, rise=SHIM_RISE, seat=SEAT):
+    """Cale du cote +x, en place sur l'assise de rayon `on` (repere de saddle_collar), le rayon de son dessus et son
+    abscisse de debut, la ou elle atteint SHIM_MIN. La cale du cote -x est la meme tournee d'un demi-tour."""
+    half = seat[0] / 2
+    r = radius_for_sag(half, face_sag(half, on) + rise)
+    lo, hi = 0.0, half
+    for _ in range(50):
+        mid = (lo + hi) / 2
+        lo, hi = (mid, hi) if face_sag(mid, r) - face_sag(mid, on) < SHIM_MIN else (lo, mid)
+    co = collar_outer()
+    side = cq.Workplane("XY").box(half, 200, 200, centered=(False, True, True)).translate((hi, 0, 0))
+    shim = (ell_prism(*seat, 0, 60).intersect(below_face(SADDLE_T0, r)).cut(below_face(SADDLE_T0, on))
+            .cut(ell_prism(co[0] + 2 * SHIM_CLEAR, co[1] + 2 * SHIM_CLEAR, -1, 61)).intersect(side))
+    return shim, r, hi
+
+
 def pad_test_cap():
     """Capot ferme : dos plat au plateau, appui du coussin en haut avec logement de collier."""
     z_seat = CAP_WALL + CAP_DEPTH
@@ -370,6 +395,17 @@ def export(out=HERE / "out" / "v3-galet" / "coupons"):
         placed = ins.translate((0, 0, z_seat + 0.02))
         assert vol(placed.intersect(cap)) < 1e-6, "assise / capot"
         save(f"assise-col-{h:g}mm" + ("" if r == FACE_RADIUS else f"-r{r:g}"), ins)
+    shim, r, x0 = saddle_shim()
+    bb, half, wall = shim.val().BoundingBox(), SEAT[0] / 2, collar_outer()[0] / 2 + SHIM_CLEAR
+    assert abs(bb.zmax - SADDLE_T0 - face_sag(half, r)) < 0.1 and abs(bb.xmax - half) < 0.1 and abs(bb.xmin - x0) < 0.1, bb
+    assert abs(face_sag(half, r) - face_sag(half, SHIM_ON) - SHIM_RISE) < 1e-9
+    print(f"cale : dessus au rayon {r:.1f}, de x = {x0:.1f} a {half:g} ; contre le col, {face_sag(wall, r) - face_sag(wall, SHIM_ON):.1f} mm "
+          f"d'epaisseur, col de 20 mm depassant de {20 - face_sag(wall, r) + face_sag(wall, SHIM_ON):.1f}", flush=True)
+    # imprimee dessous au plateau : on tourne autour de l'axe de l'assise pour mettre le milieu de l'arc d'appui en bas
+    tilt = math.degrees((math.asin(x0 / SHIM_ON) + math.asin(half / SHIM_ON)) / 2)
+    axis = (0, 0, SADDLE_T0 + SHIM_ON)
+    lying = shim.rotate(axis, (0, 1, SADDLE_T0 + SHIM_ON), tilt)
+    save("cale-assise-r85-12mm", shim, lying.translate((0, 0, -lying.val().BoundingBox().zmin)))
     gauge = bonnet_gauge()
     assert vol(gauge.translate((0, 0, CAP_WALL + 0.02)).intersect(cap)) < 1e-6, "temoin / capot"
     assert max(GAUGE_SIZE[0] / collar_inner()[0], GAUGE_SIZE[1] / collar_inner()[1]) < 0.95, "temoin trop large pour le col"
