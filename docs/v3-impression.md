@@ -34,6 +34,7 @@ Dans `print/`, trois projets 3MF tranchés, réglages embarqués. Chaque plateau
 | 2 | `print/cols-et-joint.3mf` | assise courbe et col de 10 mm (celle du corps), éprouvettes de joint avant et arrière (2 vis, 2 écrous) ; assise pleine | 1 h 53 | 66 g PLA |
 | 2 bis | `print/assises-20mm.3mf` | assises à col de 20 mm, plus courbées (rayons 85 et 70, gravés dessous), essai de forme à 20 % de remplissage : la retenue sera réimprimée pleine | 2 h 15 | 76 g PLA |
 | 2 ter | `print/cales-assise.3mf` | deux cales posées sur l'assise R85 déjà imprimée, une de chaque côté sous le coussin : bord relevé de 12 mm (dessus au rayon 60, 3,9 mm contre le col, rien au centre), au lieu de réimprimer l'assise | 40 min | 12 g PLA |
+| 2 quater | `print/cales-assise-2.3mf` | seconde paire de cales, posée sur la première : encore 12 mm au bord, 24 au total (dessus au rayon 53, 2,1 mm de plus contre le col, rien avant 27 mm du centre) | 36 min | 9 g PLA |
 | 3 | `print/lumiere-petg.3mf` | éprouvette de lumière | 10 min | 1 g PETG |
 
 L'assise se pose à plat sur le capot d'essai comme sur le corps : leurs appuis ont le même contour (104 × 77 mm, 2 mm sous le coussin de chaque côté). Elle s'imprime dos au plateau, sans support (contrôlé couche par couche). Sa hauteur de col est gravée dessous.

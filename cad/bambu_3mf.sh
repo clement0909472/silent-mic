@@ -127,6 +127,8 @@ SOLID=1 SUP=plate project cols-et-joint "$tmp/pla.json" "$c/joint-coupon-rear.st
 project assises-20mm "$tmp/pla.json" "$c/assise-col-20mm-r85.stl" "$c/assise-col-20mm-r70.stl"
 # essai suivant : bords encore 12 mm plus haut, par deux cales posees sur l'assise R85 deja imprimee (une par cote)
 project cales-assise "$tmp/pla.json" "$c/cale-assise-r85-12mm.stl" "$c/cale-assise-r85-12mm.stl"
+# puis encore 12 mm : seconde paire posee sur la premiere
+project cales-assise-2 "$tmp/pla.json" "$c/cale-assise-r60-12mm.stl" "$c/cale-assise-r60-12mm.stl"
 project lumiere-petg "$tmp/petg.json" "$c/light-coupon-petg.stl"
 fi
 if [ "$only" != essai ]; then

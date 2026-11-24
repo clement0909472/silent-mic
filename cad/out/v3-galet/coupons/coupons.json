@@ -41,6 +41,14 @@
         27.4
       ]
     },
+    "cale-assise-r60-12mm": {
+      "volume_cm3": 3.06,
+      "size_mm": [
+        24.7,
+        65.5,
+        35.2
+      ]
+    },
     "temoin-bonnette": {
       "volume_cm3": 13.95,
       "size_mm": [
