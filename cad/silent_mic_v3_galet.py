@@ -138,7 +138,9 @@ LINER_T = 10.0
 # section d'air libre le long de l'axe, de l'entree au coussin : 20 fois celle du conduit. Le seuil etait a
 # 1200 avec le micro a plat ; debout au centre, il traverse la zone du manchon (1130 mm2 libres autour de lui)
 MIN_PASSAGE = 1000.0
-TUNNEL_D = 2.6
+# 3.2 depuis le 24 nov. 2026 (2.6 avant) : le filament LED nOOds fait 1.7 x 1.9 mm (guide Adafruit) et doit pouvoir
+# descendre lui-meme a la baie, vrille d'un quart de tour au coude (il ne plie pas sur sa largeur)
+TUNNEL_D = 3.2
 TUNNEL_OFFSET = 3.8
 # vis de la trappe : entre les logements de la baie et le flanc bombe de la trappe ; controle dans export()
 COVER_SCREW_XY = ((-19.6, -4.0), (19.6, -4.0))
