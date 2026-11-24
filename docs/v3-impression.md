@@ -43,6 +43,24 @@ L'assise se pose à plat sur le capot d'essai comme sur le corps : leurs appuis 
 
 Grammes calculés par Bambu Studio avec la densité réelle du filament (1,32) : le tableau OrcaSlicer précédent comptait 1,24, d'où environ 6 % de moins.
 
+### Corps : un seul projet pour la vague d'impression
+
+`print/silent-mic-corps.3mf` (demande de Clément, 24 nov. 2026) : un projet Bambu Studio, un plateau par impression, dans l'ordre. Les réglages de chaque pièce y sont déjà, par objet : pleine, supports sur plateau seulement pour la coque et le capot. Rien à cocher ni décocher : « Imprimer plateau » n'imprime que la plaque affichée. Régénération et preuve : `python3 cad/bambu_projet.py`, qui retranche le projet en entier et exige que chaque plateau redonne la durée et la masse de son projet d'une pièce (vérifié le 24 nov. 2026, et dans l'interface pour la plaque 1 : 3 h 12, 107,95 g).
+
+| Plaque | Pièce | Temps | Filament |
+|---|---|---|---|
+| 1 | coque arrière (supports sous le passage de la prise USB-C, dans la baie) | 3 h 12 | 108 g PLA noir |
+| 2 | capot avant (une colonne de support sous chaque puits de vis) | 1 h 52 | 56 g PLA noir |
+| 3 | trappe | 28 min | 16 g PLA noir |
+
+L'anneau lumineux garde son projet d'une pièce (`print/corps-anneau-petg.3mf`, à retrancher avec le filament blanc quand il arrive) : la ligne de commande de Bambu Studio 2.9 plante quand un projet mélange deux filaments.
+
+Pour lancer une plaque :
+1. Imprimante allumée, plateau propre, au moins 110 g de filament noir sur la bobine pour la plaque 1.
+2. Bambu Studio : Fichier > Ouvrir projet > `print/silent-mic-corps.3mf`. S'il demande d'enregistrer le projet précédent : « Non ». Avertissement d'imprimante non connectée : « Plus tard ».
+3. Onglet Aperçu, cliquer la vignette de la plaque à gauche (1, 2 ou 3), puis « Trancher le plateau » en haut à droite. Vérifier la durée et la masse du tableau.
+4. « Imprimer plateau » (pas « Imprimer tout »), puis « Envoyer ».
+
 ### Corps : projets Bambu Studio prêts
 
 | Plateau | Fichier | Contenu | Temps | Filament |
