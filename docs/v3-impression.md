@@ -52,6 +52,7 @@ Grammes calculés par Bambu Studio avec la densité réelle du filament (1,32) :
 | 5 bis | `print/corps-assise.3mf` | assise du corps (R53, col de 20 mm, gravée « 20 R53 » dessous), dos au plateau, sans support, pleine | 2 h 17 | 87 g PLA |
 | 6 | `print/corps-trappe.3mf` | trappe, pleine | 29 min | 16 g PLA |
 | 7 | `print/corps-anneau-petg.3mf` | anneau lumineux | 11 min | 2 g PETG |
+| 8 | `print/corps-tirette.3mf` | tirette du micro, pleine, profil à plat | 11 min | 1 g PLA |
 
 Mêmes réglages que les pièces d'essai. Le corps ne s'imprime qu'après le test de l'assise sur le capot d'essai (`bench/README.md`) et l'essai des éprouvettes de joint. Régénération : `cad/bambu_3mf.sh corps`.
 
@@ -182,9 +183,10 @@ Trois coques s'empilent le long de l'axe : trappe, coque arrière, capot avant. 
 7. Le capot avant, garni de son manchon de mousse, se pose droit : la languette entre dans la rainure. Le col n'est pas encore en place.
 8. Les 4 vis par l'ouverture de l'appui du coussin (77 × 57 mm), avec une clé six pans de 2 mm ou un tournevis à lame longue. Chaque tête descend dans son puits, entre les deux nervures de son bossage ; la mousse du manchon s'écarte au passage. Serrer en croix, en deux passes, jusqu'au contact : les bords des coques se touchent, il n'y a plus de jour au plan de joint.
 9. L'assise courbe (R53, col de 20 mm) se colle sur l'appui du capot par un anneau continu de ruban double face, contour aligné sur celui du capot. Le coussin, voile de tissu découpé, se colle de même sur l'assise : le ruban le tient et ferme le jour.
-10. Le micro, bonnette DJI en place, entre par la bouche, haut du boîtier vers soi, et se pose debout contre la plaque, au fond de l'encoche de la mousse : son aimant le tient sur le disque d'acier.
+10. La tirette d'abord : son pied à plat sur les nervures du fond, devant la plaque, sa languette du côté de l'élargissement de l'encoche de la mousse, crochet vers le haut.
+11. Le micro, bonnette DJI en place, entre par la bouche, haut du boîtier vers soi, et se pose debout contre la plaque, sur le pied de la tirette, au fond de l'encoche de la mousse : son aimant le tient sur le disque d'acier.
 
-Au quotidien, rien ne s'ouvre : on sort le micro par la bouche pour le recharger, on le remet de même. On le prend par le haut de sa bonnette, à 23 mm sous la crête du col au centre : de chaque côté, une bande de 11 mm reste libre le long des 10,5 mm de fourrure qui dépassent du rebord intérieur du capot (contrôlé). Le boîtier lui-même est à 43 mm sous la crête.
+Au quotidien, rien ne s'ouvre : on sort le micro par la bouche pour le recharger, on le remet de même. **Depuis le col de 20 mm, le haut de la bonnette est à 33 mm sous la crête au centre et le boîtier à 53 mm** : les doigts n'attrapent que 10,5 mm de fourrure, et tirer sur les poils peut déclipser la bonnette. D'où la **tirette** (idée de Clément, 24 nov. 2026) : un pied de 0,8 mm sous le boîtier, une languette de 1,2 mm le long de son flanc, qui s'écarte sous la jupe de la bonnette, et un crochet à côté du haut des poils, à 39 mm sous la crête à cet endroit, avec 7,9 mm de place libre dessous pour un doigt. On pince le crochet et on tire : le pied soulève le micro, qui glisse sur le disque et sort avec sa bonnette (contrôlé sur 75 mm, aucune pièce rigide touchée). Le disque reste collé à la plaque : en usage, le micro tient par son aimant comme avant, la tirette ne porte rien. Le crochet reste sous le haut des poils : la marge des lèvres ne change pas. Pour le remettre : la tirette d'abord, puis le micro.
 
 **Pour rouvrir le corps** (mise au point, changement de mousse) : sortir le micro, desserrer les 4 vis avec une clé six pans de 2 mm passée par la bouche, col et coussin en place (1,2 mm de jeu entre la clé et le col ; avec le coussin, il faut un tournevis six pans de 2 mm à lame d'au moins 60 mm et à tige de moins de 4,9 mm, une clé coudée bute sur le coussin). Les vis restent dans leurs puits, le capot se lève droit. Pas besoin de décoller le coussin.
 
@@ -194,7 +196,7 @@ Deux pièces seulement, dans une plaque de mousse polyuréthane à cellules ouve
 
 | Ordre | Pièce | Plaque | Quantité | Contour |
 |---|---|---|---|---|
-| 1 | Fond | 10 mm | 2 | ellipse 60 × 40 mm, une encoche droite à 6 h où passent la plaque et le micro |
+| 1 | Fond | 10 mm | 2 | ellipse 60 × 40 mm, une encoche droite à 6 h où passent la plaque, le micro et la tirette (encoche élargie d'un côté jusqu'à 20 mm de l'axe depuis le 24 nov. 2026) |
 | 2 | Manchon avant | 10 mm | 1 | bande développée : secteur d'anneau de rayons 58 et 70 mm, 187°, 8 fentes de 2 × 9 mm côté joint, une par nervure des bossages de vis |
 
 1. Poser le gabarit sur la plaque, le tenir à plat d'une main.
@@ -250,7 +252,7 @@ Onshape ne voit pas les défauts de passage trouvés par le contrôle d'étanch�
 - **Longueur du filament LED non choisie.** Le tour de la rainure fait environ 21 cm.
 - **Levier de l'interrupteur** accessible par une fente de 4 × 2,2 mm sous la coque : à valider au doigt.
 - **Vissage du joint à essayer sur les éprouvettes** (`print/cols-et-joint.3mf`) : l'écrou doit se glisser dans sa fente, la tête fraisée s'asseoir au fond de son puits, les deux moitiés se toucher sans jour une fois serrées. L'éprouvette arrière porte aussi, dessous, un avant-trou de 2,7 mm : y visser une M3 × 10 pour vérifier que le filet de la trappe prend sans fendre la pièce.
-- **Micro plus profond que sur le v2** : haut du boîtier à 43 mm sous la crête du col, haut de la bonnette à 23 mm, pour garder les lèvres loin des poils sans allonger le corps. La prise par la bonnette se juge sur la pièce : si elle est malcommode, remonter le micro (`MIC_Z0`) coûte de la marge, pas d'isolation.
+- **Micro plus profond que sur le v2** : haut du boîtier à 53 mm sous la crête du col, haut de la bonnette à 33 mm depuis le col de 20 mm, pour garder les lèvres loin des poils sans allonger le corps. La sortie passe par la tirette ; sa prise se juge sur la pièce. Si elle reste malcommode, remonter le micro (`MIC_Z0`, jusqu'à 9 mm en gardant les 8 mm du v2 entre lèvres et poils) coûte de la marge, pas d'isolation, mais change la coque arrière.
 - **Serrage des vis** : rien ne limite le couple à part la main. Bossage contre bossage, le serrage s'arrête net ; forcer au-delà peut fendre un bossage entre deux couches.
 - **Accroche du coussin : ruban double face.** Décision de Clément du 20 novembre 2026. Le scratch du prototype v2 laisse un jour tout autour (calcul : de -3 à 11 dB(A) au lieu de 21). La lèvre élastique du coussin sur une gorge de la coque est réservée à une version de production : même étanchéité attendue, coussin plus simple à changer, mais gorge à ajuster au millimètre.
 - **Bonnette DJI : hauteur mesurée, largeur et épaisseur encore estimées.** Clément a mesuré le 23 novembre 2026 environ 48 mm du bas du micro au haut des poils, soit 20 mm au-dessus du boîtier : c'est la cote de la CAO depuis la révision de l'appui visage. Largeur et épaisseur restent estimées à 36 × 26 mm, avec une jupe de 9 mm sur le haut du boîtier ; il reste 3,4 mm jusqu'au capot et au col. La simulation de la visionneuse (bouton « Bouche »), calée sur l'essai du v2 (coussin de 28 mm écrasé à 15, lèvres juste sous son fond), donne 12,5 mm entre les lèvres et les poils ; visage en butée sur le col, 7,6 mm ; lèvres avancées de 22 mm au-delà des joues et visage en butée, encore 1,1 mm. Visage schématique : à confirmer sur la pièce. Les cotes se règlent par `BONNET` dans `cad/silent_mic_v3_galet.py`.

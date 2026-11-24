@@ -53,6 +53,16 @@
       ]
     },
     {
+      "file": "tirette.stl",
+      "label": "Tirette du micro",
+      "role": "black",
+      "explode": [
+        0,
+        0,
+        250
+      ]
+    },
+    {
       "file": "mic.stl",
       "label": "DJI Mic Mini 2",
       "role": "electronics",

@@ -141,4 +141,6 @@ if [ "$only" != essai ]; then
   # trappe pleine aussi : poids et sensation de produit fini (Clement, 24 nov. 2026)
   SOLID=1 project corps-trappe "$tmp/pla.json" "$b-cover.stl"
   project corps-anneau-petg "$tmp/petg.json" "$b-ring.stl"
+  # tirette du micro : profil a plat, pleine comme le reste
+  SOLID=1 project corps-tirette "$tmp/pla.json" "$b-tirette.stl"
 fi

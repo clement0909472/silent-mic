@@ -157,6 +157,13 @@ MOUNT_W, MOUNT_T = v0.MOUNT_WIDTH, v0.MOUNT_THICKNESS
 MIC_CLEARANCE = 1.0
 MIC_STACK_EXTRA = float(os.environ.get("SILENT_MIC_STACK_EXTRA", 0.0))  # clip ou aimant entre disque et boitier, a mesurer
 BONNET = (36.0, 26.0, 9.0, 20.0)  # bonnette DJI : largeur, epaisseur, recouvrement du boitier, depassement. Depassement mesure par Clement (48 mm du bas du micro au haut des poils, 23 nov. 2026) ; largeur et epaisseur estimees
+# tirette du micro (idee de Clement, 24 nov. 2026) : avec le col de 20 mm, les doigts n'atteignent plus que le haut de
+# la bonnette, et tirer sur les poils peut la declipser. Piece imprimee posee avant le micro : un pied sous le boitier,
+# une languette le long de son flanc +x qui s'ecarte sous la jupe de la bonnette, et un crochet a cote du haut des
+# poils. On pince le crochet et on tire : le pied souleve le micro, qui glisse sur le disque et sort avec sa bonnette.
+# Le disque reste colle a la plaque : en usage le micro tient par son aimant comme avant, la tirette ne porte rien.
+# (epaisseur de la languette, du pied et du crochet, largeur, bout du crochet en x, debut du pied en x, jeu, hauteur du coude)
+TAB = {"t": 1.2, "foot_t": 0.8, "w": 8.0, "bar_t": 1.6, "bar_x": 26.0, "foot_x0": -10.0, "gap": 0.4, "jog": 6.0}
 FINGER = 11.0  # largeur de doigt controlee de chaque cote de la bonnette, prise par la bouche (capot visse) ; le col elliptique laisse 11 mm sur toute l'epaisseur du boitier
 # regle du v2 (AIR_GAP_TARGET) : 8 mm d'air entre le fond du coussin et ce qui depasse du micro. Clement a constate
 # le 23 nov. 2026 sur le v2 imprime que ses levres descendent un peu sous le fond du coussin
@@ -704,6 +711,22 @@ def bonnet_envelope():
     return env.cut(mic_box())
 
 
+def build_tab():
+    """Tirette du micro (TAB) : profil plan dans le plan xz, epaisseur TAB["w"] centree sur le boitier en y."""
+    k = TAB
+    mb, top = mic_box().val().BoundingBox(), bonnet_envelope().val().BoundingBox().zmax
+    zf0 = FLOOR_TOP + FLOOR_RIB + 0.1  # pied pose sur les nervures, 0.1 mm sous le boitier
+    assert k["foot_t"] <= MIC_CLEARANCE - 0.15, "pied de la tirette plus epais que le jeu sous le micro"
+    xs0, xu0 = mb.xmax + k["gap"], MIC_XC + BONNET[0] / 2 + k["gap"]
+    zj1 = mb.zmax - BONNET[2] - 0.5  # coude fini sous la jupe de la bonnette
+    zj0, ztop = zj1 - k["jog"], top - 1.0  # crochet juste sous le haut des poils : la marge des levres ne change pas
+    t = k["t"]
+    pts = [(k["foot_x0"], zf0), (xs0 + t, zf0), (xs0 + t, zj0), (xu0 + t, zj1), (xu0 + t, ztop - k["bar_t"]),
+           (k["bar_x"], ztop - k["bar_t"]), (k["bar_x"], ztop), (xu0, ztop), (xu0, zj1), (xs0, zj0),
+           (xs0, zf0 + k["foot_t"]), (k["foot_x0"], zf0 + k["foot_t"])]
+    return cq.Workplane("XZ", origin=(0, MIC_YC + k["w"] / 2, 0)).polyline(pts).close().extrude(k["w"])
+
+
 def build_liner():
     """Manchon de mousse 9 mm sur les flancs de la chambre avant, piege entre la plaque
     d'appui et le chanfrein du joint. Le micro, au centre, ne le touche plus : bande complete."""
@@ -735,7 +758,9 @@ def disc_layer_shape():
     ib = build_inlet().val().BoundingBox()
     half = max(MOUNT_W, v0.MIC_STEEL_DISC_DIAMETER) / 2 + 0.3  # le disque de 30 mm deborde de la plaque de 28
     # l'encoche va jusque devant le micro, qui traverse les deux couches jusqu'aux nervures du fond
-    notch = (MIC_XC - half, max(ib.xmax + 1.0, MIC_XC + half), mic_box().val().BoundingBox().ymax + 0.5)
+    # cote +x, l'encoche loge aussi le coude de la tirette (build_tab)
+    tab_x = MIC_XC + BONNET[0] / 2 + TAB["gap"] + TAB["t"] + 0.5
+    notch = (MIC_XC - half, max(ib.xmax + 1.0, MIC_XC + half, tab_x), mic_box().val().BoundingBox().ymax + 0.5)
     return a - 0.5, b - 0.5, notch
 
 
@@ -885,7 +910,7 @@ def export():
     front_env, rear_env = build_envelope()
     front, rear, cover = build_front(front_env), build_rear(rear_env), build_cover(rear_env)
     ring_, insert = build_ring(), saddle_placed()
-    parts = {"front": front, "rear": rear, "cover": cover, "ring": ring_, "assise-col": insert}
+    parts = {"front": front, "rear": rear, "cover": cover, "ring": ring_, "assise-col": insert, "tirette": build_tab()}
     for n, p in parts.items():
         assert p.val().isValid() and p.solids().size() == 1, n
     t = time.perf_counter()
@@ -1008,6 +1033,12 @@ def export():
         zf0 += 0.5
     fingers = {"largeur_mm": FINGER, "prise_le_long_de_la_bonnette_mm": round(top_bonnet - zf0, 1),
                "haut_de_la_bonnette_sous_la_crete_mm": round(z_rim - top_bonnet, 1)}
+    # tirette : son crochet est dans la bande libre de +x, sous le haut des poils (marge des levres inchangee)
+    tb = parts["tirette"].val().BoundingBox()
+    bar_bottom = tb.zmax - TAB["bar_t"]
+    fingers["tirette"] = {"crochet_sous_la_crete_locale_mm": round(z_rim + cp.face_sag((xb + TAB["bar_x"]) / 2, SEAT_RADIUS) - tb.zmax, 1),
+                          "place_sous_le_crochet_mm": round(bar_bottom - zf0, 1)}
+    assert tb.zmax < top_bonnet and bar_bottom - zf0 >= 5.0, fingers["tirette"]
     m["mic"] = {"centre": [MIC_XC, round((bbm.ymin + bbm.ymax) / 2, 2), round(MIC_ZC, 2)],
                 "clearance_mm": {k: round(v, 2) for k, v in clear.items()}, "stack_extra_mm": MIC_STACK_EXTRA,
                 "acces_doigts_par_la_bouche": fingers, "haut_du_micro_au_dessus_du_joint_mm": round(bbm.zmax, 1),
@@ -1074,13 +1105,15 @@ def export():
     # aucune interference au repos, la tete du pied et le micro debordaient de 5.5 mm au-dessus du corbeau
     # du capot avant : capot ni posable ni retirable (trouve par une relecture independante des STL).
     steps = (1.0, 2.0, 4.0, 8.0, 14.0, 22.0, 32.0, 45.0, 60.0)
-    stays = union_all([rear, refs["mic"], refs["mic-disc"], refs["bonnette"]])
+    tab = parts["tirette"]
+    stays = union_all([rear, refs["mic"], refs["mic-disc"], refs["bonnette"], tab])
     mic_on = refs["mic"].union(refs["bonnette"])
     held = union_all([rear, refs["mic-disc"], front, insert])
     # capot visse : le micro, bonnette en place, sort droit par la bouche, ou se decolle d'abord du disque
     # vers l'avant (+y), ou 4 mm suffisent a liberer l'aimant
     pulls = {"capot_avant_et_col_micro_en_place": (front.union(insert), stays, (0, 0, 1)),
-             "micro_et_bonnette_par_la_bouche": (mic_on, held, (0, 0, 1)), "micro_et_bonnette_decolles": (mic_on, held, (0, 1, 0)),
+             "micro_et_bonnette_par_la_bouche": (mic_on, held, (0, 0, 1)), "micro_et_bonnette_decolles": (mic_on, held.union(tab), (0, 1, 0)),
+             "micro_bonnette_et_tirette_par_la_bouche": (mic_on.union(tab), held.union(ring_), (0, 0, 1)),
              "trappe": (cover, rear, (0, 0, -1))}
     m["demontage_volume_commun_mm3"] = {k: {d: round(vol(p.translate(tuple(c * d for c in u)).intersect(q)), 2)
                                             for d in steps if u[1] == 0 or d <= 4.0} for k, (p, q, u) in pulls.items()}
@@ -1119,6 +1152,7 @@ def export():
         "cover": cover.rotate((0, 0, 0), (1, 0, 0), 180).translate((0, 0, Z_RF)),
         "ring": ring_.translate((0, 0, RING_H)),
         "assise-col": cp.body_saddle(),
+        "tirette": parts["tirette"].rotate((0, 0, 0), (1, 0, 0), 90).translate((0, 0, TAB["w"] / 2 - MIC_YC)),  # profil a plat
     }
     for n, p in printed.items():
         pb = p.val().BoundingBox()
@@ -1134,7 +1168,7 @@ def export():
     # pieces imprimees opaques et de couleurs distinctes : en revue (Onshape), des coques transparentes
     # donnent l'impression de voir a travers la paroi
     colors = {"front": (0.35, 0.50, 0.65, 1.0), "rear": (0.80, 0.55, 0.10, 1.0), "cover": (0.30, 0.30, 0.32, 1.0),
-              "ring": (0.92, 0.92, 1.0, 0.6), "assise-col": (0.20, 0.20, 0.22, 1.0)}
+              "ring": (0.92, 0.92, 1.0, 0.6), "assise-col": (0.20, 0.20, 0.22, 1.0), "tirette": (0.15, 0.15, 0.17, 1.0)}
     for n, p in parts.items():
         assembly.add(written[n], name=n, color=cq.Color(*colors[n]))
     for n, p in refs.items():
@@ -1152,6 +1186,7 @@ def export():
     roles = {"front": ("Capot avant", "black", (0, 0, 135)), "rear": ("Coque arriere", "black", (0, 0, 0)),
              "cover": ("Couvercle de la baie", "black", (0, 0, -62)), "ring": ("Anneau lumineux", "translucent", (0, 0, 10)),
              "assise-col": (f"Assise courbe et col {COLLAR_HEIGHT:g} mm", "black", (0, 0, 150)),
+             "tirette": ("Tirette du micro", "black", (0, 0, 250)),
              "mic": ("DJI Mic Mini 2", "electronics", (0, 0, 250)), "mic-disc": ("Disque acier 30 mm, recoupe en bas", "metal", (0, 0, 62)),
              "earpad": ("Coussin Brainwavz", "soft", (0, 0, 175)), "gasket": ("Joint mousse 3 x 2", "soft", (0, 0, 128)),
              "led-filament": ("Filament LED", "electronics", (0, 0, 5)), "foam-disc": ("Fond de mousse, 2 couches de 10 mm entaillees", "foam", (0, 0, 45)),
