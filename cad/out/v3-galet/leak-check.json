@@ -6,7 +6,7 @@
   "entree_bouchee_chambre_etanche": true,
   "conduit_bouche_a_midi_chambre_etanche": true,
   "temoin_trou_1mm2_detecte": true,
-  "volume_chambre_cm3": 188.2,
+  "volume_chambre_cm3": 210.2,
   "volume_conduit_cm3": 8.53,
   "fentes_nombre": 4,
   "fentes_section_dans_la_paroi_mm2": {
@@ -29,10 +29,10 @@
     "rapport": 1.001,
     "inconnues": 2465528
   },
-  "volume_chambre_modele_1d_cm3": 178.9,
+  "volume_chambre_modele_1d_cm3": 201.1,
   "event_longueur_equivalente_mm_pour_48_mm2": 157.7,
   "resonance_helmholtz_hz": {
-    "pieces_imprimees": 69.4,
-    "modele_1d": 71.1
+    "pieces_imprimees": 65.7,
+    "modele_1d": 67.1
   }
 }

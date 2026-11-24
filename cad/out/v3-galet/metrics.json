@@ -6,7 +6,7 @@
     77.0,
     81.0
   ],
-  "length_with_collar_mm": 100.7,
+  "length_with_collar_mm": 126.8,
   "palm_section_mm": [
     83.9980413468183,
     65.99846105821437
@@ -16,8 +16,8 @@
     77.0
   ],
   "nose_clearance_ymax_mm": 38.5,
-  "cavity_air_plus_foam_cm3": 178.9,
-  "cavity_air_only_cm3": 132.6,
+  "cavity_air_plus_foam_cm3": 201.1,
+  "cavity_air_only_cm3": 154.8,
   "foam_cm3": {
     "foam-disc": 23.2,
     "foam-liner": 23.1,
@@ -68,12 +68,12 @@
     "acces_doigts_par_la_bouche": {
       "largeur_mm": 11.0,
       "prise_le_long_de_la_bonnette_mm": 10.5,
-      "haut_de_la_bonnette_sous_la_crete_mm": 23.0
+      "haut_de_la_bonnette_sous_la_crete_mm": 33.0
     },
     "haut_du_micro_au_dessus_du_joint_mm": -3.0,
     "sous_le_bord_du_col_mm": {
-      "haut_du_micro": 43.0,
-      "haut_de_la_bonnette": 23.0
+      "haut_du_micro": 53.0,
+      "haut_de_la_bonnette": 33.0
     },
     "sous_le_fond_du_coussin_au_centre_mm": {
       "haut_du_micro": 33.0,
@@ -212,9 +212,9 @@
     "front": 48.8,
     "rear": 98.8,
     "cover": 15.0,
-    "assise-col": 46.7,
+    "assise-col": 79.0,
     "ring_petg": 1.8,
-    "total": 211.1
+    "total": 243.4
   },
   "warn": [
     "longueur entree -> centre des fentes 155.7 mm < 175 (canal barrage a barrage 182.2)"

@@ -30,6 +30,8 @@ HERE = Path(__file__).resolve().parent
 OUT = HERE / "out" / "v3-galet"
 P = 0.25
 Z_SEAT, Z_RF, RING_H = 26.0, -47.0, 2.6  # Z_SEAT de cad/silent_mic_v3_galet.py : 31 avant le capot raccourci de 5 mm
+# le visage ferme le col 1 mm sous sa crete au centre : assise de 4 mm et col de 20 mm (13 avec le col de 10, avant le 24 nov. 2026)
+FACE_Z = Z_SEAT + 4.0 + 20.0 - 1.0
 LO = np.array([-58.03, -48.03, -58.03])  # decale : aucun plan de coupe ne tombe sur un sommet
 NX, NY, NZ = 464, 384, 432
 XC, YC, ZC = (LO[i] + (np.arange(n) + 0.5) * P for i, n in enumerate((NX, NY, NZ)))
@@ -122,7 +124,7 @@ def add_plugs(mat, axes):
     iy0, ix0 = np.abs(YC).argmin(), np.abs(XC).argmin()
     for k, c in enumerate(ZC):
         air = mat[k] == 0
-        if c > Z_SEAT + 13.0:  # le visage
+        if c > FACE_Z:  # le visage
             mat[k][air] = MOUTH
         elif c > Z_SEAT:  # le coussin colle : tout sauf l'alesage du col
             lab, _ = ndimage.label(air)

@@ -267,14 +267,16 @@ def below_face(depth, radius=FACE_RADIUS):
     return cq.Workplane("XY").box(300, 300, zc + 100, centered=(True, True, False)).translate((0, 0, -100)).cut(cq.Workplane("XY").newObject([cyl]))
 
 
-def saddle_collar(height, seat=SEAT, radius=FACE_RADIUS):
+def saddle_collar(height, seat=SEAT, radius=FACE_RADIUS, rim_radius=None):
     """Assise du coussin et col d'une piece, dos plat (z = 0) pose sur l'appui plat du capot, imprime dos au plateau
-    sans support. Dessus creuse en cylindre (105 mm comme le v2 par defaut) ; crete du col a `height` au-dessus de
-    l'assise, partout. Le passage interieur garde l'ouverture du col (62 x 42) : la cle de 2 mm atteint toujours les vis."""
+    sans support. Dessus creuse en cylindre (105 mm comme le v2 par defaut) ; crete du col a `height` au-dessus du
+    fond de l'assise, courbee au rayon `rim_radius` (celui de l'assise par defaut : meme hauteur partout). Le passage
+    interieur garde l'ouverture du col (62 x 42) : la cle de 2 mm atteint toujours les vis."""
     ci, co = collar_inner(), collar_outer()
-    assert face_sag(seat[0] / 2, radius) + SADDLE_T0 + height < 60, "assise plus haute que le prisme qui la decoupe"
+    rim_radius = rim_radius or radius
+    assert max(face_sag(seat[0] / 2, radius), face_sag(co[0] / 2, rim_radius) + height) + SADDLE_T0 < 60, "assise plus haute que le prisme qui la decoupe"
     base = ell_prism(*seat, 0, 60).intersect(below_face(SADDLE_T0, radius))
-    rim = ell_prism(*co, 0, 60).intersect(below_face(SADDLE_T0 + height, radius))
+    rim = ell_prism(*co, 0, 60).intersect(below_face(SADDLE_T0 + height, rim_radius))
     piece = base.union(rim).cut(ell_prism(*ci, -1, 61))
     top = SADDLE_T0 + height - 0.01
     try:  # crete arrondie, comme l'ancien col
@@ -284,7 +286,7 @@ def saddle_collar(height, seat=SEAT, radius=FACE_RADIUS):
     # hauteur gravee sous l'assise, cote +x, dans le porte-a-faux au-dessus de l'ouverture du capot, hors de la bande
     # du ruban adhesif : lisible piece retournee
     x = (ci[0] / 2 + flange_outer()[0] / 2 - 1.5) / 2
-    mark = f"{height:g}" if radius == FACE_RADIUS else f"{height:g} R{radius:g}"
+    mark = f"{height:g}" if radius == FACE_RADIUS else f"{height:g} R{radius:.0f}"
     label = (cq.Workplane(cq.Plane(origin=(x, 0, 0), xDir=(0, -1, 0), normal=(0, 0, -1)))
              .text(mark, 5, -0.4, combine=False, halign="center", valign="center"))
     return piece.cut(label)
@@ -309,6 +311,19 @@ def saddle_shim(on=SHIM_ON, rise=SHIM_RISE, seat=SEAT):
     shim = (ell_prism(*seat, 0, 60).intersect(below_face(SADDLE_T0, r)).cut(below_face(SADDLE_T0, on))
             .cut(ell_prism(co[0] + 2 * SHIM_CLEAR, co[1] + 2 * SHIM_CLEAR, -1, 61)).intersect(side))
     return shim, r, hi
+
+
+# Assise du corps (24 nov. 2026, avant l'essai de la 2e paire) : Clement pense retenir l'assise R85 et ses deux
+# paires de cales. La voici d'une piece : dessus au rayon des cales du haut, col a la crete de l'assise R85 essayee
+# (20 mm au centre, 14 contre ses flancs). (hauteur du col, rayon de l'assise, rayon de la crete)
+BODY_SEAT_RADIUS = SHIM_ON
+for _ in range(SHIM_LAYERS):
+    BODY_SEAT_RADIUS = radius_for_sag(SEAT[0] / 2, face_sag(SEAT[0] / 2, BODY_SEAT_RADIUS) + SHIM_RISE)
+BODY_SEAT = (20.0, BODY_SEAT_RADIUS, SHIM_ON)
+
+
+def body_saddle():
+    return saddle_collar(BODY_SEAT[0], radius=BODY_SEAT[1], rim_radius=BODY_SEAT[2])
 
 
 def pad_test_cap():
@@ -411,6 +426,10 @@ def export(out=HERE / "out" / "v3-galet" / "coupons"):
         lying = shim.rotate((0, 0, SADDLE_T0 + on), (0, 1, SADDLE_T0 + on), tilt)
         save(f"cale-assise-r{on:.0f}-12mm", shim, lying.translate((0, 0, -lying.val().BoundingBox().zmin)))
         on, prev_x0 = r, x0
+    assert abs(on - BODY_SEAT_RADIUS) < 1e-9
+    body = body_saddle()
+    assert vol(body.translate((0, 0, CAP_WALL + CAP_DEPTH + 0.02)).intersect(cap)) < 1e-6, "assise du corps / capot"
+    save(f"assise-col-{BODY_SEAT[0]:g}mm-r{BODY_SEAT[1]:.0f}", body)
     gauge = bonnet_gauge()
     assert vol(gauge.translate((0, 0, CAP_WALL + 0.02)).intersect(cap)) < 1e-6, "temoin / capot"
     assert max(GAUGE_SIZE[0] / collar_inner()[0], GAUGE_SIZE[1] / collar_inner()[1]) < 0.95, "temoin trop large pour le col"

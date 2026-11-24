@@ -96,9 +96,9 @@
     },
     {
       "name": "v3-galet",
-      "_source": "CAO cad/silent_mic_v3_galet.py (profil evase, joint s = 61, 20 nov. 2026) : cavite air + mousse mesuree jusqu'au sommet du collier, conduit annulaire d'un tour 4.5 x 12.1 mm (faite vif) (toit en pointe), longueur prise de l'entree au centre des fentes (le canal fait 182.2 mm de barrage a barrage), joint = coussin Brainwavz sur collier de 14 mm. Mis a jour le 23 nov. 2026 : assise courbe et col de 10 mm, micro au fond, coussin mesure, capot avant raccourci de 5 mm (cad/out/v3-galet/metrics.json).",
+      "_source": "CAO cad/silent_mic_v3_galet.py (profil evase, joint s = 61, 20 nov. 2026) : cavite air + mousse mesuree jusqu'au sommet du collier, conduit annulaire d'un tour 4.5 x 12.1 mm (faite vif) (toit en pointe), longueur prise de l'entree au centre des fentes (le canal fait 182.2 mm de barrage a barrage), joint = coussin Brainwavz sur collier de 14 mm. Mis a jour le 23 nov. 2026 : assise courbe et col de 10 mm, micro au fond, coussin mesure, capot avant raccourci de 5 mm (cad/out/v3-galet/metrics.json). Le 24 nov. 2026 : assise des essais (R53, col de 20 mm), chambre de 178.9 a 201.1 cm3.",
       "cavity": {
-        "volume_cm3": 178.9,
+        "volume_cm3": 201.1,
         "foam_cm3": 46.3,
         "foam_sigma": 12000
       },
@@ -131,12 +131,12 @@
         "outlet_area_mm2": 62.4
       },
       "seal": {
-        "_cushion": "coussin Brainwavz mesure par Clement le 23 nov. 2026 : 108 x 81, ouverture 72,6 x 48,5, 28 mm, environ 15 mm comprime ; sur assise courbe et col de 10 mm ; paroi souple exposee = perimetre de l'ouverture x (15 mm comprime - 10 mm de col) ; raideur laissee a la valeur du superviseur",
+        "_cushion": "coussin Brainwavz mesure par Clement le 23 nov. 2026 : 108 x 81, ouverture 72,6 x 48,5, 28 mm, environ 15 mm comprime ; paroi souple exposee = integrale sur le perimetre de l'ouverture de (15 mm comprime - hauteur locale du col), 961 mm2 avec le col de 10 mm ; depuis le 24 nov. 2026, assise R53 et col de 20 mm a crete R85 (cp.BODY_SEAT) : le col depasse le coussin comprime sauf contre ses flancs (13,9 mm au plus bas), 29 mm2 ; raideur laissee a la valeur du superviseur",
         "perimeter_mm": 192.1,
         "gap_mm": 0.2,
         "leak_width_mm": 30,
         "contact_depth_mm": 8,
-        "soft_wall_area_mm2": 961,
+        "soft_wall_area_mm2": 29,
         "soft_wall_stiffness_pa_per_m": 1000000.0,
         "radiating_fraction": 0.5,
         "soft_wall_mass_kg_m2": 2.0,

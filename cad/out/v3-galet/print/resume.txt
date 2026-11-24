@@ -8,3 +8,4 @@ corps-trappe : 0h20, 8.55 g, blocs de support au controle=0, retranche : 19m 52s
 corps-anneau-petg : 0h11, 1.68 g, blocs de support au controle=0, retranche : 11m 21s
 cales-assise : 0h40, 11.99 g, blocs de support au controle=92, retranche : 40m 1s
 cales-assise-2 : 0h36, 9.13 g, blocs de support au controle=105, retranche : 36m 57s
+corps-assise : 2h21, 86.25 g, blocs de support au controle=0, retranche : 2h 21m 8s

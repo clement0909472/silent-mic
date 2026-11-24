@@ -6,9 +6,9 @@
 >
 > **Appui visage révisé le 23 novembre 2026.** Clément a essayé sa bouche sur le v2 imprimé : coussin écrasé d'environ moitié (28 à 15 mm), ses lèvres descendent un peu sous le fond du coussin. Le v3 avait perdu trois choses du v2 (`cad/whisper_mask_v0.py`) : l'assise creusée qui fait épouser les joues au coussin, la règle des 8 mm d'air entre le fond du coussin et le micro, et un bord rigide plus bas. Corrigé ainsi :
 > 1. **Assise courbe rapportée** (`cp.saddle_collar`) : une pièce posée à plat sur l'appui du capot avant et collée au ruban double face, comme le coussin. Son dessus est creusé en cylindre de 105 mm de rayon, comme le v2 : 4 mm d'épaisseur au centre, les côtés avancent vers les joues jusqu'à 13,8 mm de plus au bord. Le capot avant ne change pas.
-> 2. **Col bombé d'une pièce avec l'assise** : sa crête suit la courbe, 10 mm au-dessus du fond du coussin au centre, là où est la bouche, et plus haut sur les côtés (idée de Clément). Essai de Clément du 24 nov. 2026 sur l'assise de 10 mm : taille juste, mais pas assez courbée et col trop bas. Variantes d'essai : col de 20 mm, rayons de 85 et 70 mm au lieu de 105.
+> 2. **Col bombé d'une pièce avec l'assise** : sa crête suit la courbe, 10 mm au-dessus du fond du coussin au centre, là où est la bouche, et plus haut sur les côtés (idée de Clément). Essai de Clément du 24 nov. 2026 sur l'assise de 10 mm : taille juste, mais pas assez courbée et col trop bas. Variantes d'essai : col de 20 mm, rayons de 85 et 70 mm au lieu de 105. Sur la R85, Clément a relevé les bords par deux paires de cales de 12 mm (« ça sera ça la bonne version », sous réserve de son essai de la seconde paire). **Assise du corps depuis le 24 nov. 2026** (`cp.BODY_SEAT`, plateau `print/corps-assise.3mf`) : la même d'une pièce, dessus au rayon de 53 mm (bords 41,8 mm plus haut que le centre, 24 de plus qu'avec la R85), col à la crête de la R85 essayée : 20 mm au centre, 13,9 mm au plus bas contre ses flancs. Même dos plat et même contour : elle se colle sur le capot sans rien y changer.
 > 3. **Micro descendu de 20 mm, au fond de la chambre** : il tient sur son disque, 1 mm au-dessus des nervures du fond, et les deux couches de mousse sont entaillées autour de lui. Le disque d'acier de 30 mm se recoupe d'une bande de 10 mm en bas, toute sous le bas du micro : la surface sous l'aimant ne change pas. Avec la bonnette à la cote mesurée (48 mm du bas du micro au haut des poils), le haut des poils serait à 18 mm sous le fond du coussin au centre, à longueur égale. `export()` refuse le modèle sous 8 mm.
-> 5. **Capot avant raccourci de 5 mm** (décision de Clément, meilleur compromis compacité / isolation) : le corps passe à 81 mm, 100,7 mm avec l'assise et le col (105,7 avant). La chambre perd 18 cm³ : 21,2 dB(A) au modèle 1D au lieu de 22,2 (estimation, non mesurée). Le haut des poils reste à 13 mm sous le fond du coussin, 5 mm de mieux que la règle du v2.
+> 5. **Capot avant raccourci de 5 mm** (décision de Clément, meilleur compromis compacité / isolation) : le corps passe à 81 mm, 100,7 mm avec l'assise et le col (105,7 avant). La chambre perd 18 cm³ : 21,2 dB(A) au modèle 1D au lieu de 22,2 (estimation, non mesurée). Le haut des poils reste à 13 mm sous le fond du coussin, 5 mm de mieux que la règle du v2. Avec l'assise R53 du 24 nov. 2026, le corps garde 81 mm, mais ses bords montent : 126,8 mm aux pointes des joues (100,7 avant). Le col de 20 mm ajoute 22 cm³ à la chambre et ferme presque toute la paroi souple du coussin : 25,1 dB(A) au modèle 1D au lieu de 21,2 (estimation, non mesurée).
 >
 > 4. **Coussin aux cotes mesurées par Clément** (108 × 81 mm, ouverture 72,6 × 48,5, 28 mm d'épaisseur, contre 110 × 90 × 30 sur la fiche) : l'appui du capot passe de 104 × 84 à 104 × 77 mm, 2 mm sous le coussin de chaque côté, et le col suit la vraie ouverture (1 mm de jeu par côté, passage intérieur 66,6 × 42,5).
 >
@@ -49,7 +49,8 @@ Grammes calculés par Bambu Studio avec la densité réelle du filament (1,32) :
 |---|---|---|---|---|
 | 4 | `print/corps-capot-avant.3mf` | capot avant, appui du coussin sur le plateau, 4 colonnes de support, plein | 1 h 52 | 56 g PLA |
 | 5 | `print/corps-coque-arriere.3mf` | coque arrière, face arrière sur le plateau, pleine | 3 h 11 | 108 g PLA |
-| 6 | `print/corps-trappe.3mf` | trappe (l'assise du corps est celle du plateau 2) | 20 min | 9 g PLA |
+| 5 bis | `print/corps-assise.3mf` | assise du corps (R53, col de 20 mm, gravée « 20 R53 » dessous), dos au plateau, sans support, pleine | 2 h 21 | 86 g PLA |
+| 6 | `print/corps-trappe.3mf` | trappe | 20 min | 9 g PLA |
 | 7 | `print/corps-anneau-petg.3mf` | anneau lumineux | 11 min | 2 g PETG |
 
 Mêmes réglages que les pièces d'essai. Le corps ne s'imprime qu'après le test de l'assise sur le capot d'essai (`bench/README.md`) et l'essai des éprouvettes de joint. Régénération : `cad/bambu_3mf.sh corps`.
@@ -142,7 +143,7 @@ Même méthode : un agent sans accès à mes conclusions, sur les STL seuls. **R
 | Logement d'écrou juste en hauteur | 2,6 mm pour un écrou de 2,4, sous un plafond en pont | corrigé : 2,8 mm |
 | Éprouvette de joint avant différente du vrai bossage | elle reproduit la vis, la fraisure, sa fermeture en trois couches et son support, pas les deux nervures de 1,3 mm ni le puits de 26 mm | laissé tel quel : ces deux points ne se jugeront que sur le capot |
 | Éprouvette arrière pas posée à z = 0 | de -8 à +2 mm | corrigé |
-| Outil pour rouvrir, coussin en place | tête à 56 mm sous le haut du coussin, qui passe à 5,8 mm de l'axe | noté au montage : tournevis six pans de 2 mm, lame de 60 mm au moins, tige de moins de 4,9 mm |
+| Outil pour rouvrir, coussin en place | tête à 56 mm sous le haut du coussin (58 avec l'assise R53 du 24 nov. 2026), qui passe à 5,8 mm de l'axe | noté au montage : tournevis six pans de 2 mm, lame de 75 mm conseillée (60 au moins), tige de moins de 4,9 mm |
 | Siège du col et dessous du coussin fermés par simple contact | entre z = 29,6 et 31 | déjà en point ouvert (ruban double face) |
 
 ## Montage
@@ -180,7 +181,7 @@ Trois coques s'empilent le long de l'axe : trappe, coque arrière, capot avant. 
 6. Le ruban LED dans sa rainure, derrière l'anneau translucide.
 7. Le capot avant, garni de son manchon de mousse, se pose droit : la languette entre dans la rainure. Le col n'est pas encore en place.
 8. Les 4 vis par l'ouverture de l'appui du coussin (77 × 57 mm), avec une clé six pans de 2 mm ou un tournevis à lame longue. Chaque tête descend dans son puits, entre les deux nervures de son bossage ; la mousse du manchon s'écarte au passage. Serrer en croix, en deux passes, jusqu'au contact : les bords des coques se touchent, il n'y a plus de jour au plan de joint.
-9. L'assise courbe (col de 10 mm) se colle sur l'appui du capot par un anneau continu de ruban double face, contour aligné sur celui du capot. Le coussin, voile de tissu découpé, se colle de même sur l'assise : le ruban le tient et ferme le jour.
+9. L'assise courbe (R53, col de 20 mm) se colle sur l'appui du capot par un anneau continu de ruban double face, contour aligné sur celui du capot. Le coussin, voile de tissu découpé, se colle de même sur l'assise : le ruban le tient et ferme le jour.
 10. Le micro, bonnette DJI en place, entre par la bouche, haut du boîtier vers soi, et se pose debout contre la plaque, au fond de l'encoche de la mousse : son aimant le tient sur le disque d'acier.
 
 Au quotidien, rien ne s'ouvre : on sort le micro par la bouche pour le recharger, on le remet de même. On le prend par le haut de sa bonnette, à 23 mm sous la crête du col au centre : de chaque côté, une bande de 11 mm reste libre le long des 10,5 mm de fourrure qui dépassent du rebord intérieur du capot (contrôlé). Le boîtier lui-même est à 43 mm sous la crête.

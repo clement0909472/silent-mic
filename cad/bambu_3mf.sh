@@ -120,7 +120,7 @@ project capot-essai "$tmp/pla.json" "$c/pad-test-cap.stl" "$c/temoin-bonnette.st
 # 11 petits blocs de support qu'aucune piece ne demande seule
 # supports sur plateau seulement, comme au corps : un plot sous chaque tete de vis de l'eprouvette avant,
 # rien dans les logements d'ecrou de l'eprouvette arriere (leur plafond s'imprime en pont, comme dans la coque)
-# l'assise de 10 mm sert d'abord sur le capot d'essai, puis sur le corps
+# l'assise de 10 mm sert d'abord sur le capot d'essai (le corps a la sienne depuis le 24 nov. 2026 : corps-assise)
 SOLID=1 SUP=plate project cols-et-joint "$tmp/pla.json" "$c/joint-coupon-rear.stl" "$c/joint-coupon-front.stl" "$c/assise-col-10mm.stl"
 # essai du 24 nov. 2026 : col de 20 mm, assise plus courbee (rayons 85 et 70 au lieu de 105). Essai de forme a
 # 20 % (2 h 15 au lieu de 3 h 27 pleines) : l'assise retenue sera reimprimee pleine avec le corps
@@ -136,7 +136,8 @@ if [ "$only" != essai ]; then
   # capot : une colonne de support par puits de vis, debout sur le plateau dans l'ouverture du coussin
   SOLID=1 SUP=plate project corps-capot-avant "$tmp/pla.json" "$b-front.stl"
   SOLID=1 SUP=plate project corps-coque-arriere "$tmp/pla.json" "$b-rear.stl"
-  # l'assise du corps est celle de 10 mm du plateau cols-et-joint
+  # assise du corps : celle des essais du 24 nov. 2026 (R85 et ses deux paires de cales) d'une piece, pleine
+  SOLID=1 project corps-assise "$tmp/pla.json" "$b-assise-col.stl"
   project corps-trappe "$tmp/pla.json" "$b-cover.stl"
   project corps-anneau-petg "$tmp/petg.json" "$b-ring.stl"
 fi

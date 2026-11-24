@@ -94,8 +94,9 @@ SCREW_T_DEG = (45, 135, 223, 317)
 # ---------- coussin et collier amovible ----------
 PAD = cp.PAD
 # assise courbe et col d'une piece, posee sur l'appui plat (cp.saddle_collar) ; hauteur du col au-dessus du fond
-# du coussin, au centre : 10 mm retenus avec Clement le 23 nov. 2026 (coussin de 30 mm, environ 15 comprime)
-COLLAR_HEIGHT = 10.0
+# du coussin, au centre : 10 mm retenus avec Clement le 23 nov. 2026, puis assise des essais du 24 nov. (cp.BODY_SEAT :
+# 20 mm au centre, dessus au rayon 53, bords 24 mm plus haut que l'assise R85)
+COLLAR_HEIGHT, SEAT_RADIUS, RIM_RADIUS = cp.BODY_SEAT
 COLLAR_INNER = cp.collar_inner()
 SADDLE_GAP = 0.02  # jeu sous l'assise : les controles d'interference ne voient pas le contact
 PAD_BASE = Z_SEAT + SADDLE_GAP + cp.SADDLE_T0  # fond du coussin au centre, sur l'assise
@@ -641,7 +642,7 @@ def build_ring():
 
 
 def saddle_placed():
-    return cp.saddle_collar(COLLAR_HEIGHT).translate((0, 0, Z_SEAT + SADDLE_GAP))  # dos plat sur l'appui plat du capot
+    return cp.body_saddle().translate((0, 0, Z_SEAT + SADDLE_GAP))  # dos plat sur l'appui plat du capot
 
 
 # ================= corps de reference =================
@@ -753,8 +754,10 @@ def build_foam_disc(rear=None):
 
 def build_refs():
     lipo, charger, switch = bay_boxes()
-    ring_pad = eprism(*PAD["outer"], Z_SEAT, Z_SEAT + 80).cut(eprism(*PAD["opening"], Z_SEAT - 1, Z_SEAT + 81))
-    pad = ring_pad.intersect(cp.below_face(PAD_BASE + PAD["thickness"])).cut(cp.below_face(PAD_BASE + SADDLE_GAP))
+    # shortcut: coussin retaille au contour de l'assise (2 mm de moins par cote), le cylindre de 53 mm ne couvre pas
+    # ses 108 mm ; a reprendre si un controle porte un jour sur le bord du coussin
+    ring_pad = eprism(*cp.SEAT, Z_SEAT, Z_SEAT + 80).cut(eprism(*PAD["opening"], Z_SEAT - 1, Z_SEAT + 81))
+    pad = ring_pad.intersect(cp.below_face(PAD_BASE + PAD["thickness"], SEAT_RADIUS)).cut(cp.below_face(PAD_BASE + SADDLE_GAP, SEAT_RADIUS))
     # tete 0.1 mm au-dessus de sa portee dans la fraisure, ecrou 0.05 mm sous son plafond (position serree)
     jscrews = union_all(screw_solid(x, y, cp.BOSS_FRONT_H - 0.1, -1) for x, y in screw_xy())
     nut_z = -cp.NUT_SKIN - 2.4 - 0.05
@@ -1115,7 +1118,7 @@ def export():
         "rear": rear.translate((0, 0, -Z_RF)),
         "cover": cover.rotate((0, 0, 0), (1, 0, 0), 180).translate((0, 0, Z_RF)),
         "ring": ring_.translate((0, 0, RING_H)),
-        "assise-col": cp.saddle_collar(COLLAR_HEIGHT),
+        "assise-col": cp.body_saddle(),
     }
     for n, p in printed.items():
         pb = p.val().BoundingBox()
@@ -1164,8 +1167,8 @@ def export():
         tol = WEB_TOL_FINE if n in ("front", "rear", "cover", "assise-col") else WEB_TOL
         cq.exporters.export(p, str(f), tolerance=tol[0], angularTolerance=tol[1])
         if n == "earpad":  # coussin arrondi dessine a plat, pose ensuite sur l'assise courbe : chaque sommet suit la courbe
-            r = cp.FACE_RADIUS
-            bend_stl(f, lambda x: PAD_BASE - Z_SEAT + r - np.sqrt(r * r - np.clip(x, -r, r) ** 2))
+            r, half = SEAT_RADIUS, cp.SEAT[0] / 2  # au-dela du bord de l'assise, le coussin reste a sa hauteur
+            bend_stl(f, lambda x: PAD_BASE - Z_SEAT + r - np.sqrt(r * r - np.clip(x, -half, half) ** 2))
         assert f.stat().st_size < 1.5e6, (n, f.stat().st_size)
         label, role, ex = roles[n]
         manifest.append({"file": f.name, "label": label, "role": role, "explode": list(ex)})
