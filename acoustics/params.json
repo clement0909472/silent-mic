@@ -131,12 +131,12 @@
         "outlet_area_mm2": 62.4
       },
       "seal": {
-        "_cushion": "coussin Brainwavz mesure par Clement le 23 nov. 2026 : 108 x 81, ouverture 72,6 x 48,5, 28 mm, environ 15 mm comprime ; paroi souple exposee = integrale sur le perimetre de l'ouverture de (15 mm comprime - hauteur locale du col), 961 mm2 avec le col de 10 mm ; depuis le 24 nov. 2026, assise R53 et col de 20 mm a crete R85 (cp.BODY_SEAT) : le col depasse le coussin comprime sauf contre ses flancs (13,9 mm au plus bas), 29 mm2 ; raideur laissee a la valeur du superviseur",
+        "_cushion": "coussin Brainwavz mesure par Clement le 23 nov. 2026 : 108 x 81, ouverture 72,6 x 48,5, 28 mm, environ 15 mm comprime ; paroi souple exposee = integrale sur le perimetre de l'ouverture de (15 mm comprime - hauteur locale du col), 961 mm2 avec le col de 10 mm ; depuis le 24 nov. 2026, assise R53 et col de 20 mm au-dessus d'elle partout (cp.BODY_SEAT) : le col depasse partout le coussin comprime, plus de paroi souple exposee ; raideur laissee a la valeur du superviseur",
         "perimeter_mm": 192.1,
         "gap_mm": 0.2,
         "leak_width_mm": 30,
         "contact_depth_mm": 8,
-        "soft_wall_area_mm2": 29,
+        "soft_wall_area_mm2": 0,
         "soft_wall_stiffness_pa_per_m": 1000000.0,
         "radiating_fraction": 0.5,
         "soft_wall_mass_kg_m2": 2.0,

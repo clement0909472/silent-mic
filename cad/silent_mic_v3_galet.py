@@ -1164,7 +1164,9 @@ def export():
     shown = dict(parts) | refs | {"earpad": web_earpad()}
     for n, p in shown.items():
         f = web / f"{n}.stl"
-        tol = WEB_TOL_FINE if n in ("front", "rear", "cover", "assise-col") else WEB_TOL
+        tol = WEB_TOL_FINE if n in ("front", "rear", "cover") else WEB_TOL
+        if n == "assise-col":  # bord arrondi de l'assise : en maillage fin, 2.4 Mo
+            tol = (0.15, 0.3)
         cq.exporters.export(p, str(f), tolerance=tol[0], angularTolerance=tol[1])
         if n == "earpad":  # coussin arrondi dessine a plat, pose ensuite sur l'assise courbe : chaque sommet suit la courbe
             r, half = SEAT_RADIUS, cp.SEAT[0] / 2  # au-dela du bord de l'assise, le coussin reste a sa hauteur

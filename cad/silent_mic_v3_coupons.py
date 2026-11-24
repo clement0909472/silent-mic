@@ -267,7 +267,33 @@ def below_face(depth, radius=FACE_RADIUS):
     return cq.Workplane("XY").box(300, 300, zc + 100, centered=(True, True, False)).translate((0, 0, -100)).cut(cq.Workplane("XY").newObject([cyl]))
 
 
-def saddle_collar(height, seat=SEAT, radius=FACE_RADIUS, rim_radius=None):
+SEAT_MAX_SLOPE = 70.0  # deg : au-dela, le dessus de l'assise continue en droite (2 derniers mm de l'assise R53)
+
+
+def below_face_capped(depth, radius, slope_deg=SEAT_MAX_SLOPE):
+    """Comme below_face, mais l'arc s'arrete a la pente `slope_deg` et se prolonge par sa tangente."""
+    s = math.radians(slope_deg)
+    xk, zk, X = radius * math.sin(s), depth + radius * (1 - math.cos(s)), 80.0
+    zx = zk + (X - xk) * math.tan(s)
+    return (cq.Workplane("XZ").moveTo(-X, -10).lineTo(X, -10).lineTo(X, zx).lineTo(xk, zk)
+            .threePointArc((0, depth), (-xk, zk)).lineTo(-X, zx).close().extrude(150, both=True))
+
+
+def rounded_seat(seat, radius, r):
+    """Assise aux aretes du haut du contour arrondies de r. Aux pointes de l'assise R53, le dessus presque vertical
+    faisait avec le flanc une lame de 12 deg, coupante a l'essai (Clement, 24 nov. 2026), et le conge d'OCCT y
+    echoue. Plafonner la pente a SEAT_MAX_SLOPE ouvre l'angle a 20 deg, et le conge passe. (Un decale de toute
+    l'assise arrondissait aussi, mais ses surfaces faussaient les booleens d'OCCT.)"""
+    sharp = ell_prism(*seat, 0, 80).intersect(below_face_capped(SADDLE_T0, radius))
+    top = [e for e in sharp.edges().vals() if e.geomType() != "LINE" and e.BoundingBox().zmin > 1.0]
+    out = sharp.newObject(top).fillet(r)
+    vif = ell_prism(*seat, 0, 80).intersect(below_face(SADDLE_T0, radius))
+    assert out.val().isValid() and out.solids().size() == 1, "arrondi de l'assise"
+    assert vol(out.cut(vif)) < 0.01 and 0 < vol(vif.cut(out)) < 0.01 * vol(vif), "arrondi de l'assise : aretes seules"
+    return out
+
+
+def saddle_collar(height, seat=SEAT, radius=FACE_RADIUS, rim_radius=None, edge_round=0.0):
     """Assise du coussin et col d'une piece, dos plat (z = 0) pose sur l'appui plat du capot, imprime dos au plateau
     sans support. Dessus creuse en cylindre (105 mm comme le v2 par defaut) ; crete du col a `height` au-dessus du
     fond de l'assise, courbee au rayon `rim_radius` (celui de l'assise par defaut : meme hauteur partout). Le passage
@@ -276,6 +302,8 @@ def saddle_collar(height, seat=SEAT, radius=FACE_RADIUS, rim_radius=None):
     rim_radius = rim_radius or radius
     assert max(face_sag(seat[0] / 2, radius), face_sag(co[0] / 2, rim_radius) + height) + SADDLE_T0 < 60, "assise plus haute que le prisme qui la decoupe"
     base = ell_prism(*seat, 0, 60).intersect(below_face(SADDLE_T0, radius))
+    if edge_round:  # aretes du contour arrondies : 12 deg aux pointes de l'assise R53, coupante a l'essai (Clement, 24 nov. 2026)
+        base = rounded_seat(seat, radius, edge_round)
     rim = ell_prism(*co, 0, 60).intersect(below_face(SADDLE_T0 + height, rim_radius))
     piece = base.union(rim).cut(ell_prism(*ci, -1, 61))
     top = SADDLE_T0 + height - 0.01
@@ -313,17 +341,19 @@ def saddle_shim(on=SHIM_ON, rise=SHIM_RISE, seat=SEAT):
     return shim, r, hi
 
 
-# Assise du corps (24 nov. 2026, avant l'essai de la 2e paire) : Clement pense retenir l'assise R85 et ses deux
-# paires de cales. La voici d'une piece : dessus au rayon des cales du haut, col a la crete de l'assise R85 essayee
-# (20 mm au centre, 14 contre ses flancs). (hauteur du col, rayon de l'assise, rayon de la crete)
+# Assise du corps, retenue par Clement le 24 nov. 2026 apres l'essai des deux paires de cales sur la R85 : « niveau
+# courbure, c'est vraiment ce qu'on veut ». D'une piece, dessus au rayon des cales du haut ; col a 20 mm au-dessus
+# de l'assise partout, qui remonte avec elle sur les cotes (demande de Clement) ; arete exterieure du haut arrondie,
+# la pointe des cales empilees etant presque coupante. (hauteur du col, rayon de l'assise, rayon de la crete)
 BODY_SEAT_RADIUS = SHIM_ON
 for _ in range(SHIM_LAYERS):
     BODY_SEAT_RADIUS = radius_for_sag(SEAT[0] / 2, face_sag(SEAT[0] / 2, BODY_SEAT_RADIUS) + SHIM_RISE)
-BODY_SEAT = (20.0, BODY_SEAT_RADIUS, SHIM_ON)
+BODY_SEAT = (20.0, BODY_SEAT_RADIUS, None)
+SEAT_EDGE_ROUND = 1.0  # bord de 2 mm arrondi, comme la crete du col
 
 
 def body_saddle():
-    return saddle_collar(BODY_SEAT[0], radius=BODY_SEAT[1], rim_radius=BODY_SEAT[2])
+    return saddle_collar(BODY_SEAT[0], radius=BODY_SEAT[1], rim_radius=BODY_SEAT[2], edge_round=SEAT_EDGE_ROUND)
 
 
 def pad_test_cap():

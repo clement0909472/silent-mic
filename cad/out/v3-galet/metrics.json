@@ -6,7 +6,7 @@
     77.0,
     81.0
   ],
-  "length_with_collar_mm": 126.8,
+  "length_with_collar_mm": 120.8,
   "palm_section_mm": [
     83.9980413468183,
     65.99846105821437
@@ -212,9 +212,9 @@
     "front": 48.8,
     "rear": 98.8,
     "cover": 15.0,
-    "assise-col": 79.0,
+    "assise-col": 79.8,
     "ring_petg": 1.8,
-    "total": 243.4
+    "total": 244.2
   },
   "warn": [
     "longueur entree -> centre des fentes 155.7 mm < 175 (canal barrage a barrage 182.2)"
