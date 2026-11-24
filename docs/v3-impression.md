@@ -221,7 +221,7 @@ La plaque de 10 mm donne les deux couches du fond et le manchon avant (voir « D
 
 Déjà en main : les 4 écrous M3 du v2 conviennent (pas ses vis M3 × 6, trop courtes), coussin Brainwavz (mesuré par Clément : 108 × 81 mm, ouverture 72,6 × 48,5, épaisseur 28 ; la fiche annonçait 110 × 90, 70 × 50, 30), disque d'acier de 30 mm, DJI Mic Mini 2 et sa bonnette, PLA noir mat.
 
-Pour la lumière, plus tard : batterie LiPo 502030 avec protection (5 × 20 × 30 mm), chargeur TP4056 USB-C (17,5 × 28 mm), interrupteur à glissière 8,6 × 3,6 × 3,5 mm, filament LED souple 3 V, fil fin.
+Pour la lumière (références choisies le 24 nov. 2026) : batterie LiPo 502025 avec protection, 200 mAh, 27 × 20 × 5 mm (une 502030 dépasse 30 mm avec sa carte) ; chargeur DFRobot DFR0668 USB-C, 16,5 × 28 mm, 50 mA par défaut, 200 mA en pontant une pastille (un TP4056 du commerce charge à 1 A, cinq fois trop pour 200 mAh ; épaisseur avec la prise à mesurer avant d'imprimer la coque arrière) ; interrupteur SS12D00G3 ; filament LED souple de 290 mm, 2,9 V, 1,5 mm de diamètre (Tinytronics), 33 Ω en série ; fil silicone 30 AWG.
 
 ## Revue Onshape
 
