@@ -157,13 +157,17 @@ MOUNT_W, MOUNT_T = v0.MOUNT_WIDTH, v0.MOUNT_THICKNESS
 MIC_CLEARANCE = 1.0
 MIC_STACK_EXTRA = float(os.environ.get("SILENT_MIC_STACK_EXTRA", 0.0))  # clip ou aimant entre disque et boitier, a mesurer
 BONNET = (36.0, 26.0, 9.0, 20.0)  # bonnette DJI : largeur, epaisseur, recouvrement du boitier, depassement. Depassement mesure par Clement (48 mm du bas du micro au haut des poils, 23 nov. 2026) ; largeur et epaisseur estimees
-# tirette du micro (idee de Clement, 24 nov. 2026) : avec le col de 20 mm, les doigts n'atteignent plus que le haut de
-# la bonnette, et tirer sur les poils peut la declipser. Piece imprimee posee avant le micro : un pied sous le boitier,
-# une languette le long de son flanc +x qui s'ecarte sous la jupe de la bonnette, et un crochet a cote du haut des
-# poils. On pince le crochet et on tire : le pied souleve le micro, qui glisse sur le disque et sort avec sa bonnette.
-# Le disque reste colle a la plaque : en usage le micro tient par son aimant comme avant, la tirette ne porte rien.
-# (epaisseur de la languette, du pied et du crochet, largeur, bout du crochet en x, debut du pied en x, jeu, hauteur du coude)
-TAB = {"t": 1.2, "foot_t": 0.8, "w": 8.0, "bar_t": 1.6, "bar_x": 26.0, "foot_x0": -10.0, "gap": 0.4, "jog": 6.0}
+# glissiere du micro (idee de Clement, 24 nov. 2026) : avec le col de 20 mm, les doigts n'atteignent que le haut de
+# la bonnette, et tirer sur les poils peut la declipser. Une tirette coulisse dans un rail en C dresse sur le fond, a cote
+# du micro : son pied passe sous le boitier, sa languette monte droit a travers la fourrure (souple, Clement), et une
+# patte a cote du haut des poils sert de prise. On tire la patte : le pied monte le micro le long du disque, qui le
+# lache en haut de course, et la bonnette depasse alors toute entiere du rebord du capot. L'aile de la tirette, dans la
+# chambre du rail, bute sous un capuchon visse (vis M3 x 10 fraisee) : la tirette ne peut pas sortir. Le disque reste
+# colle a la plaque : en usage, le micro tient par son aimant comme avant et la tirette ne porte rien.
+# (jeu par cote, epaisseur et largeur de la languette, ame dans la fente du rail, epaisseur de l'aile, longueur guidee,
+#  course, pied, patte, rail : profondeur en x, largeur en y, epaisseur des levres du C, capuchon)
+SLIDE = {"c": 0.2, "t": 2.2, "w": 7.0, "web": 3.6, "flange_t": 1.2, "guide": 12.0, "travel": 22.0,
+         "foot_t": 1.6, "foot_x0": -10.0, "bar_t": 2.0, "bar_x": 26.5, "post_x": 8.0, "post_w": 9.2, "lip": 1.2, "cap_t": 2.0}
 FINGER = 11.0  # largeur de doigt controlee de chaque cote de la bonnette, prise par la bouche (capot visse) ; le col elliptique laisse 11 mm sur toute l'epaisseur du boitier
 # regle du v2 (AIR_GAP_TARGET) : 8 mm d'air entre le fond du coussin et ce qui depasse du micro. Clement a constate
 # le 23 nov. 2026 sur le v2 imprime que ses levres descendent un peu sous le fond du coussin
@@ -527,6 +531,9 @@ def build_floor_features():
     ribs = box(-40, 40, -0.8, 0.8, FLOOR_TOP - 0.5, zt).union(box(-0.8, 0.8, -40, 40, FLOOR_TOP - 0.5, zt))
     # nervure entaillee devant la plaque : depuis que le micro est abaisse, le bas du disque d'acier passe au ras du fond
     ribs = ribs.cut(box(-16, 16, MOUNT_FACE_Y - 0.1, MOUNT_FACE_Y + 1.0, FLOOR_TOP - 1, zt + 1))
+    # et sous le pied de la tirette de la glissiere (SLIDE), qui pose sur le fond, 0.8 mm sous le micro
+    k = SLIDE
+    ribs = ribs.cut(box(k["foot_x0"] - 0.5, MIC_XC + BONNET[0] / 2 + 0.5, MIC_YC - k["w"] / 2 - 0.5, MIC_YC + k["w"] / 2 + 0.5, FLOOR_TOP - 1, zt + 1))
     return ribs.intersect(eprism(2 * a - 2, 2 * b - 2, FLOOR_TOP - 0.5, zt))
 
 
@@ -614,14 +621,14 @@ def build_rear(rear_env):
     log("  cavite arriere", t)
     shell = shell.union(build_rear_bosses()).union(build_tunnel_rib().intersect(env))
     # le disque de mousse est retenu par le chanfrein a 45 deg sous le conduit (pas de taquets)
-    shell = shell.union(build_floor_features()).union(build_mic_mount())
+    shell = shell.union(build_floor_features()).union(build_mic_mount()).union(build_slide_post())
     shell = shell.union(ring(TONGUE[0], TONGUE[1], -0.5, TONGUE[2]))
     log("  ajouts arriere", t)
     shell = shell.cut(build_duct()).cut(build_inlet()).cut(build_slots()).cut(build_shadow_groove())
     log("  conduit, entree, fentes, gorge", t)
     shell = shell.cut(ring(-1.0, REBATE, -RING_H, 1)).cut(ring(LED_CH[0], LED_CH[1], -LED_CH[2], 1))
     shell = shell.cut(rear_screw_cut()).cut(build_tunnel())
-    shell = shell.cut(bay_cut()).cut(cover_pilots())
+    shell = shell.cut(bay_cut()).cut(cover_pilots()).cut(slide_cut())
     log("coque arriere", t)
     return shell
 
@@ -711,20 +718,81 @@ def bonnet_envelope():
     return env.cut(mic_box())
 
 
-def build_tab():
-    """Tirette du micro (TAB) : profil plan dans le plan xz, epaisseur TAB["w"] centree sur le boitier en y."""
-    k = TAB
-    mb, top = mic_box().val().BoundingBox(), bonnet_envelope().val().BoundingBox().zmax
-    zf0 = FLOOR_TOP + FLOOR_RIB + 0.1  # pied pose sur les nervures, 0.1 mm sous le boitier
-    assert k["foot_t"] <= MIC_CLEARANCE - 0.15, "pied de la tirette plus epais que le jeu sous le micro"
-    xs0, xu0 = mb.xmax + k["gap"], MIC_XC + BONNET[0] / 2 + k["gap"]
-    zj1 = mb.zmax - BONNET[2] - 0.5  # coude fini sous la jupe de la bonnette
-    zj0, ztop = zj1 - k["jog"], top - 1.0  # crochet juste sous le haut des poils : la marge des levres ne change pas
-    t = k["t"]
-    pts = [(k["foot_x0"], zf0), (xs0 + t, zf0), (xs0 + t, zj0), (xu0 + t, zj1), (xu0 + t, ztop - k["bar_t"]),
-           (k["bar_x"], ztop - k["bar_t"]), (k["bar_x"], ztop), (xu0, ztop), (xu0, zj1), (xs0, zj0),
-           (xs0, zf0 + k["foot_t"]), (k["foot_x0"], zf0 + k["foot_t"])]
-    return cq.Workplane("XZ", origin=(0, MIC_YC + k["w"] / 2, 0)).polyline(pts).close().extrude(k["w"])
+def slide_geom():
+    """Cotes de la glissiere (SLIDE), dans le repere du corps."""
+    k, c = SLIDE, SLIDE["c"]
+    zr = FLOOR_TOP  # nervures entaillees sous le pied (build_floor_features) : il pose sur le fond
+    x0 = MIC_XC + BONNET[0] / 2 + 0.4  # face du rail cote micro, hors de la bonnette
+    xs1 = x0 - c  # face de la languette cote rail
+    xf0 = x0 + k["lip"] + c  # aile, dans la chambre du C
+    xc1 = xf0 + k["flange_t"] + c  # fond de la chambre
+    z0 = zr + 0.1  # bas de la tirette, posee sur le fond
+    zg1 = z0 + k["guide"]  # haut de l'aile au repos
+    zp1 = zg1 + k["travel"]  # haut du rail : l'aile y bute sous le capuchon
+    return {"zr": zr, "x0": x0, "xs0": xs1 - k["t"], "xs1": xs1, "xf0": xf0, "xf1": xf0 + k["flange_t"], "xc1": xc1,
+            "x1": x0 + k["post_x"], "hw": k["post_w"] / 2, "z0": z0, "zg1": zg1, "zp1": zp1,
+            "screw": ((xc1 + x0 + k["post_x"]) / 2, MIC_YC), "ztop": bonnet_envelope().val().BoundingBox().zmax - 1.0}
+
+
+def build_slider():
+    """Tirette : languette droite, pied sous le micro, ame et aile guidees dans le C, patte de prise en haut."""
+    k, g = SLIDE, slide_geom()
+    y0, y1 = MIC_YC - k["w"] / 2, MIC_YC + k["w"] / 2
+    w0, w1 = MIC_YC - k["web"] / 2, MIC_YC + k["web"] / 2
+    assert g["z0"] + k["foot_t"] + 0.5 <= MIC_Z0 + 1e-6, "pied plus epais que le jeu sous le micro"
+    parts = [box(g["xs0"], g["xs1"], y0, y1, g["z0"], g["ztop"]),  # languette
+             box(k["foot_x0"], g["xs1"], y0, y1, g["z0"], g["z0"] + k["foot_t"]),  # pied
+             box(g["xs1"] - 0.01, g["xf0"] + 0.01, w0, w1, g["z0"], g["zg1"]),  # ame
+             box(g["xf0"], g["xf1"], y0, y1, g["z0"], g["zg1"]),  # aile
+             box(g["xs0"], k["bar_x"], y0, y1, g["ztop"] - k["bar_t"], g["ztop"])]  # patte
+    out = union_all(parts)
+    return out.edges(cq.selectors.BoxSelector((k["bar_x"] - 0.1, y0 - 1, g["ztop"] - 5), (k["bar_x"] + 0.1, y1 + 1, g["ztop"] + 1))).fillet(0.9)
+
+
+def build_slide_post():
+    """Rail en C dresse sur le fond de la coque arriere (imprime avec elle, sans support)."""
+    g = slide_geom()
+    return box(g["x0"], g["x1"], MIC_YC - g["hw"], MIC_YC + g["hw"], FLOOR_TOP - 0.5, g["zp1"])
+
+
+def slide_cut():
+    """Fente (ame) et chambre (aile) du C, ouvertes en haut ; avant-trou de la vis du capuchon."""
+    k, g, c = SLIDE, slide_geom(), SLIDE["c"]
+    mouth = box(g["x0"] - 1.0, g["xf0"] - c + 0.01, MIC_YC - k["web"] / 2 - c, MIC_YC + k["web"] / 2 + c, FLOOR_TOP, g["zp1"] + 1)
+    chamber = box(g["xf0"] - c, g["xc1"], MIC_YC - k["w"] / 2 - c, MIC_YC + k["w"] / 2 + c, FLOOR_TOP, g["zp1"] + 1)
+    sx, sy = g["screw"]
+    pilot = cq.Workplane("XY", origin=(sx, sy, g["zp1"] - 9.0)).circle(cp.PILOT_D / 2).extrude(10.0)
+    return mouth.union(chamber).union(pilot)
+
+
+def build_slide_cap():
+    """Capuchon du rail : couvre la chambre, l'aile y bute en fin de course ; une vis M3 x 10 fraisee le tient."""
+    k, g = SLIDE, slide_geom()
+    z0 = g["zp1"] + 0.05
+    cap = box(g["x0"], g["x1"], MIC_YC - g["hw"], MIC_YC + g["hw"], z0, z0 + k["cap_t"]).edges("|Z").fillet(1.0)
+    sx, sy = g["screw"]
+    hole = cq.Workplane("XY", origin=(sx, sy, z0 - 1)).circle(1.7).extrude(k["cap_t"] + 2)
+    csk = cq.Workplane("XY").newObject([cq.Solid.makeCone(1.7, 3.1, 1.4, cq.Vector(sx, sy, z0 + k["cap_t"] - 1.4))])
+    return cap.cut(hole).cut(csk)
+
+
+def build_slide_coupon():
+    """Eprouvette de la glissiere (~15 min) : un troncon du rail en C sur un socle, une tirette courte (ame, aile,
+    patte) et le capuchon du corps. A essayer avant la coque arriere : la tirette doit glisser sans jeu sensible ni
+    point dur, et buter sous le capuchon. Rail debout comme dans la coque, tirette couchee comme la vraie."""
+    k, g = SLIDE, slide_geom()
+    h = k["guide"] + 8.0  # course d'essai de 8 mm
+    dz = -g["zp1"] + h  # haut du troncon a z = h, socle de 2 mm dessous
+    post = box(g["x0"], g["x1"], MIC_YC - g["hw"], MIC_YC + g["hw"], g["zp1"] - h, g["zp1"]).cut(slide_cut())
+    base = box(g["x0"] - 4, g["x1"] + 4, MIC_YC - g["hw"] - 4, MIC_YC + g["hw"] + 4, g["zp1"] - h - 2, g["zp1"] - h)
+    rail = post.union(base).translate((0, 0, dz + 2))
+    y0, y1, w0, w1 = MIC_YC - k["w"] / 2, MIC_YC + k["w"] / 2, MIC_YC - k["web"] / 2, MIC_YC + k["web"] / 2
+    z0, z1 = 0.0, k["guide"] + 14.0
+    slider = union_all([box(g["xs0"], g["xs1"], y0, y1, z0, z1),
+                        box(g["xs1"] - 0.01, g["xf0"] + 0.01, w0, w1, z0, k["guide"]),
+                        box(g["xf0"], g["xf1"], y0, y1, z0, k["guide"]),
+                        box(g["xs0"] - 8.0, g["xs1"], y0, y1, z1 - k["bar_t"], z1)])
+    return rail, slider
 
 
 def build_liner():
@@ -758,8 +826,8 @@ def disc_layer_shape():
     ib = build_inlet().val().BoundingBox()
     half = max(MOUNT_W, v0.MIC_STEEL_DISC_DIAMETER) / 2 + 0.3  # le disque de 30 mm deborde de la plaque de 28
     # l'encoche va jusque devant le micro, qui traverse les deux couches jusqu'aux nervures du fond
-    # cote +x, l'encoche loge aussi le coude de la tirette (build_tab)
-    tab_x = MIC_XC + BONNET[0] / 2 + TAB["gap"] + TAB["t"] + 0.5
+    # cote +x, l'encoche loge aussi le rail de la glissiere (build_slide_post)
+    tab_x = slide_geom()["x1"] + 0.5
     notch = (MIC_XC - half, max(ib.xmax + 1.0, MIC_XC + half, tab_x), mic_box().val().BoundingBox().ymax + 0.5)
     return a - 0.5, b - 0.5, notch
 
@@ -910,7 +978,8 @@ def export():
     front_env, rear_env = build_envelope()
     front, rear, cover = build_front(front_env), build_rear(rear_env), build_cover(rear_env)
     ring_, insert = build_ring(), saddle_placed()
-    parts = {"front": front, "rear": rear, "cover": cover, "ring": ring_, "assise-col": insert, "tirette": build_tab()}
+    parts = {"front": front, "rear": rear, "cover": cover, "ring": ring_, "assise-col": insert, "tirette": build_slider(),
+             "capuchon": build_slide_cap()}
     for n, p in parts.items():
         assert p.val().isValid() and p.solids().size() == 1, n
     t = time.perf_counter()
@@ -1035,8 +1104,8 @@ def export():
                "haut_de_la_bonnette_sous_la_crete_mm": round(z_rim - top_bonnet, 1)}
     # tirette : son crochet est dans la bande libre de +x, sous le haut des poils (marge des levres inchangee)
     tb = parts["tirette"].val().BoundingBox()
-    bar_bottom = tb.zmax - TAB["bar_t"]
-    fingers["tirette"] = {"crochet_sous_la_crete_locale_mm": round(z_rim + cp.face_sag((xb + TAB["bar_x"]) / 2, SEAT_RADIUS) - tb.zmax, 1),
+    bar_bottom = tb.zmax - SLIDE["bar_t"]
+    fingers["tirette"] = {"patte_sous_la_crete_locale_mm": round(z_rim + cp.face_sag((xb + SLIDE["bar_x"]) / 2, SEAT_RADIUS) - tb.zmax, 1),
                           "place_sous_le_crochet_mm": round(bar_bottom - zf0, 1)}
     assert tb.zmax < top_bonnet and bar_bottom - zf0 >= 5.0, fingers["tirette"]
     m["mic"] = {"centre": [MIC_XC, round((bbm.ymin + bbm.ymax) / 2, 2), round(MIC_ZC, 2)],
@@ -1097,6 +1166,9 @@ def export():
             if ba.xmax < bb2.xmin or bb2.xmax < ba.xmin or ba.ymax < bb2.ymin or bb2.ymax < ba.ymin or ba.zmax < bb2.zmin or bb2.zmax < ba.zmin:
                 continue
             v = vol(bodies[a].intersect(bodies[b]))
+            if {a, b} == {"tirette", "bonnette"}:  # languette droite a travers la fourrure, souple (Clement, 24 nov. 2026)
+                m["languette_dans_la_fourrure_mm3"] = round(v, 1)
+                continue
             if v > 0.005:  # mm3 : a 0.1, un vrai contact pied du micro / capot avant (0.03 mm3) passait
                 hits.append((a, b, round(v, 3)))
     m["interferences"] = hits
@@ -1105,18 +1177,36 @@ def export():
     # aucune interference au repos, la tete du pied et le micro debordaient de 5.5 mm au-dessus du corbeau
     # du capot avant : capot ni posable ni retirable (trouve par une relecture independante des STL).
     steps = (1.0, 2.0, 4.0, 8.0, 14.0, 22.0, 32.0, 45.0, 60.0)
-    tab = parts["tirette"]
-    stays = union_all([rear, refs["mic"], refs["mic-disc"], refs["bonnette"], tab])
+    tab, cap = parts["tirette"], parts["capuchon"]
+    stays = union_all([rear, refs["mic"], refs["mic-disc"], refs["bonnette"], tab, cap])
     mic_on = refs["mic"].union(refs["bonnette"])
     held = union_all([rear, refs["mic-disc"], front, insert])
     # capot visse : le micro, bonnette en place, sort droit par la bouche, ou se decolle d'abord du disque
     # vers l'avant (+y), ou 4 mm suffisent a liberer l'aimant
     pulls = {"capot_avant_et_col_micro_en_place": (front.union(insert), stays, (0, 0, 1)),
-             "micro_et_bonnette_par_la_bouche": (mic_on, held, (0, 0, 1)), "micro_et_bonnette_decolles": (mic_on, held.union(tab), (0, 1, 0)),
-             "micro_bonnette_et_tirette_par_la_bouche": (mic_on.union(tab), held.union(ring_), (0, 0, 1)),
+             "micro_et_bonnette_par_la_bouche": (mic_on, held.union(cap), (0, 0, 1)),
+             "micro_et_bonnette_decolles": (mic_on, held.union(cap), (0, 1, 0)),
+             "micro_decolle_au_dessus_de_la_tirette": (refs["mic"], tab, (0, 1, 0)),  # la fourrure, souple, frotte la languette
              "trappe": (cover, rear, (0, 0, -1))}
     m["demontage_volume_commun_mm3"] = {k: {d: round(vol(p.translate(tuple(c * d for c in u)).intersect(q)), 2)
                                             for d in steps if u[1] == 0 or d <= 4.0} for k, (p, q, u) in pulls.items()}
+    # glissiere : la tirette monte le micro et sa bonnette jusqu'a la butee, puis le micro, libere du disque, sort
+    # par la bouche ; la tirette reste captive (l'aile bute sous le capuchon)
+    sg, travel = slide_geom(), SLIDE["travel"]
+    rigid = union_all([rear, refs["mic-disc"], front, insert, ring_, cap])
+    lift = tab.union(refs["mic"])
+    m["glissiere"] = {"montee_mm3": {d: round(vol(lift.translate((0, 0, d)).intersect(rigid)) + vol(refs["bonnette"].translate((0, 0, d)).intersect(rigid)), 2)
+                                     for d in (1.0, 4.0, 8.0, 14.0, 18.0, travel - 0.1)},
+                      "au_dela_de_la_butee_mm3": round(vol(tab.translate((0, 0, travel + 0.6)).intersect(cap)), 2),
+                      "micro_libre_du_disque_en_haut": refs["mic"].translate((0, 0, travel)).val().BoundingBox().zmin > refs["mic-disc"].val().BoundingBox().zmax,
+                      "sortie_du_micro_mm3": {d: round(vol(refs["mic"].translate((0, 0, travel + d)).intersect(rigid.union(tab.translate((0, 0, travel)))))
+                                                       + vol(refs["bonnette"].translate((0, 0, travel + d)).intersect(rigid)), 2)
+                                              for d in (2.0, 8.0, 20.0, 40.0, 60.0)},
+                      "course_mm": travel, "longueur_guidee_mm": SLIDE["guide"]}
+    if max(m["glissiere"]["montee_mm3"].values()) > 0.05 or max(m["glissiere"]["sortie_du_micro_mm3"].values()) > 0.05:
+        fail.append(f"glissiere bloquee : {m['glissiere']}")
+    if m["glissiere"]["au_dela_de_la_butee_mm3"] < 1.0:
+        fail.append("tirette non captive : l'aile passe le capuchon")
     for k, v in m["demontage_volume_commun_mm3"].items():
         if max(v.values()) > 0.05:
             fail.append(f"demontage bloque ({k}) : {max(v.values())} mm3 communs pendant le retrait")
@@ -1152,13 +1242,22 @@ def export():
         "cover": cover.rotate((0, 0, 0), (1, 0, 0), 180).translate((0, 0, Z_RF)),
         "ring": ring_.translate((0, 0, RING_H)),
         "assise-col": cp.body_saddle(),
-        "tirette": parts["tirette"].rotate((0, 0, 0), (1, 0, 0), 90).translate((0, 0, TAB["w"] / 2 - MIC_YC)),  # profil a plat
+        "tirette": parts["tirette"].rotate((0, 0, 0), (1, 0, 0), 90).translate((0, 0, SLIDE["w"] / 2 - MIC_YC)),  # profil a plat
+        "capuchon": parts["capuchon"].translate((0, 0, -(slide_geom()["zp1"] + 0.05))),
     }
     for n, p in printed.items():
         pb = p.val().BoundingBox()
         assert abs(pb.zmin) < 0.05 and pb.xlen <= 180 and pb.ylen <= 180 and pb.zlen <= 180, (n, pb.zmin)
         cq.exporters.export(p, str(out / f"{stem}-{n}.stl"), tolerance=LIN_TOL, angularTolerance=ANG_TOL)
         cp.clean_stl(out / f"{stem}-{n}.stl")
+    # eprouvette de la glissiere : rail debout, tirette couchee (profil a plat)
+    rail_c, slider_c = build_slide_coupon()
+    assert vol(rail_c.intersect(slider_c.translate((0, 0, rail_c.val().BoundingBox().zmin + 2.0 + 0.1)))) < 0.005, "eprouvette de glissiere"
+    for n, p in {"glissiere-rail": rail_c.translate((0, 0, -rail_c.val().BoundingBox().zmin)),
+                 "glissiere-tirette": slider_c.rotate((0, 0, 0), (1, 0, 0), 90).translate((0, 0, SLIDE["w"] / 2 - MIC_YC))}.items():
+        f = out / "coupons" / f"{n}.stl"
+        cq.exporters.export(p, str(f), tolerance=LIN_TOL, angularTolerance=ANG_TOL)
+        cp.clean_stl(f)
     air = cav.union(duct).union(build_inlet()).union(build_slots())
     air_written = cp.export_step(air, out / f"{stem}-air-volume.step")
     # corps de reference : meme controle de relecture (joint, filament LED et fond de mousse passent en NURBS)
@@ -1168,7 +1267,8 @@ def export():
     # pieces imprimees opaques et de couleurs distinctes : en revue (Onshape), des coques transparentes
     # donnent l'impression de voir a travers la paroi
     colors = {"front": (0.35, 0.50, 0.65, 1.0), "rear": (0.80, 0.55, 0.10, 1.0), "cover": (0.30, 0.30, 0.32, 1.0),
-              "ring": (0.92, 0.92, 1.0, 0.6), "assise-col": (0.20, 0.20, 0.22, 1.0), "tirette": (0.15, 0.15, 0.17, 1.0)}
+              "ring": (0.92, 0.92, 1.0, 0.6), "assise-col": (0.20, 0.20, 0.22, 1.0), "tirette": (0.15, 0.15, 0.17, 1.0),
+              "capuchon": (0.15, 0.15, 0.17, 1.0)}
     for n, p in parts.items():
         assembly.add(written[n], name=n, color=cq.Color(*colors[n]))
     for n, p in refs.items():
@@ -1186,7 +1286,7 @@ def export():
     roles = {"front": ("Capot avant", "black", (0, 0, 135)), "rear": ("Coque arriere", "black", (0, 0, 0)),
              "cover": ("Couvercle de la baie", "black", (0, 0, -62)), "ring": ("Anneau lumineux", "translucent", (0, 0, 10)),
              "assise-col": (f"Assise courbe et col {COLLAR_HEIGHT:g} mm", "black", (0, 0, 150)),
-             "tirette": ("Tirette du micro", "black", (0, 0, 250)),
+             "tirette": ("Tirette du micro (glissiere)", "black", (0, 0, 250)), "capuchon": ("Capuchon du rail", "black", (0, 0, 120)),
              "mic": ("DJI Mic Mini 2", "electronics", (0, 0, 250)), "mic-disc": ("Disque acier 30 mm, recoupe en bas", "metal", (0, 0, 62)),
              "earpad": ("Coussin Brainwavz", "soft", (0, 0, 175)), "gasket": ("Joint mousse 3 x 2", "soft", (0, 0, 128)),
              "led-filament": ("Filament LED", "electronics", (0, 0, 5)), "foam-disc": ("Fond de mousse, 2 couches de 10 mm entaillees", "foam", (0, 0, 45)),

@@ -54,12 +54,22 @@
     },
     {
       "file": "tirette.stl",
-      "label": "Tirette du micro",
+      "label": "Tirette du micro (glissiere)",
       "role": "black",
       "explode": [
         0,
         0,
         250
+      ]
+    },
+    {
+      "file": "capuchon.stl",
+      "label": "Capuchon du rail",
+      "role": "black",
+      "explode": [
+        0,
+        0,
+        120
       ]
     },
     {

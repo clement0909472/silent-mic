@@ -96,10 +96,10 @@
     },
     {
       "name": "v3-galet",
-      "_source": "CAO cad/silent_mic_v3_galet.py (profil evase, joint s = 61, 20 nov. 2026) : cavite air + mousse mesuree jusqu'au sommet du collier, conduit annulaire d'un tour 4.5 x 12.1 mm (faite vif) (toit en pointe), longueur prise de l'entree au centre des fentes (le canal fait 182.2 mm de barrage a barrage), joint = coussin Brainwavz sur collier de 14 mm. Mis a jour le 23 nov. 2026 : assise courbe et col de 10 mm, micro au fond, coussin mesure, capot avant raccourci de 5 mm (cad/out/v3-galet/metrics.json). Le 24 nov. 2026 : assise des essais (R53, col de 20 mm), chambre de 178.9 a 201.1 cm3. Le 24 nov. 2026 au soir : encoche de la tirette du micro dans la mousse du fond, mousse de 46.3 a 44.0 cm3.",
+      "_source": "CAO cad/silent_mic_v3_galet.py (profil evase, joint s = 61, 20 nov. 2026) : cavite air + mousse mesuree jusqu'au sommet du collier, conduit annulaire d'un tour 4.5 x 12.1 mm (faite vif) (toit en pointe), longueur prise de l'entree au centre des fentes (le canal fait 182.2 mm de barrage a barrage), joint = coussin Brainwavz sur collier de 14 mm. Mis a jour le 23 nov. 2026 : assise courbe et col de 10 mm, micro au fond, coussin mesure, capot avant raccourci de 5 mm (cad/out/v3-galet/metrics.json). Le 24 nov. 2026 : assise des essais (R53, col de 20 mm), chambre de 178.9 a 201.1 cm3. Le 24 nov. 2026 au soir : encoche du rail de la glissiere du micro dans la mousse du fond, mousse de 46.3 a 41.2 cm3, chambre air + mousse de 201.1 a 199.3 cm3 (rail).",
       "cavity": {
-        "volume_cm3": 201.1,
-        "foam_cm3": 44.0,
+        "volume_cm3": 199.3,
+        "foam_cm3": 41.2,
         "foam_sigma": 12000
       },
       "vent": {
