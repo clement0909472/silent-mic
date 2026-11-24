@@ -138,6 +138,7 @@ if [ "$only" != essai ]; then
   SOLID=1 SUP=plate project corps-coque-arriere "$tmp/pla.json" "$b-rear.stl"
   # assise du corps : celle des essais du 24 nov. 2026 (R85 et ses deux paires de cales) d'une piece, pleine
   SOLID=1 project corps-assise "$tmp/pla.json" "$b-assise-col.stl"
-  project corps-trappe "$tmp/pla.json" "$b-cover.stl"
+  # trappe pleine aussi : poids et sensation de produit fini (Clement, 24 nov. 2026)
+  SOLID=1 project corps-trappe "$tmp/pla.json" "$b-cover.stl"
   project corps-anneau-petg "$tmp/petg.json" "$b-ring.stl"
 fi

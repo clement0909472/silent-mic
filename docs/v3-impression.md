@@ -20,7 +20,7 @@
 
 Bambu Lab A1 mini, buse 0,4 mm, couches de 0,20 mm, 4 périmètres, 20 % de remplissage (100 %, en rectiligne, pour les pièces qui ferment la chambre du corps : assises, capot avant, coque arrière), couture alignée, plaque PEI texturée. PLA : préréglage « ELEGOO PLA Mat Flow Rate Calibrated » de Clément (débit 1,029, densité 1,32). PETG : « Bambu PETG Translucent @BBL A1M ». Fichiers dans `cad/out/v3-galet/`.
 
-> **Pièces pleines depuis le 23 novembre 2026** (question de Clément sur les 20 %). Le modèle 1D ne voit pas d'effet de la paroi : même 4 fois moins raide, l'isolation reste à 21,2 dB(A), les fuites du joint et l'évent dominent (estimation, non mesurée). Une paroi pleine coûte peu et retire ce doute : plus de vide entre les périmètres, plus de peau mince qui vibre. Les éprouvettes de joint, le capot d'essai et la trappe gardent 20 % : ils servent à la forme ou ne touchent pas la chambre.
+> **Pièces pleines depuis le 23 novembre 2026** (question de Clément sur les 20 %). Le modèle 1D ne voit pas d'effet de la paroi : 4 fois moins raide, l'isolation reste à 25,1 dB(A), et 10 fois moins raide elle ne perd que 0,4 dB(A) ; les fuites du joint et l'évent dominent (estimation, non mesurée). Les parois de 3 mm sortent de toute façon pleines (4 périmètres de chaque côté) : le remplissage ne change que les zones épaisses. Une pièce pleine coûte peu et retire ce doute : plus de vide entre les périmètres, plus de peau mince qui vibre. Depuis le 24 novembre, la trappe est pleine aussi : Clément veut le poids et la sensation d'un produit fini. Appareil complet d'environ 310 g en plein (pièces imprimées 268 g d'après le trancheur, composants environ 40 g), 220 g à 20 %. Les éprouvettes de joint et le capot d'essai gardent 20 % : ils servent à la forme.
 
 > **Projets 3MF refaits le 23 novembre 2026.** Jusque-là, `cad/bambu_3mf.sh` passait à la ligne de commande les préréglages système de la machine et du procédé sans leur chaîne d'héritage. Les fichiers embarquaient donc une configuration générique : G-code de démarrage réduit à un retour à l'origine (sans la séquence de l'A1 mini : chauffe, nivellement, purge), parois à 60 mm/s, accélérations de 500 mm/s². Et à l'ouverture dans Bambu Studio, l'interface rechargeait le procédé standard en ignorant les 4 parois, les 20 % de remplissage et les supports. Les deux défauts sont corrigés : préréglages aplatis avec tout leur héritage, et écarts au procédé système inscrits dans le projet comme le fait l'interface. Les temps ci-dessous sont ceux du vrai profil A1 mini.
 
@@ -50,7 +50,7 @@ Grammes calculés par Bambu Studio avec la densité réelle du filament (1,32) :
 | 4 | `print/corps-capot-avant.3mf` | capot avant, appui du coussin sur le plateau, 4 colonnes de support, plein | 1 h 52 | 56 g PLA |
 | 5 | `print/corps-coque-arriere.3mf` | coque arrière, face arrière sur le plateau, pleine | 3 h 11 | 108 g PLA |
 | 5 bis | `print/corps-assise.3mf` | assise du corps (R53, col de 20 mm, gravée « 20 R53 » dessous), dos au plateau, sans support, pleine | 2 h 17 | 87 g PLA |
-| 6 | `print/corps-trappe.3mf` | trappe | 20 min | 9 g PLA |
+| 6 | `print/corps-trappe.3mf` | trappe, pleine | 29 min | 16 g PLA |
 | 7 | `print/corps-anneau-petg.3mf` | anneau lumineux | 11 min | 2 g PETG |
 
 Mêmes réglages que les pièces d'essai. Le corps ne s'imprime qu'après le test de l'assise sur le capot d'essai (`bench/README.md`) et l'essai des éprouvettes de joint. Régénération : `cad/bambu_3mf.sh corps`.
