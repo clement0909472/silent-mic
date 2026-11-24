@@ -670,7 +670,8 @@ MOUNT_FACE_Y = MIC_YC - v0.MIC_SIZE[2] / 2 - v0.MIC_STEEL_DISC_THICKNESS  # face
 
 
 def mic_box(extra=None):
-    """Boitier DJI (cotes de la fiche officielle) debout contre le disque ; extra = epaisseur d'un clip
+    """Boitier DJI (cotes de la fiche officielle, 28.58 x 28.04 x 13.52) debout contre le disque, par sa face opposee au
+    logo DJI blanc, qui porte l'aimant (Clement, 24 nov. 2026 ; DJI ne publie pas sa position exacte) ; extra = epaisseur d'un clip
     ou d'un aimant entre disque et boitier, qui ecarte le micro de la plaque."""
     e = MIC_STACK_EXTRA if extra is None else extra
     sx, sz, sy = v0.MIC_SIZE
