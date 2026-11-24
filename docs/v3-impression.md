@@ -52,8 +52,11 @@ Grammes calculés par Bambu Studio avec la densité réelle du filament (1,32) :
 | 1 | coque arrière (supports sous le passage de la prise USB-C, dans la baie) | 3 h 12 | 108 g PLA noir |
 | 2 | capot avant (une colonne de support sous chaque puits de vis) | 1 h 52 | 56 g PLA noir |
 | 3 | trappe | 28 min | 16 g PLA noir |
+| 4 | anneau lumineux, bobine blanche translucide chargée | 9 min | 2 g PLA blanc |
 
-L'anneau lumineux garde son projet d'une pièce (`print/corps-anneau-petg.3mf`, à retrancher avec le filament blanc quand il arrive) : la ligne de commande de Bambu Studio 2.9 plante quand un projet mélange deux filaments.
+L'anneau est en filament 1, comme le reste : on change de bobine avant la plaque 4 (la ligne de commande de Bambu Studio 2.9 plante quand un projet mélange deux filaments). Seules pièces imprimées du corps : ces quatre plaques et l'assise, déjà imprimée le 24 novembre ; tout le reste de la vue « Montage » s'achète ou se découpe (micro, disque, coussin, mousses, joint, filament LED, électronique, vis et écrous).
+
+Orientations vérifiées le 24 nov. 2026 en tranchant chaque coque dans les deux sens. Capot avant, appui du coussin sur le plateau : 4 colonnes de support dans les puits de vis, 3 g et 10 min ; retourné, face de joint au plateau, le trancheur réclame environ 1 500 blocs de support dans la chambre, impossibles à retirer, ou laisse les surplombs intérieurs dans le vide. Coque arrière, dos au plateau : 0,3 g de support sous le passage de la prise USB-C ; retournée, 9 à 11 g de plus et 26 min de plus.
 
 Pour lancer une plaque :
 1. Imprimante allumée, plateau propre, au moins 110 g de filament noir sur la bobine pour la plaque 1.

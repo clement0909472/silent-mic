@@ -9,7 +9,7 @@ commun (A1 mini 0.4, 0.20 mm, 4 parois, 20 %, couture alignee, plaque texturee P
 (100 %, rectiligne) et les supports sur plateau seulement la ou le projet d'une piece les a. Filament 1 : le
 prereglage calibre de Clement (copie aplatie, jamais modifie), seul filament du projet : la ligne de commande de
 Bambu Studio 2.9 plante (segfault) des qu'une liste d'assemblage melange deux filaments, et l'anneau attend son
-filament blanc ; il garde son projet d'une piece (print/corps-anneau-petg.3mf).
+filament blanc : il est la plaque 4, en filament 1 (PLA) comme le reste, a imprimer bobine blanche chargee.
 La preuve : le projet se retranche en entier et chaque plateau doit redonner la duree et la masse de son projet
 d'une piece (print/resume.txt) a 2 % pres.
 """
@@ -32,6 +32,9 @@ PLATES = [
     ("1 Coque arriere", f"{B}-rear.stl", 1, SOLID | ON_PLATE, "corps-coque-arriere"),
     ("2 Capot avant", f"{B}-front.stl", 1, SOLID | ON_PLATE, "corps-capot-avant"),
     ("3 Trappe", f"{B}-cover.stl", 1, SOLID, "corps-trappe"),
+    # anneau : meme filament 1 (PLA) que le reste, imprime avec la bobine blanche translucide une fois arrivee ; son
+    # projet d'une piece est regle pour du PETG, d'ou l'absence de reference
+    ("4 Anneau lumineux (bobine blanche)", f"{B}-ring.stl", 1, {}, None),
 ]
 
 
@@ -83,6 +86,9 @@ def main():
     bad = []
     for i, (name, _, _, _, single) in enumerate(PLATES, start=1):
         t, w = got[i]
+        if single is None:
+            print(f"plateau {name} : {t // 3600}h{t % 3600 // 60:02d}, {w:.2f} g (pas de projet d'une piece en PLA pour comparer)")
+            continue
         rt, rw = ref[single]
         ok = abs(t - rt) <= 0.02 * rt + 60 and abs(w - rw) <= 0.02 * rw + 0.1
         print(f"plateau {name} : {t // 3600}h{t % 3600 // 60:02d}, {w:.2f} g (projet d'une piece {rt // 3600}h{rt % 3600 // 60:02d}, {rw:.2f} g) {'OK' if ok else 'ECART'}")
