@@ -2,7 +2,7 @@
 # Copyright 2026 Clement Barberousse
 """Silent Mic v3 galet : eprouvettes a imprimer avant le corps.
 
-- un capot d'essai du coussin d'oreillette et trois colliers amovibles (3, 10 et 16 mm) ;
+- un capot d'essai du coussin d'oreillette et des assises courbes a col (SADDLE_COLLARS) ;
 - eprouvette de joint (deux moities, deux vis M3 a ecrou prisonnier, rainure de mousse) ;
 - eprouvette de lumiere (bande translucide en marches de 0.8 a 2.4 mm).
 
@@ -90,7 +90,9 @@ FACE_RADIUS = v0.FACE_RADIUS
 SADDLE_T0 = 4.0  # epaisseur au centre, sous la bouche : le fond du coussin monte d'autant
 # hauteur du col au-dessus du fond du coussin, au centre. La crete suit la courbe : plus haute sur les cotes,
 # ou le coussin plie moins (idee de Clement). Coussin de 30 mm, environ 15 une fois comprime (Clement).
-SADDLE_COLLARS = (8.0, 10.0, 14.0)
+# (hauteur du col, rayon de l'assise). Essai du 24 nov. 2026 sur l'assise de 10 mm / 105 : taille juste, mais
+# pas assez courbee, et col a monter a 20 mm au moins (Clement). 85 : un peu plus courbe, 70 : nettement plus.
+SADDLE_COLLARS = ((10.0, FACE_RADIUS), (20.0, 85.0), (20.0, 70.0))
 
 # temoin de bonnette (idee de Clement, 23 nov. 2026) : pose au fond du capot d'essai, sous l'assise, son dessus est a
 # la hauteur du haut de la bonnette dans le corps, GAUGE_GAP sous le fond du coussin. On appuie le visage comme pour
@@ -247,25 +249,26 @@ def flange_outer():
     return tuple(c + 2 * FLANGE_W for c in collar_inner())
 
 
-def face_sag(x):
+def face_sag(x, radius=FACE_RADIUS):
     """Avancee de l'assise vers le visage a l'abscisse x, par rapport au centre."""
-    return FACE_RADIUS - math.sqrt(FACE_RADIUS ** 2 - x * x)
+    return radius - math.sqrt(radius ** 2 - x * x)
 
 
-def below_face(depth):
-    """Tout ce qui est sous la surface cylindrique de rayon FACE_RADIUS (axe vertical y) dont le creux est a z = depth."""
-    zc = depth + FACE_RADIUS
-    cyl = cq.Solid.makeCylinder(FACE_RADIUS, 300, cq.Vector(0, -150, zc), cq.Vector(0, 1, 0))
+def below_face(depth, radius=FACE_RADIUS):
+    """Tout ce qui est sous la surface cylindrique de rayon `radius` (axe vertical y) dont le creux est a z = depth."""
+    zc = depth + radius
+    cyl = cq.Solid.makeCylinder(radius, 300, cq.Vector(0, -150, zc), cq.Vector(0, 1, 0))
     return cq.Workplane("XY").box(300, 300, zc + 100, centered=(True, True, False)).translate((0, 0, -100)).cut(cq.Workplane("XY").newObject([cyl]))
 
 
-def saddle_collar(height, seat=SEAT):
+def saddle_collar(height, seat=SEAT, radius=FACE_RADIUS):
     """Assise du coussin et col d'une piece, dos plat (z = 0) pose sur l'appui plat du capot, imprime dos au plateau
-    sans support. Dessus creuse en cylindre de 105 mm comme le v2 ; crete du col a `height` au-dessus de l'assise,
-    partout. Le passage interieur garde l'ouverture du col (62 x 42) : la cle de 2 mm atteint toujours les vis."""
+    sans support. Dessus creuse en cylindre (105 mm comme le v2 par defaut) ; crete du col a `height` au-dessus de
+    l'assise, partout. Le passage interieur garde l'ouverture du col (62 x 42) : la cle de 2 mm atteint toujours les vis."""
     ci, co = collar_inner(), collar_outer()
-    base = ell_prism(*seat, 0, 60).intersect(below_face(SADDLE_T0))
-    rim = ell_prism(*co, 0, 60).intersect(below_face(SADDLE_T0 + height))
+    assert face_sag(seat[0] / 2, radius) + SADDLE_T0 + height < 60, "assise plus haute que le prisme qui la decoupe"
+    base = ell_prism(*seat, 0, 60).intersect(below_face(SADDLE_T0, radius))
+    rim = ell_prism(*co, 0, 60).intersect(below_face(SADDLE_T0 + height, radius))
     piece = base.union(rim).cut(ell_prism(*ci, -1, 61))
     top = SADDLE_T0 + height - 0.01
     try:  # crete arrondie, comme l'ancien col
@@ -275,8 +278,9 @@ def saddle_collar(height, seat=SEAT):
     # hauteur gravee sous l'assise, cote +x, dans le porte-a-faux au-dessus de l'ouverture du capot, hors de la bande
     # du ruban adhesif : lisible piece retournee
     x = (ci[0] / 2 + flange_outer()[0] / 2 - 1.5) / 2
+    mark = f"{height:g}" if radius == FACE_RADIUS else f"{height:g} R{radius:g}"
     label = (cq.Workplane(cq.Plane(origin=(x, 0, 0), xDir=(0, -1, 0), normal=(0, 0, -1)))
-             .text(f"{height:g}", 5, -0.4, combine=False, halign="center", valign="center"))
+             .text(mark, 5, -0.4, combine=False, halign="center", valign="center"))
     return piece.cut(label)
 
 
@@ -360,12 +364,12 @@ def export(out=HERE / "out" / "v3-galet" / "coupons"):
     print(f"construit capot en {time.perf_counter() - t:.1f} s", flush=True)
     assert CAP_DEPTH >= v0.MIC_SIZE[2] + 8.0, "place pour DJI a plat + ecouteur"
     save("pad-test-cap", cap)
-    for h in SADDLE_COLLARS:
-        ins = saddle_collar(h)
+    for h, r in SADDLE_COLLARS:
+        ins = saddle_collar(h, radius=r)
         z_seat = CAP_WALL + CAP_DEPTH
         placed = ins.translate((0, 0, z_seat + 0.02))
         assert vol(placed.intersect(cap)) < 1e-6, "assise / capot"
-        save(f"assise-col-{h:g}mm", ins)
+        save(f"assise-col-{h:g}mm" + ("" if r == FACE_RADIUS else f"-r{r:g}"), ins)
     gauge = bonnet_gauge()
     assert vol(gauge.translate((0, 0, CAP_WALL + 0.02)).intersect(cap)) < 1e-6, "temoin / capot"
     assert max(GAUGE_SIZE[0] / collar_inner()[0], GAUGE_SIZE[1] / collar_inner()[1]) < 0.95, "temoin trop large pour le col"

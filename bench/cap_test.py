@@ -114,7 +114,7 @@ def main():
     ap.add_argument("--inside", default="DJI")
     ap.add_argument("--outside", default="Yeti")
     ap.add_argument("--session", default=time.strftime("capot-%Y%m%d-%H%M"))
-    ap.add_argument("--collars", default="8,10,14")
+    ap.add_argument("--collars", default="10,20")
     ap.add_argument("--reps", type=int, default=3)
     ap.add_argument("--seconds", type=float, default=12)
     a = ap.parse_args()

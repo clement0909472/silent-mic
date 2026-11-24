@@ -6,7 +6,7 @@
 >
 > **Appui visage révisé le 23 novembre 2026.** Clément a essayé sa bouche sur le v2 imprimé : coussin écrasé d'environ moitié (28 à 15 mm), ses lèvres descendent un peu sous le fond du coussin. Le v3 avait perdu trois choses du v2 (`cad/whisper_mask_v0.py`) : l'assise creusée qui fait épouser les joues au coussin, la règle des 8 mm d'air entre le fond du coussin et le micro, et un bord rigide plus bas. Corrigé ainsi :
 > 1. **Assise courbe rapportée** (`cp.saddle_collar`) : une pièce posée à plat sur l'appui du capot avant et collée au ruban double face, comme le coussin. Son dessus est creusé en cylindre de 105 mm de rayon, comme le v2 : 4 mm d'épaisseur au centre, les côtés avancent vers les joues jusqu'à 13,8 mm de plus au bord. Le capot avant ne change pas.
-> 2. **Col bombé d'une pièce avec l'assise** : sa crête suit la courbe, 10 mm au-dessus du fond du coussin au centre, là où est la bouche, et plus haut sur les côtés (idée de Clément). Variantes d'essai à 8 et 14 mm.
+> 2. **Col bombé d'une pièce avec l'assise** : sa crête suit la courbe, 10 mm au-dessus du fond du coussin au centre, là où est la bouche, et plus haut sur les côtés (idée de Clément). Essai de Clément du 24 nov. 2026 sur l'assise de 10 mm : taille juste, mais pas assez courbée et col trop bas. Variantes d'essai : col de 20 mm, rayons de 85 et 70 mm au lieu de 105.
 > 3. **Micro descendu de 20 mm, au fond de la chambre** : il tient sur son disque, 1 mm au-dessus des nervures du fond, et les deux couches de mousse sont entaillées autour de lui. Le disque d'acier de 30 mm se recoupe d'une bande de 10 mm en bas, toute sous le bas du micro : la surface sous l'aimant ne change pas. Avec la bonnette à la cote mesurée (48 mm du bas du micro au haut des poils), le haut des poils serait à 18 mm sous le fond du coussin au centre, à longueur égale. `export()` refuse le modèle sous 8 mm.
 > 5. **Capot avant raccourci de 5 mm** (décision de Clément, meilleur compromis compacité / isolation) : le corps passe à 81 mm, 100,7 mm avec l'assise et le col (105,7 avant). La chambre perd 18 cm³ : 21,2 dB(A) au modèle 1D au lieu de 22,2 (estimation, non mesurée). Le haut des poils reste à 13 mm sous le fond du coussin, 5 mm de mieux que la règle du v2.
 >
@@ -32,7 +32,7 @@ Dans `print/`, trois projets 3MF tranchés, réglages embarqués. Chaque plateau
 |---|---|---|---|---|
 | 1 | `print/capot-essai.3mf` | capot d'essai du coussin et témoin de bonnette | 1 h 51 | 71 g PLA |
 | 2 | `print/cols-et-joint.3mf` | assise courbe et col de 10 mm (celle du corps), éprouvettes de joint avant et arrière (2 vis, 2 écrous) ; assise pleine | 1 h 53 | 66 g PLA |
-| 2 bis | `print/assises-variantes.3mf` | assises à col de 8 et 14 mm, pour comparer (facultatif), pleines | 2 h 43 | 103 g PLA |
+| 2 bis | `print/assises-20mm.3mf` | assises à col de 20 mm, plus courbées (rayons 85 et 70, gravés dessous), essai de forme à 20 % de remplissage : la retenue sera réimprimée pleine | 2 h 15 | 76 g PLA |
 | 3 | `print/lumiere-petg.3mf` | éprouvette de lumière | 10 min | 1 g PETG |
 
 L'assise se pose à plat sur le capot d'essai comme sur le corps : leurs appuis ont le même contour (104 × 77 mm, 2 mm sous le coussin de chaque côté). Elle s'imprime dos au plateau, sans support (contrôlé couche par couche). Sa hauteur de col est gravée dessous.

@@ -1,6 +1,6 @@
 capot-essai : 1h51, 70.93 g, blocs de support au controle=0, retranche : 1h 51m 9s
 cols-et-joint : 1h52, 65.76 g, blocs de support au controle=69, retranche : 1h 52m 56s
-assises-variantes : 2h43, 103.09 g, blocs de support au controle=0, retranche : 2h 43m 9s
+assises-20mm : 2h15, 75.69 g, blocs de support au controle=0, retranche : 2h 15m 37s
 lumiere-petg : 0h10, 1.17 g, blocs de support au controle=0, retranche : 10m 17s
 corps-capot-avant : 1h52, 56.29 g, blocs de support au controle=145, retranche : 1h 51m 57s
 corps-coque-arriere : 3h12, 107.95 g, blocs de support au controle=332, retranche : 3h 13m 25s

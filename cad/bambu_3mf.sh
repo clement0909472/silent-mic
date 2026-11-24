@@ -119,9 +119,11 @@ project capot-essai "$tmp/pla.json" "$c/pad-test-cap.stl" "$c/temoin-bonnette.st
 # 11 petits blocs de support qu'aucune piece ne demande seule
 # supports sur plateau seulement, comme au corps : un plot sous chaque tete de vis de l'eprouvette avant,
 # rien dans les logements d'ecrou de l'eprouvette arriere (leur plafond s'imprime en pont, comme dans la coque)
-# l'assise de 10 mm sert d'abord sur le capot d'essai, puis sur le corps ; 8 et 14 mm pour comparer
+# l'assise de 10 mm sert d'abord sur le capot d'essai, puis sur le corps
 SOLID=1 SUP=plate project cols-et-joint "$tmp/pla.json" "$c/joint-coupon-rear.stl" "$c/joint-coupon-front.stl" "$c/assise-col-10mm.stl"
-SOLID=1 project assises-variantes "$tmp/pla.json" "$c/assise-col-8mm.stl" "$c/assise-col-14mm.stl"
+# essai du 24 nov. 2026 : col de 20 mm, assise plus courbee (rayons 85 et 70 au lieu de 105). Essai de forme a
+# 20 % (2 h 25 au lieu de 3 h 27 pleines) : l'assise retenue sera reimprimee pleine avec le corps
+project assises-20mm "$tmp/pla.json" "$c/assise-col-20mm-r85.stl" "$c/assise-col-20mm-r70.stl"
 project lumiere-petg "$tmp/petg.json" "$c/light-coupon-petg.stl"
 fi
 if [ "$only" != essai ]; then

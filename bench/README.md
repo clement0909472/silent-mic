@@ -46,7 +46,7 @@ Les prises nez pincé disent ce que le nez laisse sortir quand la bouche est cou
 
 ## Test du capot d'essai : quel col choisir
 
-But : mesurer sur ton visage quelle hauteur de col (assises de 8, 10 et 14 mm, `print/cols-et-joint.3mf` et `print/assises-variantes.3mf`) laisse le moins sortir le son, avant d'imprimer le corps. Sans le plateau des variantes, ne tester que l'assise de 10 mm (`--collars 10`) et passer directement à l'étape 6.
+But : mesurer sur ton visage quelle hauteur de col (assises de 10 et 20 mm, `print/cols-et-joint.3mf` et `print/assises-20mm.3mf`) laisse le moins sortir le son, avant d'imprimer le corps. Sans le plateau des variantes, ne tester que l'assise de 10 mm (`--collars 10`) et passer directement à l'étape 6.
 
 1. `python bench/cap_test.py --make-noise` écrit `bench/bruit-rose.wav`. Le jouer en boucle dans un écouteur sans fil, à volume fixe et modéré.
 2. Découper le voile de tissu tendu au dos du coussin, au ras de l'ouverture : sinon le col bute dessus et le coussin ne se plaque pas. Garder le morceau, il peut servir de filtre anti-pop collé sur le haut du col.

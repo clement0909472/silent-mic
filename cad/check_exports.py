@@ -59,7 +59,7 @@ def main():
             subprocess.run(guard + [str(isolated / script)], check=True, stdout=subprocess.DEVNULL)
         for sub in ("v3-galet", "v3-galet/coupons"):
             compare_steps(source / "out" / sub, isolated / "out" / sub,
-                          ("-front.step", "-rear.step", "-cover.step", "-ring.step", "-14mm.step", "cap.step"))
+                          ("-front.step", "-rear.step", "-cover.step", "-ring.step", "-r70.step", "cap.step"))
             compare_stls(source / "out" / sub, isolated / "out" / sub)
         compare_stls(source / "out" / "v3-galet" / "foam", isolated / "out" / "v3-galet" / "foam")
         print("PASS v3-galet: assertions, STEP metrics, exact printed geometry and deterministic STL exports")

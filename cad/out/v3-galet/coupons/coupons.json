@@ -9,14 +9,6 @@
         32.1
       ]
     },
-    "assise-col-8mm": {
-      "volume_cm3": 36.98,
-      "size_mm": [
-        104.1,
-        77.1,
-        17.9
-      ]
-    },
     "assise-col-10mm": {
       "volume_cm3": 37.69,
       "size_mm": [
@@ -25,12 +17,20 @@
         19.8
       ]
     },
-    "assise-col-14mm": {
-      "volume_cm3": 39.11,
+    "assise-col-20mm-r85": {
+      "volume_cm3": 45.93,
       "size_mm": [
         104.1,
         77.1,
-        23.8
+        31.3
+      ]
+    },
+    "assise-col-20mm-r70": {
+      "volume_cm3": 51.69,
+      "size_mm": [
+        104.2,
+        77.2,
+        33.3
       ]
     },
     "temoin-bonnette": {
