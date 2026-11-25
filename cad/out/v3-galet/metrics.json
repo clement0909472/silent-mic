@@ -236,11 +236,11 @@
   "flat_faces_note": "plans > 35 mm : appui du coussin (couvert par le coussin, voulu plat) et face arriere du dos (maquette)",
   "mass_g_solid_pla": {
     "front": 48.8,
-    "rear": 98.8,
+    "rear": 99.0,
     "cover": 15.0,
     "assise-col": 78.6,
     "ring_petg": 1.8,
-    "total": 243.0
+    "total": 243.2
   },
   "warn": [
     "longueur entree -> centre des fentes 155.7 mm < 175 (canal barrage a barrage 182.2)"

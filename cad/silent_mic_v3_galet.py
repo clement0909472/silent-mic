@@ -148,6 +148,10 @@ COVER_HEAD_Z = Z_RF - 4.0  # dessus de la tete fraisee, au fond d'un puits ouver
 LIPO = (30.0, 20.0, 5.0)
 CHARGER = (17.5, 28.0, 4.0)  # x, y, z ; USB-C vers le bas
 SWITCH = (8.6, 3.6, 3.5)
+# Le corps s'affine vers l'arriere : places a Z_RF + 4.5, chargeur et interrupteur laissaient leurs logements percer la
+# peau au ras de la trappe (cad/light_check.py, 25 nov. 2026 : lumiere de la baie visible dehors). Recul vers
+# l'interieur et jeu reduit cote peau, pour 1 mm de plastique noir au moins a la face arriere.
+CHARGER_BACK, SWITCH_BACK = 0.8, 1.5
 
 # ---------- micro : debout contre une plaque dressee au centre du fond, haut du boitier vers la bouche ----------
 # Disposition du v2 (cad/whisper_mask_v0.py, memes cotes de plaque et de disque), reprise le 21 nov. 2026 sur
@@ -553,10 +557,10 @@ def bay_boxes():
     zr = Z_RF
     a, b = outer_profile(s_of(zr + 4.5))
     lipo = box(-LIPO[0] / 2, LIPO[0] / 2, -4 - LIPO[1] / 2, -4 + LIPO[1] / 2, zr + 5.0, zr + 5.0 + LIPO[2])
-    yb = -(b - 2.5) * math.sqrt(1 - (CHARGER[0] / 2 / (a - 2.5)) ** 2) + 0.7
+    yb = -(b - 2.5) * math.sqrt(1 - (CHARGER[0] / 2 / (a - 2.5)) ** 2) + 0.7 + CHARGER_BACK
     charger = box(-CHARGER[0] / 2, CHARGER[0] / 2, yb, yb + CHARGER[1], zr + 0.4, zr + 0.4 + CHARGER[2])
     sx = 15.3
-    ys = -(b - 2.5) * math.sqrt(1 - ((sx + SWITCH[0] / 2) / (a - 2.5)) ** 2) + 0.7
+    ys = -(b - 2.5) * math.sqrt(1 - ((sx + SWITCH[0] / 2) / (a - 2.5)) ** 2) + 0.7 + SWITCH_BACK
     switch = box(sx - SWITCH[0] / 2, sx + SWITCH[0] / 2, ys, ys + SWITCH[1], zr + 0.4, zr + 0.4 + SWITCH[2])
     return lipo, charger, switch
 
@@ -569,9 +573,12 @@ def grow(b, m):
 def bay_cut():
     lipo, charger, switch = bay_boxes()
     # un seul plafond de baie (pont unique) : chaque logement monte jusqu'au plafond
-    full = lambda b: box(*(lambda q: (q.xmin - 0.5, q.xmax + 0.5, q.ymin - 0.5, q.ymax + 0.5, Z_RF - 1, Z_RF + BAY_DEPTH))(b.val().BoundingBox()))
-    bay = union_all([full(lipo), full(charger), full(switch)])
-    bay = bay.union(box(-CHARGER[0] / 2 - 0.5, CHARGER[0] / 2 + 0.5, -40, 0, Z_RF - 1, Z_RF + 0.4))
+    # jeux (x-, x+, y-, y+) : 0.5 partout sauf cote peau ; la carte du chargeur fait 16.5 mm de large pour 17.5 dessines.
+    # Plus de degagement sous le chargeur jusqu'a y = -40 : il traversait la paroi (fentes de part et d'autre de la prise)
+    def full(b, mx0=0.5, mx1=0.5, my0=0.5, my1=0.5):
+        q = b.val().BoundingBox()
+        return box(q.xmin - mx0, q.xmax + mx1, q.ymin - my0, q.ymax + my1, Z_RF - 1, Z_RF + BAY_DEPTH)
+    bay = union_all([full(lipo), full(charger, 0.0, 0.0, 0.2), full(switch, 0.5, 0.3, 0.2)])
     cb = charger.val().BoundingBox()
     usb = cq.Workplane("XZ", origin=(0, cb.ymin + 2, Z_RF + 2.6)).slot2D(12.0, 6.0).extrude(20)
     roof = cq.Workplane("XZ", origin=(0, cb.ymin + 2, 0)).polyline([(-3.0, Z_RF + 5.6), (3.0, Z_RF + 5.6), (0.0, Z_RF + 5.6 + 3.0 * STEEP)]).close().extrude(20)

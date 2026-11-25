@@ -6,64 +6,19 @@
     "sorties": [
       {
         "ou": "prise USB-C",
-        "voxels": 1152
+        "voxels": 1136
       },
       {
         "ou": "fente de l'interrupteur",
-        "voxels": 122
-      },
-      {
-        "ou": "AUTRE",
-        "x_mm": [
-          -9.3,
-          -6.3
-        ],
-        "y_mm": [
-          -22.3,
-          -21.5
-        ],
-        "z_mm": [
-          -47.0,
-          -46.8
-        ]
-      },
-      {
-        "ou": "AUTRE",
-        "x_mm": [
-          6.2,
-          9.2
-        ],
-        "y_mm": [
-          -22.3,
-          -21.5
-        ],
-        "z_mm": [
-          -47.0,
-          -46.8
-        ]
-      },
-      {
-        "ou": "AUTRE",
-        "x_mm": [
-          19.2,
-          20.0
-        ],
-        "y_mm": [
-          -17.0,
-          -16.5
-        ],
-        "z_mm": [
-          -47.0,
-          -46.3
-        ]
+        "voxels": 123
       }
     ]
   },
-  "paroi_noire_min_mm": 1.43,
+  "paroi_noire_min_mm": 1.0,
   "paroi_noire_min_ou_mm": [
-    16.6,
-    -17.7,
-    -48.4
+    -8.7,
+    -21.4,
+    -47.7
   ],
   "jeux_de_plus_de_0_25_mm": {
     "tunnel_relie_rainure_et_baie": true,
@@ -71,56 +26,11 @@
     "sorties": [
       {
         "ou": "prise USB-C",
-        "voxels": 1197
+        "voxels": 1174
       },
       {
         "ou": "fente de l'interrupteur",
-        "voxels": 146
-      },
-      {
-        "ou": "AUTRE",
-        "x_mm": [
-          -9.3,
-          -6.3
-        ],
-        "y_mm": [
-          -22.3,
-          -21.5
-        ],
-        "z_mm": [
-          -47.0,
-          -46.5
-        ]
-      },
-      {
-        "ou": "AUTRE",
-        "x_mm": [
-          6.2,
-          9.2
-        ],
-        "y_mm": [
-          -22.3,
-          -21.5
-        ],
-        "z_mm": [
-          -47.0,
-          -46.5
-        ]
-      },
-      {
-        "ou": "AUTRE",
-        "x_mm": [
-          19.2,
-          20.2
-        ],
-        "y_mm": [
-          -17.0,
-          -16.3
-        ],
-        "z_mm": [
-          -47.0,
-          -46.0
-        ]
+        "voxels": 147
       }
     ]
   }
