@@ -78,6 +78,22 @@ tourbillon en plus. Ce qui fait marcher la mousse à bosses, c'est la mousse qui
 2 mm (feutre ou mousse, section d'air gardée à 42 mm²) amortit le creux du conduit vers 1 kHz mais perd plus vers 500 à
 800 Hz, soit −0,6 à −1,7 dB(A), et garderait l'humidité du souffle. Conclusion : le conduit lisse, réglé par sa section.
 
+Section retenue : 42 mm² (25 nov. 2026, avec Clément). Balayage fin, 1D, conduit décalé, joint fermé ; 0,2 L/s est le
+débit de la parole, 0,5 L/s une expiration par la bouche entre deux phrases :
+
+| Conduit | Atténuation | Effort à 0,2 L/s | à 0,5 L/s |
+|---|---|---|---|
+| 36 mm² | 28,8 dB(A) | 58 Pa | 255 Pa |
+| 38 mm² | 28,3 dB(A) | 53 Pa | 233 Pa |
+| 40 mm² | 27,8 dB(A) | 50 Pa | 215 Pa |
+| **42 mm²** | **27,4 dB(A)** | **47 Pa** | **200 Pa** |
+| 44 mm² | 26,9 dB(A) | 44 Pa | 186 Pa |
+| 48 mm² | 26,1 dB(A) | 40 Pa | 164 Pa |
+
+La courbe n'a pas de coude : chaque 2 mm² retirés donnent environ 0,5 dB(A) pour 3 Pa de plus. Le critère de confort de
+la cible v3 (50 Pa au plus à 0,2 L/s) s'atteint à 40 mm² ; 42 mm² garde une marge de 3 Pa. L'effort à l'expiration
+(200 Pa) est le point à vérifier au premier essai porté : s'il gêne, 48 mm² rend 36 Pa pour 1,3 dB(A).
+
 ## Temps de calcul
 
 Sur ce Mac (openCFS 26.09 ARM64, 1 cœur) : 0,03 s de résolution par fréquence (6 700 à 15 300 nœuds avec le dispositif). Il faut 17 s pour v3-A complet (deux jeux, 20 bandes, maillage compris) et 3 s pour la validation.

@@ -4,8 +4,8 @@
 
 Les STL d'impression sont remis en position de montage et decoupes en voxels de 0.25 mm.
 On "inonde" ensuite l'air de la chambre : il doit rejoindre l'exterieur, et seulement par l'entree
-du conduit, un tour complet, puis les 4 fentes. Pour les passages, un voxel compte comme plein des
-qu'un de ses 8 sous-voxels l'est : une peau de plastique de 0.13 mm en travers d'une fente est vue
+du conduit, un tour complet, puis les 4 ouvertures de sortie en pente. Pour les passages, un voxel compte comme
+plein des qu'un de ses 8 sous-voxels l'est : une peau de plastique de 0.13 mm en travers d'une fente est vue
 (le 20 nov. 2026, fentes et entree etaient fermees par 0.2 a 0.9 mm de plastique, sans alerte).
 
     cad/guarded.sh -m 4 -t 900 .venv/bin/python cad/leak_check.py [--figure docs/img/v3-etancheite.png]
@@ -37,6 +37,8 @@ NX, NY, NZ = 464, 384, 432
 XC, YC, ZC = (LO[i] + (np.arange(n) + 0.5) * P for i, n in enumerate((NX, NY, NZ)))
 XX, YY = np.meshgrid(XC, YC)
 FRONT, REAR, COVER, RING, COLLAR, GASKET, MOUTH, SLOTS, INLET, TOP = range(1, 11)
+DUCT_MID = 5.08  # milieu du conduit, en offset de la peau (cad/silent_mic_v3_galet.py, DUCT = (3.15, 7.01))
+OUTLET_COS = 1.0 / np.hypot(1.0, 1.3)  # goulottes a 52 deg : section droite = section dans une paroi verticale x OUTLET_COS
 STL = np.dtype([("n", "<f4", 3), ("v", "<f4", (3, 3)), ("a", "<u2")])
 
 
@@ -130,12 +132,12 @@ def add_plugs(mat, axes):
             lab, _ = ndimage.label(air)
             assert lab[iy0, ix0] > 0, c
             mat[k][air & (lab != lab[iy0, ix0])] = MOUTH
-        if -9.4 < c < -3.2:  # gorge d'ombre et debouche des fentes
-            mat[k][air & band(axes, k, -1.2, 2.3) & (YY < 0.6)] = SLOTS
+        if -27.6 < c < -18.4:  # debouche des goulottes de sortie, nez de la levre haute compris
+            mat[k][air & band(axes, k, -1.2, 1.0) & (YY < 0.6)] = SLOTS
         if -18.5 < c < -7.5:  # entree du conduit, dans la cloison conduit / chambre
             mat[k][air & band(axes, k, 9.35, 10.45) & (YY < 0) & (XX > 2) & (XX < 18)] = INLET
         if -19.0 < c < -4.4:  # bouchon d'essai dans le conduit, a midi
-            mat[k][air & band(axes, k, 3.9, 9.8) & (YY > 0) & (np.abs(XX) < 1.5)] = TOP
+            mat[k][air & band(axes, k, 2.3, 7.6) & (YY > 0) & (np.abs(XX) < 1.5)] = TOP
 
 
 def flood(mat, thick, closed):
@@ -147,11 +149,11 @@ def flood(mat, thick, closed):
 def vent_conductivity(mat, lab, chamber, duct, outside, reach=8.0):
     """Conductivite de Rayleigh K (mm) du trajet chambre -> exterieur, par ecoulement potentiel dans l'air
     echantillonne au centre des voxels. Potentiel 1 dans la chambre et 0 dehors, au-dela de reach (mm) de
-    l'entree et des fentes ; parois impermeables. Un conduit droit de section S et de longueur L donne S / L."""
+    l'entree et de la sortie ; parois impermeables. Un conduit droit de section S et de longueur L donne S / L."""
     from scipy.sparse import coo_matrix, diags
     from scipy.sparse.linalg import cg
 
-    k0, k1 = np.searchsorted(ZC, -19.0 - reach), np.searchsorted(ZC, -3.0 + reach)
+    k0, k1 = np.searchsorted(ZC, -28.0 - reach), np.searchsorted(ZC, -3.0 + reach)  # du bas des goulottes au toit du conduit
     m, l = mat[k0:k1], lab[k0:k1]
     air = (m == 0) | (m >= SLOTS)
     near = lambda pid: ndimage.distance_transform_edt(m != pid) * P <= reach
@@ -212,13 +214,13 @@ def run():
     linked = lambda lab: bool(lab[chamber] == lab[outside])
 
     res["tel_que_dessine_la_chambre_rejoint_l_exterieur"] = linked(flood(mat, thick, {MOUTH}))
-    res["fentes_bouchees_chambre_etanche"] = not linked(flood(mat, thick, {MOUTH, SLOTS}))
+    res["sortie_bouchee_chambre_etanche"] = not linked(flood(mat, thick, {MOUTH, SLOTS}))
     # sans epaissir la matiere : un jeu de montage de plus de 0.25 mm entre deux pieces serait un chemin
     res["conduit_bouche_parois_non_epaissies_chambre_etanche"] = not linked(flood(mat, np.zeros_like(thick), {MOUTH, TOP}))
     res["entree_bouchee_chambre_etanche"] = not linked(flood(mat, thick, {MOUTH, INLET}))
     res["conduit_bouche_a_midi_chambre_etanche"] = not linked(flood(mat, thick, {MOUTH, TOP}))
 
-    # temoin : un trou de 1 mm2 perce dans la paroi de 3 mm, fentes bouchees, doit etre detecte
+    # temoin : un trou de 1 mm2 perce dans la paroi de 3 mm, sortie bouchee, doit etre detecte
     k = at(0, 0, -31.0)[0]
     hole = np.zeros_like(thick)
     for kk in range(k - 2, k + 2):
@@ -227,7 +229,7 @@ def run():
     del hole
 
     lab = flood(mat, thick, {MOUTH, SLOTS, INLET})
-    duct = at(0, axes[at(0, 0, -11.3)[0]][1] - 6.85, -11.3)
+    duct = at(0, axes[at(0, 0, -11.3)[0]][1] - DUCT_MID, -11.3)
     assert mat[duct] == TOP
     vol = lambda p: float((lab == lab[p]).sum() * P ** 3 / 1000)
     res["volume_chambre_cm3"] = round(vol(chamber), 1)
@@ -235,25 +237,25 @@ def run():
 
     # sections, sur la matiere echantillonnee au centre des voxels (non epaissie)
     air0 = (mat == 0) | (mat >= SLOTS)
-    stations = [round(1.8 + 0.3 * i, 1) for i in range(8)]  # dans la paroi entre gorge (1.5) et conduit (4.6)
+    stations = [round(0.3 + 0.3 * i, 1) for i in range(8)]  # dans la paroi exterieure, de la peau au conduit (3.15)
     slot = {d: 0.0 for d in stations}
     win = np.zeros_like(air0)
     inl = np.zeros_like(air0)
     sec = np.zeros_like(air0)
     cols = np.abs(XC) < 0.5
     for k, c in enumerate(ZC):
-        if -16.0 < c < -5.0:
+        if -28.0 < c < -16.5:
             side = air0[k] & (YY < 0.6) & (XX < -4)  # hors tunnel des fils
             for d in stations:
                 slot[d] += float((side & band(axes, k, d, d + 0.3)).sum()) * P ** 3 / 0.3
-            win[k] = side & band(axes, k, 2.4, 3.6)
+            win[k] = side & band(axes, k, 1.5, 2.5)
         if -18.5 < c < -7.5:
             inl[k] = air0[k] & band(axes, k, 9.4, 10.4) & (YY < 0) & (XX > 0) & (XX < 20)
         if -19.0 < c < -4.4:
-            sec[k] = air0[k] & band(axes, k, 3.9, 9.8) & (YY > 0) & cols
-    res["fentes_nombre"] = int(ndimage.label(win, structure=np.ones((3, 3, 3)))[1])
-    res["fentes_section_dans_la_paroi_mm2"] = {str(d): round(v, 1) for d, v in slot.items()}
-    res["fentes_section_min_mm2"] = round(min(slot.values()), 1)
+            sec[k] = air0[k] & band(axes, k, 2.3, 7.6) & (YY > 0) & cols
+    res["sortie_ouvertures"] = int(ndimage.label(win, structure=np.ones((3, 3, 3)))[1])
+    res["sortie_section_dans_la_paroi_mm2"] = {str(d): round(v, 1) for d, v in slot.items()}
+    res["sortie_section_droite_min_mm2"] = round(min(slot.values()) * OUTLET_COS, 1)
     res["entree_surface_mm2"] = round(float(inl.sum() * P ** 3 / 1.0), 1)
     res["conduit_section_mm2"] = round(float(sec.sum() * P ** 3 / (cols.sum() * P)), 1)
 
@@ -274,7 +276,7 @@ def run():
     res["event_conductivite_mm"] = {"pieces_imprimees": round(k3d, 4), "modele_1d": round(float(k1d), 4),
                                     "rapport": round(float(k3d / k1d), 3), "inconnues": n}
     res["volume_chambre_modele_1d_cm3"] = v1d  # air + mousse dans la CAO ; les voxels comptent aussi le volume du micro
-    res["event_longueur_equivalente_mm_pour_48_mm2"] = round(res["conduit_section_mm2"] / k3d, 1)
+    res["event_longueur_equivalente_mm"] = round(res["conduit_section_mm2"] / k3d, 1)
     res["resonance_helmholtz_hz"] = {"pieces_imprimees": helmholtz(k3d, res["volume_chambre_cm3"]), "modele_1d": helmholtz(k1d, v1d)}
     return res, mat, lab, axes
 
@@ -285,7 +287,7 @@ def figure(path, mat, lab, axes, res):
     import matplotlib.pyplot as plt
     from matplotlib.colors import ListedColormap
 
-    chamber, duct = lab[at(0, 10, 0)], lab[at(0, axes[at(0, 0, -11.3)[0]][1] - 6.85, -11.3)]
+    chamber, duct = lab[at(0, 10, 0)], lab[at(0, axes[at(0, 0, -11.3)[0]][1] - DUCT_MID, -11.3)]
     outside = lab[0, 0, 0]
     # 0 exterieur, 1 plastique, 2 anneau, 3 joint, 4 chambre, 5 conduit, 6 coussin et visage, 7 poche fermee
     colors = ["#ffffff", "#2d2d2d", "#7db8ff", "#d94a4a", "#cfe6fb", "#ff9a3c", "#e9dcc6", "#bdbdbd"]
@@ -316,7 +318,7 @@ def figure(path, mat, lab, axes, res):
         a.set_xlabel("arrière  <-  axe du corps (mm)  ->  visage")
         a.set_yticks([])
 
-    side(ax[0], -10.0, "Coupe verticale dans une fente de sortie (x = -10 mm)")
+    side(ax[0], -10.0, "Coupe verticale dans une ouverture de sortie (x = -10 mm)")
     side(ax[1], 0.0, "Coupe verticale au milieu (x = 0) : barrage, baie, prise USB-C")
     k = np.abs(ZC + 12.0).argmin()
     ax[2].imshow(cat(mat[k], lab[k]), origin="lower", extent=(XC[0], XC[-1], YC[0], YC[-1]), cmap=cmap, vmin=0, vmax=7, interpolation="nearest")
@@ -326,14 +328,17 @@ def figure(path, mat, lab, axes, res):
     ax[2].set_xticks([])
     ax[2].set_yticks([])
 
+    def y_at(x, z, d):  # ordonnee de la courbe a l'offset d de la peau, a x et z donnes (ellipses reduites)
+        a, b = axes[at(0, 0, z)[0]]
+        return -(b - d) * np.sqrt(max(0.0, 1 - (x / (a - d)) ** 2))
+
     for a, text, xy, xytext in (
             (ax[0], "chambre (air et mousse)", (5, 5), (-20, 6)),
-            (ax[0], "conduit, 48 mm²", (-11.5, -26.2), (-56, -17)),
-            (ax[0], "fente de sortie", (-10.6, -29.8), (-56, -34)),
-            (ax[0], "gorge d'ombre : borgne,\n1,5 mm de profondeur", (-6.3, -32.3), (-30, -45)),
+            (ax[0], "conduit, 42 mm²", (-11.3, y_at(-10, -11.3, DUCT_MID)), (-56, -17)),
+            (ax[0], "sortie en pente vers le dos :\nrien ne s'y dépose", (-22.5, y_at(-10, -22.5, 1.0)), (-56, -34)),
             (ax[0], "anneau lumineux", (-1.3, -31.8), (8, -45)),
             (ax[0], "joint mousse", (2.7, -25.5), (14, -38)),
-            (ax[0], "en haut : conduit fermé,\nni fente ni gorge", (-11.5, 26.2), (-56, 40)),
+            (ax[0], "en haut : conduit fermé,\nsans sortie", (-11.3, -y_at(-10, -11.3, DUCT_MID)), (-56, 40)),
             (ax[0], "coussin collé et visage", (38, 38), (20, 45)),
             (ax[1], "barrage : pas de conduit ici", (-11, -26), (-56, -12)),
             (ax[1], "tunnel des fils LED\n(baie vers rainure LED)", (-20, -28.2), (-56, -40)),
@@ -343,14 +348,14 @@ def figure(path, mat, lab, axes, res):
             (ax[1], "plaque du micro", (-5, -9.0), (4, 13)),
             (ax[2], "entrée du conduit", (9.5, -22.6), (14, -8)),
             (ax[2], "barrage", (0, -27.5), (-8, -14)),
-            (ax[2], "4 fentes, 1 cm² en tout", (-27, -22.5), (-34, 2)),
+            (ax[2], "au-dessus des 4 sorties en pente\n(plus bas, coupe de gauche)", (-27, y_at(-27, -12, DUCT_MID)), (-40, 2)),
             (ax[2], "conduit : un tour complet\navant de sortir", (0, 26.2), (-16, 12)),
             (ax[2], "tunnel des fils", (0, -29.3), (14, -39.5))):
         a.annotate(text, xy=xy, xytext=xytext, **note)
     fig.suptitle("Silent Mic v3 : ce qui est ouvert et ce qui ne l'est pas (voxels de 0,25 mm des fichiers à imprimer). "
-                 f"Fentes bouchées, la chambre est étanche : {'oui' if res['fentes_bouchees_chambre_etanche'] else 'NON'}.", fontsize=12)
+                 f"Sortie bouchée, la chambre est étanche : {'oui' if res['sortie_bouchee_chambre_etanche'] else 'NON'}.", fontsize=12)
     handles = [plt.Rectangle((0, 0), 1, 1, fc=colors[i], ec="#888888") for i in (1, 4, 5, 0, 2, 3, 6, 7)]
-    fig.legend(handles, ["plastique imprimé", "chambre", "conduit et fentes", "air extérieur", "anneau lumineux", "joint mousse",
+    fig.legend(handles, ["plastique imprimé", "chambre", "conduit et sortie", "air extérieur", "anneau lumineux", "joint mousse",
                          "coussin et visage", "poche fermée"], loc="lower center", ncol=8, fontsize=9.5, frameon=False)
     fig.tight_layout(rect=(0, 0.045, 1, 0.95))
     Path(path).parent.mkdir(parents=True, exist_ok=True)
@@ -366,7 +371,7 @@ def main():
     print(json.dumps(res, indent=2, ensure_ascii=False))
     if a.figure:
         figure(a.figure, mat, lab, axes, res)
-    bad = [k for k in ("tel_que_dessine_la_chambre_rejoint_l_exterieur", "fentes_bouchees_chambre_etanche", "entree_bouchee_chambre_etanche",
+    bad = [k for k in ("tel_que_dessine_la_chambre_rejoint_l_exterieur", "sortie_bouchee_chambre_etanche", "entree_bouchee_chambre_etanche",
                        "conduit_bouche_a_midi_chambre_etanche", "conduit_bouche_parois_non_epaissies_chambre_etanche",
                        "temoin_trou_1mm2_detecte") if not res[k]]
     if res["demontage_capot_surface_accrochee_mm2"] > 0.5:
@@ -375,7 +380,7 @@ def main():
         bad.append("masse acoustique de l'event : le modele 1D ne decrit pas les pieces imprimees")
     if not 0.94 <= res["volume_chambre_cm3"] / res["volume_chambre_modele_1d_cm3"] <= 1.06:
         bad.append("volume de la chambre : le modele 1D ne decrit pas les pieces imprimees")
-    if res["fentes_nombre"] != 4 or res["fentes_section_min_mm2"] < 90 or res["entree_surface_mm2"] < 43 or not 44 <= res["conduit_section_mm2"] <= 52:
+    if res["sortie_ouvertures"] != 4 or res["sortie_section_droite_min_mm2"] < 95 or res["entree_surface_mm2"] < 43 or not 38 <= res["conduit_section_mm2"] <= 46:
         bad.append("sections")
     if bad:
         raise SystemExit("ECHEC : " + ", ".join(bad))

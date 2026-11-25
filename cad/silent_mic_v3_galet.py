@@ -105,27 +105,31 @@ SEAT_OPENING = tuple(f - 2 * LEDGE for f in cp.flange_outer())
 OPENING_CHAMFER = (2.5, 1.0)  # largeur, hauteur : sous le bord de l'ouverture, face au plateau en impression (pente libre)
 
 # ---------- conduit annulaire ----------
-DUCT = (4.6, 9.1)  # offsets radiaux : 4.5 mm
-DUCT_H = 12.13  # 9.2 de flanc droit + toit en pointe 2.9 (faite vif) : 48 mm2, imprimable sans support
+# Conduit de 42 mm2, decale vers l'exterieur (Clement, 25 nov. 2026) : paroi vers la chambre du micro de 3.7 mm au lieu
+# de 1.6, paroi exterieure de 3 mm comme autour de la chambre (3.15 dans le plan de la section, 3.1 en normale a la
+# peau qui penche). 42 mm2 : la plus petite section qui reste sous 50 Pa a
+# 0.2 L/s (docs/v3-simulation.md) ; bosses, chicanes et garnissage coutent plus qu'ils ne rapportent.
+DUCT = (3.15, 7.01)  # offsets radiaux : 3.86 mm
+DUCT_H = 12.13  # 9.62 de flanc droit + toit en pointe 2.51 (faite vif) : 42 mm2, imprimable sans support
 DUCT_TOP = -5.2  # 3 mm sous la rainure LED (exterieur)
 DUCT_BOTTOM = DUCT_TOP - DUCT_H
 DUCT_APEX = 0.0  # faite vif : un plat, meme de 0.3 mm, est un plafond qu'Orca supporte
 STEEP = 1.3  # pente des surplombs internes : 1.3 en hauteur pour 1 en largeur (38 deg)
 DUCT_ROOF_H = STEEP * ((DUCT[1] - DUCT[0]) - DUCT_APEX) / 2
-DAM = 9.0  # barrage a 6 h, porte aussi le tunnel des fils
+DAM = 9.4  # barrage a 6 h, porte aussi le tunnel des fils : 3.1 mm de paroi de chaque cote du tunnel (2.9 a 9.0)
 INLET_D = 8.0  # largeur de l'entree (voir INLET_W)
 INLET_Z = DUCT_BOTTOM + 4.5  # repere de hauteur de l'entree (debut du controle de passage)
-SHADOW_DEPTH = 1.5
-SHADOW_Z = (-RING_H - 1.2 - 5.0, -RING_H - 1.2)  # 5 mm visibles, 1.2 mm derriere l'anneau
-SHADOW_FLOOR_TOP = SHADOW_Z[1] - 1.3 * 1.5  # fond vertical, puis flanc haut a 38 deg
-# les 4 fentes tiennent sous la gorge (moitie basse) : a 10.5 + 2.0, la derniere depassait 9 h, a moitie borgne
-SLOT_LEN, SLOT_GAP, SLOT_COUNT = 9.3, 1.5, 4
-# Fentes horizontales (Clement, 25 nov. 2026) : inclinees a 38 deg, elles descendaient de la gorge vers le conduit, et
-# l'appareil pose debout sur le dos y laissait glisser miettes et poussiere. Horizontales, rien n'y entre par gravite et
-# leur passage est toute la fenetre (2.75 mm au lieu de 1.68). Leur plafond s'imprime en pont de 9.3 mm ; la coque se
-# tranche avec les supports "sur plateau uniquement" : aucun support ne peut se poser dans une fente.
-SLOT_STEEP = 0.0
-SLOT_WINDOW = (SHADOW_Z[0], SHADOW_FLOOR_TOP - 0.3)  # fenetres dans le fond vertical seulement, du bas de la gorge
+# Sortie de l'event en goulottes (Clement, 25 nov. 2026) : sous chaque ouverture, le plancher du conduit s'ouvre et le
+# conduit continue, toute sa largeur, en pente a 52 deg (STEEP) jusqu'a la peau. Pose debout sur le dos, ce qui y tombe
+# ressort seul ; plus de gorge d'ombre ni de rebord. Les nervures entre ouvertures portent la levre du haut : une
+# ouverture unique de 42 mm l'imprimerait en pont courbe de 42 mm sans appui (supports "sur plateau uniquement"). Bouts
+# arrondis, levre du haut arrondie en quart de cercle (OUTLET_NOSE) : rien de tranchant.
+OUTLET_LEN, OUTLET_RIB, OUTLET_COUNT = 9.3, 1.5, 4
+OUTLET_NOSE = 1.0
+# goulotte plus large que le conduit de 0.2 mm de chaque cote : ses faces croisent franchement les parois du conduit
+# (aretes communes au plancher, la coque n'etait plus un solide valide avec le conduit a 3.15 mm)
+OUTLET_WIDEN = 0.2
+OUTLET_SIN = STEEP / math.hypot(1.0, STEEP)  # section droite de la goulotte = largeur horizontale x OUTLET_SIN
 CORBEL_TOP = DUCT_BOTTOM - 1.6  # plancher du conduit garde 1.6 mm
 CORBEL_BOTTOM = CORBEL_TOP - CORBEL
 
@@ -373,7 +377,7 @@ def build_duct():
 
 
 INLET_S = DAM / 2 + 1.0 + INLET_D / 2  # cote x > 0 du barrage
-SLOT_S = [-(DAM / 2 + 1.0 + SLOT_LEN / 2 + i * (SLOT_LEN + SLOT_GAP)) for i in range(SLOT_COUNT)]
+OUTLET_S = [-(DAM / 2 + 1.0 + OUTLET_LEN / 2 + i * (OUTLET_LEN + OUTLET_RIB)) for i in range(OUTLET_COUNT)]
 
 
 INLET_W, INLET_RECT = 8.0, 3.5
@@ -405,23 +409,67 @@ def build_inlet():
     return place(port, t)
 
 
-def build_slots():
-    """Fentes inclinees, du fond vertical de la gorge (pas de son flanc) jusque dans le conduit."""
-    h = SLOT_WINDOW[1] - SLOT_WINDOW[0]
+def outlet_lip():
+    """Hauteurs de la levre haute : arete vive d'origine, bas du nez, haut du nez sur la peau."""
+    z_lip = DUCT_BOTTOM - STEEP * (DUCT[0] - OUTLET_WIDEN)
+    return z_lip, z_lip + STEEP * OUTLET_NOSE, z_lip + (STEEP + 1.0) * OUTLET_NOSE
+
+
+def outlet_profile():
+    """Goulotte et nez de la levre haute, tout le tour (offsets depuis la peau locale) ; build_outlet() en garde
+    les ouvertures. Goulotte : entre le plafond U(z) = DUCT[0] - OUTLET_WIDEN + (z - DUCT_BOTTOM) / STEEP et le
+    plancher L(z) = DUCT[1] + OUTLET_WIDEN + (z - DUCT_BOTTOM) / STEEP, du plancher du conduit jusqu'au-dela de la
+    peau. Nez : la levre haute (un coin de 38 deg entre peau et plafond) devient un quart de cercle, vertical sur la
+    peau, horizontal au plafond."""
+    o0, o1, zb, k = DUCT[0] - OUTLET_WIDEN, DUCT[1] + OUTLET_WIDEN, DUCT_BOTTOM, STEEP
+    z_lo = zb - k * (o1 + 1.0)
+    ceil = loft_wires([(z_lo, o0 - o1 - 1.0), (zb, o0), (zb + 0.5, DUCT[0] + 0.2)])
+    floor = loft_wires([(z_lo - 1.0, -1.0 - 1.0 / k), (zb, o1), (zb + 1.0, DUCT[1] - 0.4)])
+    chute = ceil.cut(floor)
+    r = OUTLET_NOSE
+    z_lip, z_t, z_s = outlet_lip()
+    # le nez deborde de 0.3 mm dans la goulotte sous son point bas : aucune face commune avec le plafond ; il finit 0.08 mm
+    # hors de la peau, qu'il croise a 23 deg : tangent a la peau, le maillage de la coque s'ouvrait a son bord
+    arc = [(z_s - r * math.sin(a), r * (1 - math.cos(a)) - 0.08) for a in (math.pi / 2 * i / 8 for i in range(8, -1, -1))]
+    keep = loft_wires([(z_lip - 1.6, -1.1), (z_lip - 0.6, -1.1), (z_lip, 0.3), (z_t - 0.25, r - 0.25 / k + 0.3)] + arc
+                      + [(z_s + 0.6, -1.1), (z_s + 1.6, -1.1)])
+    nose = loft_wires([(z_lip - 0.6, -1.0), (z_s + 0.6, -1.0)]).cut(keep)
+    return chute.union(nose)
+
+
+def outlet_frames():
+    """Axe de chaque goulotte (de la peau au plancher du conduit) et sa tangente, en coordonnees globales."""
+    o_mid, zb = sum(DUCT) / 2, DUCT_BOTTOM
     out = []
-    for s in SLOT_S:
+    for s in OUTLET_S:
         t = t_at(CENTER_TABLE, s)
-        r_floor = SHADOW_DEPTH + skin_inset(t, SLOT_WINDOW[1])  # fond de la gorge, en haut de la fenetre
-        hi = lambda r: SLOT_WINDOW[1] - SLOT_STEEP * (r - r_floor)
-        r0 = r_floor - 0.05
-        # paroi du conduit au plus loin, plus la fleche de la courbe ; le haut de la fenetre arrive dans le toit en pente
-        # du conduit, plus loin de la peau : la fente va jusque-la
-        r1 = DUCT[0] + skin_inset(t, DUCT_BOTTOM) + 0.6 + max(0.0, (SLOT_WINDOW[1] - (DUCT_TOP - DUCT_ROOF_H)) / STEEP)
-        prof = (cq.Workplane("YZ", origin=(-SLOT_LEN / 2, 0, 0))
-                .polyline([(r0, hi(r0) - h), (r1, hi(r1) - h), (r1, hi(r1)), (r0, hi(r0))]).close().extrude(SLOT_LEN))
-        out.append(place(prof, t))
-    # garde : jamais sous le plancher du conduit
-    return union_all(out).intersect(box(-70, 70, -70, 70, DUCT_BOTTOM, 5))
+        p = cq.Vector(*section_point(t, 0.0, zb - STEEP * o_mid), zb - STEEP * o_mid)
+        q = cq.Vector(*section_point(t, o_mid, zb), zb)
+        tx, ty = eq_point(t, 0.0)[1]
+        out.append((p, q, cq.Vector(tx, ty, 0.0)))
+    return out
+
+
+def build_outlet():
+    """Ouvertures de la sortie : la goulotte et le nez gardes dans un stade incline le long de la goulotte (bouts
+    arrondis), plus large que la goulotte cote plafond pour garder le nez."""
+    h = (DUCT[1] - DUCT[0] + 2 * OUTLET_WIDEN) * OUTLET_SIN / 2  # demi-epaisseur droite de la goulotte
+    z_lip, _, z_s = outlet_lip()
+    nose = (z_s - z_lip) * math.cos(math.atan(STEEP))  # le nez depasse du plafond de cette distance, en section droite
+    margin = 0.3
+    width = 2 * h + nose + 2 * margin
+    prof = outlet_profile().intersect(box(-70, 70, -70, 0, z_lip - 10, DUCT_BOTTOM + 2))
+    out = []
+    for p, q, tan in outlet_frames():
+        axis = (q - p).normalized()
+        x_dir = (tan - axis * tan.dot(axis)).normalized()
+        v = axis.cross(x_dir)
+        v = v if v.z > 0 else -v  # vers le plafond
+        origin = (p + q) * 0.5 + v * (nose / 2)
+        plane = cq.Plane(origin=origin, xDir=x_dir, normal=axis)
+        stadium = cq.Workplane(plane).slot2D(OUTLET_LEN, width).extrude((q - p).Length / 2 + 3.0, both=True)
+        out.append(prof.intersect(stadium))
+    return union_all(out)
 
 
 def wall_section(tool, d, z0, z1, t=0.1):
@@ -429,17 +477,6 @@ def wall_section(tool, d, z0, z1, t=0.1):
     aire sur une surface verticale, mesuree dans une bande d'epaisseur t. Les deux bornes sont reglees
     sur la meme hauteur que la paroi mesuree : ring() les regle sur deux hauteurs et fausse l'epaisseur."""
     return (vol(tool.intersect(band(d, z0, z1))) - vol(tool.intersect(band(d + t, z0, z1)))) / t
-
-
-def build_shadow_groove():
-    """Gorge d'ombre : flanc bas en pente, fond vertical, flanc haut a 38 deg (la coque s'imprime face arriere
-    en bas ; un rebord plat en haut serait un surplomb sur la peau visible)."""
-    z_ch, z_top = SHADOW_FLOOR_TOP, SHADOW_Z[1] + 0.3
-    # bas en pente vers l'exterieur, comme le haut : pose debout sur le dos, rien ne s'y depose (Clement, 25 nov. 2026)
-    z_bot = SHADOW_Z[0] - STEEP * (SHADOW_DEPTH + 0.3)
-    skin = loft_wires([(z_bot, -1.0), (z_top, -1.0)])
-    keep = loft_wires([(z_bot - 1.0, -1.1), (z_bot, -0.3), (SHADOW_Z[0], SHADOW_DEPTH), (z_ch, SHADOW_DEPTH), (z_top, -0.3), (z_top + 1.0, -1.1)])
-    return skin.cut(keep.intersect(box(-70, 70, -70, 70, z_bot - 1.0, z_top))).intersect(box(-60, 60, -60, 0, -30, 5))
 
 
 # ================= joint, vis, tunnel =================
@@ -624,8 +661,8 @@ def build_rear(rear_env):
     shell = shell.union(build_floor_features()).union(build_mic_mount())
     shell = shell.union(ring(TONGUE[0], TONGUE[1], -0.5, TONGUE[2]))
     log("  ajouts arriere", t)
-    shell = shell.cut(build_duct()).cut(build_inlet()).cut(build_slots()).cut(build_shadow_groove())
-    log("  conduit, entree, fentes, gorge", t)
+    shell = shell.cut(build_duct()).cut(build_inlet()).cut(build_outlet())
+    log("  conduit, entree, sortie", t)
     shell = shell.cut(ring(-1.0, REBATE, -RING_H, 1)).cut(ring(LED_CH[0], LED_CH[1], -LED_CH[2], 1))
     shell = shell.cut(rear_screw_cut()).cut(build_tunnel())
     shell = shell.cut(bay_cut()).cut(cover_pilots())
@@ -876,23 +913,24 @@ def ellipse_arc_length(a, b, d, t0=-math.pi / 2, t1=1.5 * math.pi, steps=4000):
     return out
 
 
-def duct_metrics(duct):
+def duct_metrics(duct, outlet):
     zm = (DUCT_TOP + DUCT_BOTTOM) / 2
     a, b = outer_profile(s_of(zm))
     lap = ellipse_arc_length(a, b, sum(DUCT) / 2)
     channel = lap - DAM
-    # entree et fentes reperees en abscisse sur la section du joint, ramenees au tour moyen
+    # entree et sorties reperees en abscisse sur la section du joint, ramenees au tour moyen
     k = lap / CENTER_TABLE[-1][0]
-    slot_c = sum(SLOT_S) / len(SLOT_S)
-    inlet_to_first = lap - k * (INLET_S - SLOT_S[0])
-    inlet_to_centroid = lap - k * (INLET_S - slot_c)
+    out_c = sum(OUTLET_S) / len(OUTLET_S)
+    inlet_to_first = lap - k * (INLET_S - OUTLET_S[0])
+    inlet_to_centroid = lap - k * (INLET_S - out_c)
     area = vol(duct.intersect(box(-0.5, 0.5, 0, 60, -40, 5))) / 1.0
+    # section droite des goulottes : coupe horizontale juste sous le plancher du conduit, ramenee a la normale de la pente
+    floor_cut = vol(outlet.intersect(box(-70, 70, -70, 0, DUCT_BOTTOM - 0.25, DUCT_BOTTOM - 0.15))) / 0.1
     return {"section_mm2": round(area, 2), "lap_mm": round(lap, 1), "channel_dam_to_dam_mm": round(channel, 1),
-            "inlet_to_first_slot_mm": round(inlet_to_first, 1), "inlet_to_slot_centroid_mm": round(inlet_to_centroid, 1),
-            "inlet_area_mm2": round(INLET_AREA, 1),
-            "slot_window_mm2": round(SLOT_COUNT * SLOT_LEN * (SLOT_WINDOW[1] - SLOT_WINDOW[0]), 1),
-            "slot_min_section_mm2": round(SLOT_COUNT * SLOT_LEN * (SLOT_WINDOW[1] - SLOT_WINDOW[0]) / math.hypot(1, SLOT_STEEP), 1),
-            "dam_mm": DAM}
+            "inlet_to_first_outlet_mm": round(inlet_to_first, 1), "inlet_to_outlet_centroid_mm": round(inlet_to_centroid, 1),
+            "inlet_area_mm2": round(INLET_AREA, 1), "outlet_count": OUTLET_COUNT,
+            "outlet_floor_opening_mm2": round(floor_cut, 1), "outlet_min_section_mm2": round(floor_cut * OUTLET_SIN, 1),
+            "outlet_path_mm": round(sum(DUCT) / 2 / math.cos(math.atan(STEEP)), 2), "dam_mm": DAM}
 
 
 def min_distance(a, b):
@@ -1010,51 +1048,52 @@ def export():
 
     # --- conduit
     t = time.perf_counter()
-    duct = build_duct()
-    dm = duct_metrics(duct)
+    duct, outlet = build_duct(), build_outlet()
+    dm = duct_metrics(duct, outlet)
     m["duct"] = dm
     print("conduit", dm, flush=True)
-    assert 46.0 <= dm["section_mm2"] <= 50.0, dm
+    assert 40.0 <= dm["section_mm2"] <= 44.0, dm
     assert dm["channel_dam_to_dam_mm"] >= 175.0, dm
-    assert dm["inlet_area_mm2"] >= 48.0 and dm["slot_window_mm2"] >= 100.0 and DAM >= 5.0
-    assert dm["slot_min_section_mm2"] >= 1.25 * dm["section_mm2"], dm
+    assert dm["inlet_area_mm2"] >= 48.0 and DAM >= 5.0
+    # sortie large : vitesse d'air faible (pas de sifflement) et masse acoustique portee par le conduit seul
+    assert dm["outlet_min_section_mm2"] >= max(100.0, 1.25 * dm["section_mm2"]), dm
     # ouvertures reelles : les outils doivent traverser les parois, mesure sur les surfaces qu'ils percent
     z_flat = DUCT_TOP - DUCT_ROOF_H
-    slots, inlet = build_slots(), build_inlet()
-    # la gorge n'existe que sous y = 0 : une fente qui depasse au-dessus y est borgne
-    op = {"fentes_au_fond_de_gorge": wall_section(slots.intersect(box(-70, 70, -70, 0, -30, 5)), SHADOW_DEPTH, SHADOW_Z[0] - 1.0, SHADOW_FLOOR_TOP),
-          # fentes horizontales : le haut de leur fenetre debouche par le toit en pente du conduit, plus loin de la peau que
-          # sa paroi droite ; on mesure la ou toute la hauteur de la fenetre est deja dans le conduit
-          "fentes_a_la_paroi_du_conduit": wall_section(slots, DUCT[0] + max(0.0, (SLOT_WINDOW[1] - z_flat) / STEEP) + 0.05, DUCT_BOTTOM, SLOT_WINDOW[1] + 0.5),
+    inlet = build_inlet()
+    z_lip, _, z_s = outlet_lip()
+    op = {"sortie_a_la_peau": wall_section(outlet, 0.0, z_lip - 8.0, z_s + 1.0),
+          "sortie_au_plancher_du_conduit": dm["outlet_floor_opening_mm2"],
           "entree_a_la_paroi_du_conduit": wall_section(inlet, DUCT[1], DUCT_BOTTOM - 1.0, z_flat),
           "entree_a_la_paroi_de_la_chambre": wall_section(inlet, CAV_JOINT - 0.1, CORBEL_TOP, 0.5)}
     dm["wall_openings_mm2"] = {k: round(v, 1) for k, v in op.items()}
     print("ouvertures", dm["wall_openings_mm2"], flush=True)
-    # les parois penchent avec la peau : la fente y decoupe une fenetre un peu plus haute que sa hauteur verticale
-    assert all(0.95 <= op[k] / dm["slot_window_mm2"] <= 1.25 for k in ("fentes_au_fond_de_gorge", "fentes_a_la_paroi_du_conduit")), op
+    # a la peau, la goulotte coupee en biais et le nez donnent une ouverture plus grande que sa section droite
+    assert op["sortie_a_la_peau"] >= 1.2 * dm["outlet_min_section_mm2"], op
     assert all(abs(op[k] / dm["inlet_area_mm2"] - 1) < 0.05 for k in ("entree_a_la_paroi_du_conduit", "entree_a_la_paroi_de_la_chambre")), op
-    # et ils debouchent dans les vides : un volume commun franc avec le conduit, la gorge et la chambre
-    assert vol(slots.intersect(duct)) > 20.0 and vol(slots.intersect(build_shadow_groove())) > 0.5, "fentes borgnes"
+    # et ils debouchent dans les vides : un volume commun franc avec le conduit et la chambre
+    assert vol(outlet.intersect(duct)) > 20.0, "sortie borgne"
     assert vol(inlet.intersect(duct)) > 20.0 and vol(inlet.intersect(rear_cavity_tool())) > 20.0, "entree borgne"
     assert vol(duct.intersect(box(-DAM / 2 + 0.01, DAM / 2 - 0.01, -60, 0, -30, 5))) < 1e-6, "barrage"
-    if dm["inlet_to_slot_centroid_mm"] < 175.0:
-        warn.append(f"longueur entree -> centre des fentes {dm['inlet_to_slot_centroid_mm']} mm < 175 (canal barrage a barrage {dm['channel_dam_to_dam_mm']})")
+    if dm["inlet_to_outlet_centroid_mm"] < 175.0:
+        warn.append(f"longueur entree -> centre de la sortie {dm['inlet_to_outlet_centroid_mm']} mm < 175 (canal barrage a barrage {dm['channel_dam_to_dam_mm']})")
     log("conduit", t)
 
     # --- parois minimales (distances 3D entre volumes d'air)
     t = time.perf_counter()
     env = front_env.union(rear_env)
     outside = box(-90, 90, -90, 90, Z_END - 10, Z_SEAT - 1.5).cut(env)
-    # fentes exclues des deux cotes : la distance mesuree est alors leur longueur
-    outside = union_all([outside, build_shadow_groove(), ring(0.0, REBATE, -RING_H, 0.01),
+    # sortie exclue des deux cotes : la distance mesuree est alors la paroi autour d'elle
+    outside = union_all([outside, ring(0.0, REBATE, -RING_H, 0.01),
                          ring(LED_CH[0], LED_CH[1], -LED_CH[2], 0.01), build_tunnel(), bay_cut().intersect(env)])
     cav_chk = cav.intersect(box(-90, 90, -90, 90, -80, Z_SEAT - 4.5))
     walls = {"cavity_to_outside": min_distance(cav_chk, outside), "duct_to_outside": min_distance(duct, outside),
-             "duct_to_cavity": min_distance(duct, cav.cut(build_inlet()))}
+             "duct_to_cavity": min_distance(duct, cav.cut(inlet)), "outlet_to_cavity": min_distance(outlet, cav.cut(inlet))}
     m["min_wall_mm"] = {k: round(v, 2) for k, v in walls.items()}
     if walls["cavity_to_outside"] < 3.0 - 0.05 or walls["duct_to_outside"] < 3.0 - 0.05:
         fail.append(f"paroi < 3 mm : {m['min_wall_mm']}")
-    assert walls["duct_to_cavity"] >= 1.6 - 0.05, m["min_wall_mm"]
+    # paroi entre le micro et l'event : le son qui la traverse court-circuite le conduit
+    if walls["duct_to_cavity"] < CAV_JOINT - DUCT[1] - 0.05 or walls["outlet_to_cavity"] < 3.0 - 0.05:
+        fail.append(f"paroi micro / event trop fine : {m['min_wall_mm']}")
     log("parois", t)
 
     # --- micro
@@ -1208,7 +1247,7 @@ def export():
         assert abs(pb.zmin) < 0.05 and pb.xlen <= 180 and pb.ylen <= 180 and pb.zlen <= 180, (n, pb.zmin)
         cq.exporters.export(p, str(out / f"{stem}-{n}.stl"), tolerance=LIN_TOL, angularTolerance=ANG_TOL)
         cp.clean_stl(out / f"{stem}-{n}.stl")
-    air = cav.union(duct).union(build_inlet()).union(build_slots())
+    air = cav.union(duct).union(build_inlet()).union(build_outlet())
     air_written = cp.export_step(air, out / f"{stem}-air-volume.step")
     # corps de reference : meme controle de relecture (joint, filament LED et fond de mousse passent en NURBS)
     with tempfile.TemporaryDirectory() as tmp:

@@ -112,23 +112,23 @@
           },
           {
             "type": "duct",
-            "width": 10.71,
-            "height": 4.5,
-            "length": 146.5,
-            "_doc": "longueur equivalente calee sur l'ecoulement potentiel dans les pieces imprimees (cad/leak_check.py, conductivite 0.3035 mm) ; trajet de l'entree au centre des fentes : 155.7 mm",
+            "width": 10.92,
+            "height": 3.86,
+            "length": 158.2,
+            "_doc": "longueur equivalente calee sur l'ecoulement potentiel dans les pieces imprimees (cad/leak_check.py, conductivite 0.2514 mm) ; trajet de l'entree au centre de la sortie : 166.4 mm ; section 42.17 mm2 (3,86 mm de large, decale vers l'exterieur le 25 nov. 2026)",
             "minor_k": 1.5
           },
           {
             "type": "duct",
-            "width": 9.3,
-            "height": 2.75,
-            "length": 3.9,
+            "width": 8.43,
+            "height": 3.38,
+            "length": 8.33,
             "count": 4,
             "minor_k": 1.5,
-            "_doc": "4 fentes horizontales vers la gorge d'ombre (25 nov. 2026, contre les miettes, appareil pose debout) : 9,3 x 2,75 mm, 3,1 a 4,7 mm de traversee selon la hauteur (le haut debouche par le toit en pente du conduit), 102,3 mm2"
+            "_doc": "4 goulottes de sortie a 52 deg sous le plancher du conduit (25 nov. 2026, contre les miettes, appareil pose debout) : section droite 3.38 mm, bouts arrondis, 114.0 mm2 en tout, longueur sur l'axe 8.33 mm ; ouverture a la peau 233.7 mm2"
           }
         ],
-        "outlet_area_mm2": 102.3
+        "outlet_area_mm2": 114.0
       },
       "seal": {
         "_cushion": "coussin Brainwavz mesure par Clement le 23 nov. 2026 : 108 x 81, ouverture 72,6 x 48,5, 28 mm, environ 15 mm comprime ; paroi souple exposee = integrale sur le perimetre de l'ouverture de (15 mm comprime - hauteur locale du col), 961 mm2 avec le col de 10 mm ; depuis le 24 nov. 2026, assise R53 et col de 20 mm au-dessus d'elle partout (cp.BODY_SEAT) : le col depasse partout le coussin comprime, plus de paroi souple exposee ; raideur laissee a la valeur du superviseur",

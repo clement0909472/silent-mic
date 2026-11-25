@@ -93,9 +93,9 @@ Sept contrôles tournent sur les fichiers produits eux-mêmes, pas sur l'intenti
 - **Montage et sortie du micro.** `export()` translate le capot avant et la trappe le long de leur direction de pose, puis le micro coiffé de sa bonnette **par la bouche, capot et col en place** (tiré droit sur 60 mm, et décollé de 4 mm vers l'avant), et refuse le modèle si une pièce rencontre quoi que ce soit en chemin. `cad/leak_check.py` refait ce contrôle sur les fichiers d'impression, colonne par colonne : rien de ce qui reste en place ne doit se trouver au-dessus de la matière du capot.
 - **Vis.** `export()` mesure la matière entre chaque perçage et ce qu'il ne doit pas crever : 7,1 mm jusqu'à l'extérieur et 1,9 mm jusqu'à la rainure du joint côté capot, 5,6 mm jusqu'à l'extérieur et 3,5 mm jusqu'au conduit côté coque, 5,2 mm entre les avant-trous de la trappe et la chambre. Il vérifie aussi qu'un tournevis du diamètre de la tête atteint chaque vis sans toucher ni le capot ni le manchon, et qu'une clé de 2 mm passe à travers le col en place.
 - **STEP relisibles.** Chaque STEP est relu juste après son écriture et refusé s'il ne redonne pas les mêmes solides fermés (`export_step`). `cad/check_exports.py` refuse aussi un STEP sans solide.
-- **Ouvertures mesurées dans la CAO.** `export()` mesure la section de l'entrée et des fentes là où elles percent les parois, et refuse un modèle où elles ne débouchent pas.
+- **Ouvertures mesurées dans la CAO.** `export()` mesure la section de l'entrée et de la sortie là où elles percent les parois, et refuse un modèle où elles ne débouchent pas, une sortie de moins de 100 mm² en section droite, ou une paroi de moins de 3 mm entre l'évent et la chambre du micro.
 
-![Coupes du modèle : chambre, conduit, fentes, baie](img/v3-etancheite.png)
+![Coupes du modèle : chambre, conduit, sortie, baie](img/v3-etancheite.png)
 
 | Contrôle d'étanchéité | Résultat |
 |---|---|
@@ -151,7 +151,7 @@ Cette dernière retouche (plaque abaissée, pied évasé) n'a pas été relue pa
 
 Non retenus : le recouvrement du ruban LED et du manchon de mousse avec les coques vient des maillages grossiers de la visionneuse, les solides exacts ne se recoupent pas.
 
-**À vérifier sur la pièce imprimée.** Souffler dans l'entrée du conduit (dans la paroi de la coque arrière, en bas à droite quand on la regarde de face) : l'air doit sortir par les 4 fentes, sous l'anneau. Une fente obstruée par un fil se dégage avec une lame fine.
+**À vérifier sur la pièce imprimée.** Souffler dans l'entrée du conduit (dans la paroi de la coque arrière, en bas à droite quand on la regarde de face) : l'air doit sortir par les 4 ouvertures en pente, sous le conduit, côté dos. Une ouverture obstruée par un fil se dégage avec une lame fine.
 
 ### Troisième relecture indépendante, sur l'assemblage vissé (23 novembre 2026)
 

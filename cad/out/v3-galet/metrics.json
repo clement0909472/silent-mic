@@ -28,26 +28,29 @@
     "z": -4.2
   },
   "duct": {
-    "section_mm2": 48.18,
-    "lap_mm": 191.2,
-    "channel_dam_to_dam_mm": 182.2,
-    "inlet_to_first_slot_mm": 171.7,
-    "inlet_to_slot_centroid_mm": 155.7,
+    "section_mm2": 42.17,
+    "lap_mm": 202.3,
+    "channel_dam_to_dam_mm": 192.9,
+    "inlet_to_first_outlet_mm": 182.4,
+    "inlet_to_outlet_centroid_mm": 166.4,
     "inlet_area_mm2": 48.8,
-    "slot_window_mm2": 102.3,
-    "slot_min_section_mm2": 102.3,
-    "dam_mm": 9.0,
+    "outlet_count": 4,
+    "outlet_floor_opening_mm2": 143.8,
+    "outlet_min_section_mm2": 114.0,
+    "outlet_path_mm": 8.33,
+    "dam_mm": 9.4,
     "wall_openings_mm2": {
-      "fentes_au_fond_de_gorge": 102.6,
-      "fentes_a_la_paroi_du_conduit": 102.7,
+      "sortie_a_la_peau": 233.7,
+      "sortie_au_plancher_du_conduit": 143.8,
       "entree_a_la_paroi_du_conduit": 48.9,
       "entree_a_la_paroi_de_la_chambre": 48.9
     }
   },
   "min_wall_mm": {
     "cavity_to_outside": 3.0,
-    "duct_to_outside": 2.97,
-    "duct_to_cavity": 1.67
+    "duct_to_outside": 3.0,
+    "duct_to_cavity": 3.75,
+    "outlet_to_cavity": 3.59
   },
   "mic": {
     "centre": [
@@ -117,7 +120,7 @@
     "capot_vers_exterieur": 7.09,
     "capot_vers_rainure": 1.9,
     "coque_vers_exterieur": 5.62,
-    "coque_vers_conduit": 3.54,
+    "coque_vers_conduit": 5.1,
     "trappe_vers_exterieur_et_baie": 2.75,
     "trappe_vers_chambre": 5.15
   },
@@ -236,14 +239,14 @@
   "flat_faces_note": "plans > 35 mm : appui du coussin (couvert par le coussin, voulu plat) et face arriere du dos (maquette)",
   "mass_g_solid_pla": {
     "front": 48.8,
-    "rear": 98.7,
+    "rear": 99.7,
     "cover": 15.0,
     "assise-col": 78.6,
     "ring_petg": 1.7,
-    "total": 242.8
+    "total": 243.8
   },
   "warn": [
-    "longueur entree -> centre des fentes 155.7 mm < 175 (canal barrage a barrage 182.2)"
+    "longueur entree -> centre de la sortie 166.4 mm < 175 (canal barrage a barrage 192.9)"
   ],
   "fail": []
 }

@@ -1,38 +1,38 @@
 {
   "pas_mm": 0.25,
   "tel_que_dessine_la_chambre_rejoint_l_exterieur": true,
-  "fentes_bouchees_chambre_etanche": true,
+  "sortie_bouchee_chambre_etanche": true,
   "conduit_bouche_parois_non_epaissies_chambre_etanche": true,
   "entree_bouchee_chambre_etanche": true,
   "conduit_bouche_a_midi_chambre_etanche": true,
   "temoin_trou_1mm2_detecte": true,
   "volume_chambre_cm3": 210.1,
-  "volume_conduit_cm3": 8.59,
-  "fentes_nombre": 4,
-  "fentes_section_dans_la_paroi_mm2": {
-    "1.8": 100.2,
-    "2.1": 102.3,
-    "2.4": 105.2,
-    "2.7": 101.7,
-    "3.0": 99.8,
-    "3.3": 103.8,
-    "3.6": 102.1,
-    "3.9": 101.2
+  "volume_conduit_cm3": 8.44,
+  "sortie_ouvertures": 4,
+  "sortie_section_dans_la_paroi_mm2": {
+    "0.3": 215.4,
+    "0.6": 199.1,
+    "0.9": 186.8,
+    "1.2": 191.3,
+    "1.5": 187.4,
+    "1.8": 194.5,
+    "2.1": 194.0,
+    "2.4": 190.3
   },
-  "fentes_section_min_mm2": 99.8,
-  "entree_surface_mm2": 48.8,
-  "conduit_section_mm2": 47.9,
+  "sortie_section_droite_min_mm2": 148.0,
+  "entree_surface_mm2": 49.0,
+  "conduit_section_mm2": 32.3,
   "demontage_capot_surface_accrochee_mm2": 0.0,
   "event_conductivite_mm": {
-    "pieces_imprimees": 0.3109,
-    "modele_1d": 0.3098,
-    "rapport": 1.004,
-    "inconnues": 2485247
+    "pieces_imprimees": 0.2514,
+    "modele_1d": 0.2517,
+    "rapport": 0.999,
+    "inconnues": 2627200
   },
   "volume_chambre_modele_1d_cm3": 201.1,
-  "event_longueur_equivalente_mm_pour_48_mm2": 154.1,
+  "event_longueur_equivalente_mm": 128.5,
   "resonance_helmholtz_hz": {
-    "pieces_imprimees": 66.4,
-    "modele_1d": 67.8
+    "pieces_imprimees": 59.7,
+    "modele_1d": 61.1
   }
 }
