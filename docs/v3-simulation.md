@@ -71,6 +71,13 @@ Paroi souple du coussin exposée (1D) : bande de 1 mm sur le tour, −0,2 à −
 20 mm doit donc rester au-dessus du coussin comprimé partout. Environnement : gmsh et h5py réinstallés depuis
 `requirements.txt` le 25 nov. 2026 (ils manquaient au `.venv`), validation analytique repassée à 0,15 dB.
 
+Bosses dans le conduit (1D, 25 nov. 2026, idée de Clément inspirée des plaques de mousse à bosses) : 19 bosses rigides de
+1 mm tous les 8 mm, +0,6 dB(A) pour 135 Pa à 0,2 L/s ; de 2 mm, +1,6 dB(A) pour 224 Pa ; un conduit lisse de 36 mm²
+donne +1,4 dB(A) pour 58 Pa. En PLA, les bosses ne font que rétrécir le conduit par endroits, avec des pertes de
+tourbillon en plus. Ce qui fait marcher la mousse à bosses, c'est la mousse qui absorbe : un garnissage absorbant de 1 à
+2 mm (feutre ou mousse, section d'air gardée à 42 mm²) amortit le creux du conduit vers 1 kHz mais perd plus vers 500 à
+800 Hz, soit −0,6 à −1,7 dB(A), et garderait l'humidité du souffle. Conclusion : le conduit lisse, réglé par sa section.
+
 ## Temps de calcul
 
 Sur ce Mac (openCFS 26.09 ARM64, 1 cœur) : 0,03 s de résolution par fréquence (6 700 à 15 300 nœuds avec le dispositif). Il faut 17 s pour v3-A complet (deux jeux, 20 bandes, maillage compris) et 3 s pour la validation.
