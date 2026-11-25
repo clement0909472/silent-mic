@@ -58,6 +58,10 @@ def flat(kind, name):
 petg = flat("filament", "Bambu PETG Translucent @BBL A1M")
 petg["type"] = "filament"
 json.dump(petg, open(f"{tmp}/petg.json", "w"), indent=1)
+# blanc legerement translucide fourni avec l'imprimante (bobine de 20 g de Clement) : anneau et eprouvette du premier proto
+plab = flat("filament", "Bambu PLA Basic @BBL A1M")
+plab["type"] = "filament"
+json.dump(plab, open(f"{tmp}/pla-basic.json", "w"), indent=1)
 machine = flat("machine", "Bambu Lab A1 mini 0.4 nozzle")
 # la sequence de demarrage de l'A1 mini fait plus de 10 000 caracteres ; la generique tient en deux lignes
 assert "M1002" in machine["machine_start_gcode"] and len(machine["machine_start_gcode"]) > 5000 and len(machine) > 100, "prereglage machine A1 mini incomplet"
@@ -130,6 +134,8 @@ project cales-assise "$tmp/pla.json" "$c/cale-assise-r85-12mm.stl" "$c/cale-assi
 # puis encore 12 mm : seconde paire posee sur la premiere
 project cales-assise-2 "$tmp/pla.json" "$c/cale-assise-r60-12mm.stl" "$c/cale-assise-r60-12mm.stl"
 project lumiere-petg "$tmp/petg.json" "$c/light-coupon-petg.stl"
+# parois debout de 0.8 a 2.4 mm, la lumiere les traverse comme l'anneau : choix de son epaisseur (25 nov. 2026)
+project lumiere-pla-basic "$tmp/pla-basic.json" "$c/light-walls.stl"
 fi
 if [ "$only" != essai ]; then
   b=cad/out/v3-galet/silent-mic-v3-galet

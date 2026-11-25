@@ -422,6 +422,16 @@ def light_coupon(width=12.0, step=10.0):
     return out
 
 
+def light_walls(width=10.0, gap=4.0, base=0.6):
+    """Parois debout de LIGHT_STEPS mm d'epaisseur : la lumiere y traverse des perimetres cote a cote, comme dans
+    l'anneau, et non des couches empilees comme dans la bande a plat. Dos alignes sur y = 0, ou se pose la lumiere ;
+    plus fine = plus basse (10 mm, puis 1 mm de plus par marche), pour les reconnaitre sans marquage."""
+    out = cq.Workplane("XY").box(len(LIGHT_STEPS) * (width + gap) - gap, max(LIGHT_STEPS) + 4.0, base, centered=False).translate((0, -2.0, 0))
+    for i, t in enumerate(LIGHT_STEPS):
+        out = out.union(cq.Workplane("XY").box(width, t, 10.0 + i, centered=False).translate((i * (width + gap), 0, base)))
+    return out
+
+
 def check():
     ci = collar_inner()
     assert ci[0] >= MIN_COLLAR_INNER[0] - 1e-9 and ci[1] >= MIN_COLLAR_INNER[1] - 1e-9, ci
@@ -488,6 +498,7 @@ def export(out=HERE / "out" / "v3-galet" / "coupons"):
     # impression languette en haut : on garde l'orientation du corps (z vers le haut), posee a z = 0
     save("joint-coupon-rear", rear, rear.translate((0, 0, -rear.val().BoundingBox().zmin)))
     save("light-coupon-petg", light_coupon())
+    save("light-walls", light_walls())
     (out / "coupons.json").write_text(json.dumps({"gasket_compression_mm": comp, "parts": report}, indent=2))
     print(f"OK compression joint {comp:.2f} mm, sorties {out}")
 
