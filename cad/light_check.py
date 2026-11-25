@@ -17,7 +17,7 @@ epaissir montre les jeux plus larges).
     cad/guarded.sh -m 4 -t 900 .venv/bin/python cad/light_check.py
 
 Hypotheses non prouvees ici : le PLA noir est opaque des 1 mm ; la gaine thermo noire du filament cache arrete sa
-lumiere ; le jeu de 0.1 mm entre l'anneau et le capot ne laisse qu'un filet colle a l'anneau.
+lumiere ; la ligne de 0.2 mm sous l'anneau (plots d'ecrasement) ne montre qu'un filet colle a la bande lumineuse.
 """
 
 import json
@@ -60,6 +60,11 @@ def exits(mat, solid, interior, seeds):
         box = (xx >= x0) & (xx <= x1) & (zz >= z0) & (zz <= z1)
         found.append({"ou": name, "voxels": int((touch & box).sum())})
         touch &= ~box
+    # au ras de l'anneau (moins de 1 mm) : la ligne sous l'anneau, que ses plots d'ecrasement laissent ouverte de 0.2 mm,
+    # fait partie de la bande lumineuse ; signalee, elle n'est pas une fuite ailleurs
+    near = ndimage.binary_dilation(mat == lc.RING, iterations=4) & touch
+    found.append({"ou": "au ras de l'anneau", "voxels": int(near.sum())})
+    touch &= ~near
     lab_e, n = ndimage.label(touch, structure=np.ones((3, 3, 3)))
     for sl in ndimage.find_objects(lab_e):
         k, j, i = (np.arange(s.start, s.stop) for s in sl)
@@ -117,7 +122,7 @@ def main():
             bad.append(f"{case} : volume eclaire")
         if any(s["ou"] == "AUTRE" for s in r["sorties"]):
             bad.append(f"{case} : sortie de lumiere imprevue")
-        if case == "jeux_de_moins_de_0_25_mm_fermes" and not all(s["voxels"] > 20 for s in r["sorties"] if s["ou"] != "AUTRE"):
+        if case == "jeux_de_moins_de_0_25_mm_fermes" and not all(s["voxels"] > 20 for s in r["sorties"] if s["ou"] in EXPECTED):
             bad.append("temoin : les ouvertures de la baie ne sont pas vues")
     if res["paroi_noire_min_mm"] < 1.0:
         bad.append("paroi noire de moins de 1 mm")

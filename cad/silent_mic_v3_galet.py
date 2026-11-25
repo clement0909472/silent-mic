@@ -645,9 +645,35 @@ def build_cover(rear_env, holes=True):
     return cover
 
 
-def build_ring():
-    # 0.1 mm sous le plan de joint : imprime un peu epais, il ne tient pas les coques ecartees
-    return ring(0.0, cp.RING_DEPTH, -RING_H, -0.1)
+# Anneau tenu sans colle (Clement, 25 nov. 2026) : boucle fermee dans sa feuillure, il ne peut sortir qu'en montant et
+# le capot l'en empeche une fois ferme. Il est plaque contre le capot : pas de jour au ras du capot, donc ni ligne visible
+# ni filet de lumiere directe venu de la rainure LED. Pour cela son corps fait RING_BODY (12 couches de 0.2 mm, sans
+# arrondi du trancheur) et laisse RING_LIFT sous lui, rattrape par RING_BUMPS plots imprimes RING_BUMP_H de haut, qui
+# s'ecrasent de RING_BUMP_H - RING_LIFT sur le fond de la feuillure au serrage (petits : environ 30 N chacun). Au jeu
+# de 0.2 mm sous l'anneau, la marche de 0.4 mm au fond de la rainure LED barre la lumiere. Modele : 0.02 mm de jeu
+# partout, pour les controles d'interference. L'epaisseur traversee par la lumiere (RING_LIGHT) se regle par une gorge
+# au dos, cote LED, entre deux rebords fixes : faces de serrage inchangees (controle dans export()).
+RING_BODY, RING_LIFT = 2.4, 0.2
+RING_BUMPS, RING_BUMP, RING_BUMP_H = 8, (1.2, 0.45), 0.4  # nombre, longueur et largeur (une ligne), hauteur imprimee
+RING_LIGHT = cp.RING_DEPTH  # epaisseur traversee par la lumiere ; plus fine, la gorge du dos se creuse
+RING_LIP = 0.6  # rebords haut et bas conserves de part et d'autre de la gorge
+assert abs(RING_BODY + RING_LIFT - RING_H) < 1e-9 and RING_BUMP_H > RING_LIFT
+
+
+def build_ring(printed=False, light=None):
+    light = RING_LIGHT if light is None else light
+    z0, z1 = -RING_H + RING_LIFT, -0.02  # corps
+    out = ring(0.0, cp.RING_DEPTH, z0, z1)
+    if light < cp.RING_DEPTH - 1e-9:
+        assert light >= 0.8, "paroi lumineuse de moins de deux lignes d'extrusion"
+        out = out.cut(ring(light, cp.RING_DEPTH + 1, z0 + RING_LIP, z1 - RING_LIP))
+    bottom = z0 - RING_BUMP_H if printed else -RING_H + 0.02
+    bumps = []
+    for i in range(RING_BUMPS):
+        (x, y), (tx, ty) = eq_point(2 * math.pi * (i + 0.5) / RING_BUMPS, cp.RING_DEPTH / 2)
+        bump = box(-RING_BUMP[0] / 2, RING_BUMP[0] / 2, -RING_BUMP[1] / 2, RING_BUMP[1] / 2, bottom, z0 + 0.05)
+        bumps.append(bump.rotate((0, 0, 0), (0, 0, 1), math.degrees(math.atan2(ty, tx))).translate((x, y, 0)))
+    return union_all([out] + bumps)
 
 
 def saddle_placed():
@@ -918,6 +944,12 @@ def export():
     parts = {"front": front, "rear": rear, "cover": cover, "ring": ring_, "assise-col": insert}
     for n, p in parts.items():
         assert p.val().isValid() and p.solids().size() == 1, n
+    # anneau : amincir la paroi lumineuse ne change aucune face de serrage (face haute et nervures, face basse, face
+    # exterieure jusqu'a la paroi la plus fine permise)
+    thin = build_ring(light=0.8)
+    for name, zone in (("haut", box(-90, 90, -90, 90, -0.02 - RING_LIP + 0.05, 1)), ("bas", box(-90, 90, -90, 90, -RING_H - 1, -RING_H + RING_LIFT + RING_LIP - 0.05)),
+                       ("exterieur", ring(-1.0, 0.75, -RING_H - 1, 1))):
+        assert abs(vol(ring_.intersect(zone)) - vol(thin.intersect(zone))) < 1e-3, f"anneau aminci : face de serrage {name} modifiee"
     t = time.perf_counter()
     refs = build_refs()
     refs["foam-disc"] = build_foam_disc(rear)
@@ -1160,7 +1192,8 @@ def export():
         "front": front.rotate((0, 0, 0), (1, 0, 0), 180).translate((0, 0, Z_SEAT)),
         "rear": rear.translate((0, 0, -Z_RF)),
         "cover": cover.rotate((0, 0, 0), (1, 0, 0), 180).translate((0, 0, Z_RF)),
-        "ring": ring_.translate((0, 0, RING_H)),
+        # retourne : face haute (contre le capot) sur le plateau, plots imprimes en dernier
+        "ring": build_ring(printed=True).rotate((0, 0, 0), (1, 0, 0), 180).translate((0, 0, -0.02)),
         "assise-col": cp.body_saddle(),
     }
     for n, p in printed.items():

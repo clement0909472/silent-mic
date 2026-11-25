@@ -147,4 +147,6 @@ if [ "$only" != essai ]; then
   # trappe pleine aussi : poids et sensation de produit fini (Clement, 24 nov. 2026)
   SOLID=1 project corps-trappe "$tmp/pla.json" "$b-cover.stl"
   project corps-anneau-petg "$tmp/petg.json" "$b-ring.stl"
+  # premier proto : anneau en PLA Basic blanc (bobine de 20 g de Clement), epaisseur choisie sur lumiere-pla-basic
+  project corps-anneau-pla-basic "$tmp/pla-basic.json" "$b-ring.stl"
 fi

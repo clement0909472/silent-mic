@@ -57,7 +57,7 @@ def parts():
     collar = load(f"{stem}-assise-col.stl")
     collar[:, :, 2] += load(OUT / "web" / "assise-col.stl")[:, :, 2].min() - collar[:, :, 2].min()
     return {FRONT: flip(load(f"{stem}-front.stl"), Z_SEAT), REAR: load(f"{stem}-rear.stl") + np.array([0, 0, Z_RF]),
-            COVER: flip(load(f"{stem}-cover.stl"), Z_RF), RING: load(f"{stem}-ring.stl") - np.array([0, 0, RING_H]),
+            COVER: flip(load(f"{stem}-cover.stl"), Z_RF), RING: load(OUT / "web" / "ring.stl"),  # position de montage ; le fichier a imprimer est retourne
             COLLAR: collar, GASKET: load(OUT / "web" / "gasket.stl")}
 
 

@@ -11,6 +11,10 @@
       {
         "ou": "fente de l'interrupteur",
         "voxels": 123
+      },
+      {
+        "ou": "au ras de l'anneau",
+        "voxels": 0
       }
     ]
   },
@@ -31,6 +35,10 @@
       {
         "ou": "fente de l'interrupteur",
         "voxels": 147
+      },
+      {
+        "ou": "au ras de l'anneau",
+        "voxels": 74
       }
     ]
   }

@@ -239,8 +239,8 @@
     "rear": 99.0,
     "cover": 15.0,
     "assise-col": 78.6,
-    "ring_petg": 1.8,
-    "total": 243.2
+    "ring_petg": 1.7,
+    "total": 243.1
   },
   "warn": [
     "longueur entree -> centre des fentes 155.7 mm < 175 (canal barrage a barrage 182.2)"
