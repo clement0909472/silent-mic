@@ -120,10 +120,11 @@ SHADOW_Z = (-RING_H - 1.2 - 5.0, -RING_H - 1.2)  # 5 mm visibles, 1.2 mm derrier
 SHADOW_FLOOR_TOP = SHADOW_Z[1] - 1.3 * 1.5  # fond vertical, puis flanc haut a 38 deg
 # les 4 fentes tiennent sous la gorge (moitie basse) : a 10.5 + 2.0, la derniere depassait 9 h, a moitie borgne
 SLOT_LEN, SLOT_GAP, SLOT_COUNT = 9.3, 1.5, 4
-# fentes a 38 deg de la verticale, comme les autres surplombs internes. A 22 deg (pente 2.5) leur passage
-# reel ne faisait que 0.9 mm (38 mm2 en tout, moins que le conduit). La coque arriere se tranche avec les
-# supports "sur plateau uniquement" : aucun support ne peut se poser dans une fente.
-SLOT_STEEP = STEEP
+# Fentes horizontales (Clement, 25 nov. 2026) : inclinees a 38 deg, elles descendaient de la gorge vers le conduit, et
+# l'appareil pose debout sur le dos y laissait glisser miettes et poussiere. Horizontales, rien n'y entre par gravite et
+# leur passage est toute la fenetre (2.75 mm au lieu de 1.68). Leur plafond s'imprime en pont de 9.3 mm ; la coque se
+# tranche avec les supports "sur plateau uniquement" : aucun support ne peut se poser dans une fente.
+SLOT_STEEP = 0.0
 SLOT_WINDOW = (SHADOW_Z[0], SHADOW_FLOOR_TOP - 0.3)  # fenetres dans le fond vertical seulement, du bas de la gorge
 CORBEL_TOP = DUCT_BOTTOM - 1.6  # plancher du conduit garde 1.6 mm
 CORBEL_BOTTOM = CORBEL_TOP - CORBEL
@@ -413,7 +414,9 @@ def build_slots():
         r_floor = SHADOW_DEPTH + skin_inset(t, SLOT_WINDOW[1])  # fond de la gorge, en haut de la fenetre
         hi = lambda r: SLOT_WINDOW[1] - SLOT_STEEP * (r - r_floor)
         r0 = r_floor - 0.05
-        r1 = DUCT[0] + skin_inset(t, DUCT_BOTTOM) + 0.6  # paroi du conduit au plus loin, plus la fleche de la courbe
+        # paroi du conduit au plus loin, plus la fleche de la courbe ; le haut de la fenetre arrive dans le toit en pente
+        # du conduit, plus loin de la peau : la fente va jusque-la
+        r1 = DUCT[0] + skin_inset(t, DUCT_BOTTOM) + 0.6 + max(0.0, (SLOT_WINDOW[1] - (DUCT_TOP - DUCT_ROOF_H)) / STEEP)
         prof = (cq.Workplane("YZ", origin=(-SLOT_LEN / 2, 0, 0))
                 .polyline([(r0, hi(r0) - h), (r1, hi(r1) - h), (r1, hi(r1)), (r0, hi(r0))]).close().extrude(SLOT_LEN))
         out.append(place(prof, t))
@@ -429,12 +432,14 @@ def wall_section(tool, d, z0, z1, t=0.1):
 
 
 def build_shadow_groove():
-    """Gorge d'ombre : fond vertical puis flanc haut a 38 deg (la coque s'imprime face arriere
-    en bas ; un rebord plat serait un surplomb sur la peau visible)."""
+    """Gorge d'ombre : flanc bas en pente, fond vertical, flanc haut a 38 deg (la coque s'imprime face arriere
+    en bas ; un rebord plat en haut serait un surplomb sur la peau visible)."""
     z_ch, z_top = SHADOW_FLOOR_TOP, SHADOW_Z[1] + 0.3
-    skin = loft_wires([(SHADOW_Z[0], -1.0), (z_top, -1.0)])
-    keep = loft_wires([(SHADOW_Z[0] - 1.0, SHADOW_DEPTH), (z_ch, SHADOW_DEPTH), (z_top, -0.3), (z_top + 1.0, -1.1)])
-    return skin.cut(keep.intersect(box(-70, 70, -70, 70, SHADOW_Z[0] - 1.0, z_top))).intersect(box(-60, 60, -60, 0, -30, 5))
+    # bas en pente vers l'exterieur, comme le haut : pose debout sur le dos, rien ne s'y depose (Clement, 25 nov. 2026)
+    z_bot = SHADOW_Z[0] - STEEP * (SHADOW_DEPTH + 0.3)
+    skin = loft_wires([(z_bot, -1.0), (z_top, -1.0)])
+    keep = loft_wires([(z_bot - 1.0, -1.1), (z_bot, -0.3), (SHADOW_Z[0], SHADOW_DEPTH), (z_ch, SHADOW_DEPTH), (z_top, -0.3), (z_top + 1.0, -1.1)])
+    return skin.cut(keep.intersect(box(-70, 70, -70, 70, z_bot - 1.0, z_top))).intersect(box(-60, 60, -60, 0, -30, 5))
 
 
 # ================= joint, vis, tunnel =================
@@ -1018,7 +1023,9 @@ def export():
     slots, inlet = build_slots(), build_inlet()
     # la gorge n'existe que sous y = 0 : une fente qui depasse au-dessus y est borgne
     op = {"fentes_au_fond_de_gorge": wall_section(slots.intersect(box(-70, 70, -70, 0, -30, 5)), SHADOW_DEPTH, SHADOW_Z[0] - 1.0, SHADOW_FLOOR_TOP),
-          "fentes_a_la_paroi_du_conduit": wall_section(slots, DUCT[0] - 0.1, DUCT_BOTTOM, z_flat),
+          # fentes horizontales : le haut de leur fenetre debouche par le toit en pente du conduit, plus loin de la peau que
+          # sa paroi droite ; on mesure la ou toute la hauteur de la fenetre est deja dans le conduit
+          "fentes_a_la_paroi_du_conduit": wall_section(slots, DUCT[0] + max(0.0, (SLOT_WINDOW[1] - z_flat) / STEEP) + 0.05, DUCT_BOTTOM, SLOT_WINDOW[1] + 0.5),
           "entree_a_la_paroi_du_conduit": wall_section(inlet, DUCT[1], DUCT_BOTTOM - 1.0, z_flat),
           "entree_a_la_paroi_de_la_chambre": wall_section(inlet, CAV_JOINT - 0.1, CORBEL_TOP, 0.5)}
     dm["wall_openings_mm2"] = {k: round(v, 1) for k, v in op.items()}

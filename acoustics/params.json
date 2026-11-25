@@ -121,14 +121,14 @@
           {
             "type": "duct",
             "width": 9.3,
-            "height": 1.68,
-            "length": 5.1,
+            "height": 2.75,
+            "length": 3.9,
             "count": 4,
             "minor_k": 1.5,
-            "_doc": "4 fentes inclinees a 38 deg vers la gorge d'ombre : 9,3 mm de long, passage reel de 1,68 mm (fenetre de 2,75 mm), 5,1 mm de traversee, 62,4 mm2"
+            "_doc": "4 fentes horizontales vers la gorge d'ombre (25 nov. 2026, contre les miettes, appareil pose debout) : 9,3 x 2,75 mm, 3,1 a 4,7 mm de traversee selon la hauteur (le haut debouche par le toit en pente du conduit), 102,3 mm2"
           }
         ],
-        "outlet_area_mm2": 62.4
+        "outlet_area_mm2": 102.3
       },
       "seal": {
         "_cushion": "coussin Brainwavz mesure par Clement le 23 nov. 2026 : 108 x 81, ouverture 72,6 x 48,5, 28 mm, environ 15 mm comprime ; paroi souple exposee = integrale sur le perimetre de l'ouverture de (15 mm comprime - hauteur locale du col), 961 mm2 avec le col de 10 mm ; depuis le 24 nov. 2026, assise R53 et col de 20 mm au-dessus d'elle partout (cp.BODY_SEAT) : le col depasse partout le coussin comprime, plus de paroi souple exposee ; raideur laissee a la valeur du superviseur",

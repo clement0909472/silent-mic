@@ -7,32 +7,32 @@
   "conduit_bouche_a_midi_chambre_etanche": true,
   "temoin_trou_1mm2_detecte": true,
   "volume_chambre_cm3": 210.1,
-  "volume_conduit_cm3": 8.53,
+  "volume_conduit_cm3": 8.59,
   "fentes_nombre": 4,
   "fentes_section_dans_la_paroi_mm2": {
     "1.8": 100.2,
-    "2.1": 110.1,
-    "2.4": 113.4,
-    "2.7": 111.8,
-    "3.0": 112.3,
-    "3.3": 116.4,
-    "3.6": 114.5,
-    "3.9": 115.4
+    "2.1": 102.3,
+    "2.4": 105.2,
+    "2.7": 101.7,
+    "3.0": 99.8,
+    "3.3": 103.8,
+    "3.6": 102.1,
+    "3.9": 101.2
   },
-  "fentes_section_min_mm2": 100.2,
-  "entree_surface_mm2": 48.9,
+  "fentes_section_min_mm2": 99.8,
+  "entree_surface_mm2": 48.8,
   "conduit_section_mm2": 47.9,
   "demontage_capot_surface_accrochee_mm2": 0.0,
   "event_conductivite_mm": {
-    "pieces_imprimees": 0.3038,
-    "modele_1d": 0.3035,
-    "rapport": 1.001,
-    "inconnues": 2472786
+    "pieces_imprimees": 0.3109,
+    "modele_1d": 0.3098,
+    "rapport": 1.004,
+    "inconnues": 2485247
   },
   "volume_chambre_modele_1d_cm3": 201.1,
-  "event_longueur_equivalente_mm_pour_48_mm2": 157.7,
+  "event_longueur_equivalente_mm_pour_48_mm2": 154.1,
   "resonance_helmholtz_hz": {
-    "pieces_imprimees": 65.7,
-    "modele_1d": 67.1
+    "pieces_imprimees": 66.4,
+    "modele_1d": 67.8
   }
 }
