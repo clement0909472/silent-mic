@@ -19,18 +19,18 @@
     "2.1": 194.0,
     "2.4": 190.3
   },
-  "sortie_section_droite_min_mm2": 148.0,
+  "sortie_section_droite_min_mm2": 113.9,
   "entree_surface_mm2": 49.0,
-  "conduit_section_mm2": 32.3,
+  "conduit_section_mm2": 42.0,
   "demontage_capot_surface_accrochee_mm2": 0.0,
   "event_conductivite_mm": {
     "pieces_imprimees": 0.2514,
-    "modele_1d": 0.2517,
-    "rapport": 0.999,
+    "modele_1d": 0.2514,
+    "rapport": 1.0,
     "inconnues": 2627200
   },
   "volume_chambre_modele_1d_cm3": 201.1,
-  "event_longueur_equivalente_mm": 128.5,
+  "event_longueur_equivalente_mm": 167.1,
   "resonance_helmholtz_hz": {
     "pieces_imprimees": 59.7,
     "modele_1d": 61.1

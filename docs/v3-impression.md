@@ -49,7 +49,7 @@ Grammes calculés par Bambu Studio avec la densité réelle du filament (1,32) :
 
 | Plaque | Pièce | Temps | Filament |
 |---|---|---|---|
-| 1 | coque arrière (supports sous le passage de la prise USB-C, dans la baie) | 3 h 13 | 108 g PLA noir |
+| 1 | coque arrière (supports sous le passage de la prise USB-C, dans la baie) | 3 h 17 | 111 g PLA noir |
 | 2 | capot avant (une colonne de support sous chaque puits de vis) | 1 h 52 | 56 g PLA noir |
 | 3 | trappe | 28 min | 16 g PLA noir |
 | 4 | anneau de la V0, en noir avec la même bobine (la version lumineuse s'imprime en PETG translucide avec `print/corps-anneau-petg.3mf`) | 9 min | 2 g PLA noir |

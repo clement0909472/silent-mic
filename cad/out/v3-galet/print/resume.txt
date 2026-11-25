@@ -10,4 +10,4 @@ corps-trappe : 0h28, 16.38 g, blocs de support au controle=0, retranche : 28m 59
 lumiere-pla-basic : 0h15, 1.58 g, blocs de support au controle=0, retranche : 15m 40s
 corps-anneau-petg : 0h11, 1.68 g, blocs de support au controle=0, retranche : 11m 34s
 corps-anneau-pla-basic : 0h09, 1.74 g, blocs de support au controle=0, retranche : 9m 6s
-corps-coque-arriere : 3h12, 107.90 g, blocs de support au controle=366, retranche : 3h 11m 56s
+corps-coque-arriere : 3h17, 110.64 g, blocs de support au controle=471, retranche : 3h 17m 17s
