@@ -51,6 +51,26 @@ Lecture :
 
 v2-compact (axisymétrique équivalent, coussin rigide) : -8,3 dB(A) joint fermé et 2,1 dB(A) avec 0,2 mm, contre -5,2 et 1,9 pour le 1D équivalent. La résonance de Helmholtz vers 200 Hz domine. Le 1D nominal (6,6 dB(A)) est gouverné par la paroi souple du coussin, absente de la FEM.
 
+## Galet, section du conduit (25 nov. 2026)
+
+Évent proposé pour la coque arrière : conduit décalé vers l'extérieur (paroi vers la chambre d'au moins 3,3 mm), une seule
+sortie en pente vers le bas de 41,7 × 3,6 mm, joint au visage fermé (essai de Clément : aucun jour). Même chaîne
+axisymétrique équivalente que ci-dessus ; paramètres dérivés de `acoustics/params.json` (conduit allongé de 9,8 mm).
+
+| Conduit | FEM | 1D équivalent | 1D nominal | Effort à 0,2 L/s |
+|---|---|---|---|---|
+| 48 mm² | 23,9 dB(A) | 25,5 | 26,1 | 40 Pa |
+| 42 mm² | 25,2 dB(A) | 27,0 | 27,3 | 47 Pa |
+| 36 mm² | 26,5 dB(A) | 28,7 | 28,8 | 58 Pa |
+
+La FEM confirme les écarts entre sections (+1,2 dB de 48 à 42 mm², +1,3 de 42 à 36) et reste environ 2 dB sous le 1D,
+optimiste dans les aigus (modes de la cavité et du conduit). Chicanes en travers du conduit (1D) : 3 plaques ne laissant
+que 50 % de la section donnent +0,3 dB(A) pour 251 Pa à 0,2 L/s, quand rétrécir le conduit de 42 à 36 mm² donne +1,5
+dB(A) pour +11 Pa : les plaques coûtent l'effort en pertes de jet, pas en masse acoustique, et leurs arêtes sifflent.
+Paroi souple du coussin exposée (1D) : bande de 1 mm sur le tour, −0,2 à −1,7 dB ; de 5 mm, −3,9 à −10,7 dB ; le col de
+20 mm doit donc rester au-dessus du coussin comprimé partout. Environnement : gmsh et h5py réinstallés depuis
+`requirements.txt` le 25 nov. 2026 (ils manquaient au `.venv`), validation analytique repassée à 0,15 dB.
+
 ## Temps de calcul
 
 Sur ce Mac (openCFS 26.09 ARM64, 1 cœur) : 0,03 s de résolution par fréquence (6 700 à 15 300 nœuds avec le dispositif). Il faut 17 s pour v3-A complet (deux jeux, 20 bandes, maillage compris) et 3 s pour la validation.
