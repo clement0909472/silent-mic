@@ -393,43 +393,46 @@ def col_screw_cut_saddle():
 # dans des logements de meme pente sous le col. Les vis tirent le col : les pentes le centrent sans jeu a chaque remontage,
 # rien ne s'use ni ne travaille en ressort ; un ecart d'impression fait juste asseoir le col un peu plus haut ou plus bas,
 # la mousse rattrape. Tenons a nervures ecartes (rabotees au premier montage), crochets souples ecartes (fluage du PLA).
-COL_DIAMOND = (4.0, 7.0, 2.25)  # base (radiale, tangentielle), hauteur
+# Temoin du 26 nov. 2026 : centrage parfait, mais 1 a 2 mm de jour au lieu de 0.5. A 30 deg, 0.1 mm de trop en largeur
+# souleve le col de 0.17 mm : aretes vives des pyramides dans les coins arrondis du logement, premiere couche ecrasee qui
+# retrecit son entree, trous imprimes plus petits. D'ou des cones (pas d'aretes), une entree chanfreinee a 45 deg, 0.15 mm
+# de compensation et un fond plus profond.
+COL_DIAMOND = (5.0, 2.25)  # diametre a la base, hauteur
 COL_DIAMOND_SLOPE = math.tan(math.radians(30))  # flancs, depuis la verticale
+COL_DIAMOND_FIT = 0.15  # compensation d'impression du logement, par cote
+COL_DIAMOND_ROOF = 1.0  # le sommet du cone reste a cette distance du fond du logement
 
 
 def col_diamond_xy():
-    """Bouts des axes, au milieu de la bande d'appui ; (x, y, radial le long de x ?)."""
+    """Bouts des axes, au milieu de la bande d'appui."""
     fo, sk = cp.flange_outer(), outer_profile(S_SEAT)
     a, b = ((fo[i] / 2 + cp.FLANGE_GAP + sk[i]) / 2 for i in (0, 1))
-    return [(a, 0.0, True), (-a, 0.0, True), (0.0, b, False), (0.0, -b, False)]
+    return [(a, 0.0), (-a, 0.0), (0.0, b), (0.0, -b)]
 
 
-def _frustum(base, top, z0, z1, x, y):
-    return cq.Workplane("XY", origin=(x, y, z0)).rect(*base).workplane(offset=z1 - z0).rect(*top).loft()
+def _cone(r0, r1, z0, z1, x, y):
+    return wp(cq.Solid.makeCone(r0, r1, z1 - z0, cq.Vector(x, y, z0), cq.Vector(0, 0, 1)))
 
 
 def build_col_diamonds():
-    r, t, h = COL_DIAMOND
-    k = 2 * h * COL_DIAMOND_SLOPE
-    out = []
-    for x, y, along_x in col_diamond_xy():
-        base, top = ((r, t), (r - k, t - k)) if along_x else ((t, r), (t - k, r - k))
-        out.append(_frustum(base, top, Z_SEAT - 0.3, Z_SEAT + h, x, y).union(_frustum(base, base, Z_SEAT - 0.3, Z_SEAT, x, y)))
-    return union_all(out)
+    d, h = COL_DIAMOND
+    r0 = d / 2
+    return union_all(_cone(r0, r0 - h * COL_DIAMOND_SLOPE, Z_SEAT, Z_SEAT + h, x, y)
+                     .union(wp(cq.Solid.makeCylinder(r0, 0.3, cq.Vector(x, y, Z_SEAT - 0.3)))) for x, y in col_diamond_xy())
 
 
 def col_diamond_pockets():
-    """Logements sous le col (repere du col, dos a z = 0) : memes pentes, prises a SADDLE_GAP au-dessus de l'appui, 0.03 mm
-    de jeu en normale (les controles d'interference ne voient pas le contact), 0.6 mm plus profonds que le sommet."""
-    r, t, h = COL_DIAMOND
-    shrink = 2 * (SADDLE_GAP * COL_DIAMOND_SLOPE - 0.03 / math.cos(math.radians(30)))
-    depth = h - SADDLE_GAP + 0.6
-    k = 2 * depth * COL_DIAMOND_SLOPE
-    out = []
-    for x, y, along_x in col_diamond_xy():
-        m = (r - shrink, t - shrink) if along_x else (t - shrink, r - shrink)
-        out.append(_frustum(m, (m[0] - k, m[1] - k), -0.01, depth, x, y))
-    return union_all(out)
+    """Logements sous le col (repere du col, dos a z = 0) : meme pente, prise a SADDLE_GAP au-dessus de l'appui, plus
+    COL_DIAMOND_FIT ; entree chanfreinee de 0.4 mm a 45 deg ; fond a COL_DIAMOND_ROOF au-dessus du sommet du cone."""
+    d, h = COL_DIAMOND
+    depth = h - SADDLE_GAP + COL_DIAMOND_ROOF
+    rm = d / 2 - SADDLE_GAP * COL_DIAMOND_SLOPE + COL_DIAMOND_FIT
+    return union_all(_cone(rm, rm - depth * COL_DIAMOND_SLOPE, -0.01, depth, x, y).union(_cone(rm + 0.41, rm, -0.01, 0.4, x, y))
+                     for x, y in col_diamond_xy())
+
+
+def col_diamond_pocket_depth():
+    return COL_DIAMOND[1] - SADDLE_GAP + COL_DIAMOND_ROOF
 
 
 def col_piece():
@@ -438,12 +441,11 @@ def col_piece():
 
 def temoin_pieces(front):
     """Temoin du col (26 nov. 2026) : les 4 diamants et leurs logements, decoupes dans les vraies pieces. Plaque d'appui
-    du capot sur 1.6 mm et bas du col sur 2.95 mm (0.6 mm au-dessus du fond des logements), reduit a la bande d'appui :
+    du capot sur 1.6 mm et bas du col jusqu'a 0.6 mm au-dessus du fond des logements, reduit a la bande d'appui :
     environ 30 min d'impression. Il se monte a la main, sans vis ni ecrous (deja eprouves sur le joint) : on y juge le
     centrage par les pentes et le jeu, et on le demonte et remonte plusieurs fois."""
-    pocket_top = COL_DIAMOND[2] - SADDLE_GAP + 0.6
     return {"capot": front.intersect(box(-80, 80, -80, 80, Z_SEAT - 1.6, Z_SEAT + 5.0)),
-            "col": col_piece().intersect(box(-80, 80, -80, 80, 0.0, pocket_top + 0.6)).cut(eprism(*(o + 2.0 for o in SEAT_OPENING), -1.0, 10.0))}
+            "col": col_piece().intersect(box(-80, 80, -80, 80, 0.0, col_diamond_pocket_depth() + 0.6)).cut(eprism(*(o + 2.0 for o in SEAT_OPENING), -1.0, 10.0))}
 
 
 def seat_corbel():
