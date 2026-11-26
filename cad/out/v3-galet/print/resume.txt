@@ -11,5 +11,5 @@ corps-anneau-pla-basic : 0h09, 1.74 g, blocs de support au controle=0, retranche
 corps-coque-arriere : 3h18, 111.74 g, blocs de support au controle=375, retranche : 3h 18m 39s
 eprouvette-fixation-col : 0h23, 9.36 g, blocs de support au controle=6, retranche : 23m 10s
 corps-capot-avant : 1h50, 56.49 g, blocs de support au controle=1139, retranche : 1h 50m 21s
-corps-assise : 2h18, 83.28 g, blocs de support au controle=1, retranche : 2h 18m 43s
-temoin-diamant : 0h34, 13.61 g, blocs de support au controle=2, retranche : 34m 41s
+corps-assise : 2h18, 83.25 g, blocs de support au controle=1, retranche : 2h 18m 57s
+temoin-diamant : 0h34, 13.61 g, blocs de support au controle=2, retranche : 34m 49s

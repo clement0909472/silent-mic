@@ -396,10 +396,12 @@ def col_screw_cut_saddle():
 # Temoin du 26 nov. 2026 : centrage parfait, mais 1 a 2 mm de jour au lieu de 0.5. A 30 deg, 0.1 mm de trop en largeur
 # souleve le col de 0.17 mm : aretes vives des pyramides dans les coins arrondis du logement, premiere couche ecrasee qui
 # retrecit son entree, trous imprimes plus petits. D'ou des cones (pas d'aretes), une entree chanfreinee a 45 deg, 0.15 mm
-# de compensation et un fond plus profond.
+# de compensation et un fond plus profond. Second temoin (meme jour) : le G-code reproduit les cotes a 0.01 mm pres et
+# predit 0.4 mm de jour (marches de couche emboitees) ; le reste vient de l'impression (trous plus petits, cones plus
+# gros), environ 0.3 a 0.4 mm par cote. Compensation portee a 0.35 : environ 0.2 mm de jour de moins, plus de temoin.
 COL_DIAMOND = (5.0, 2.25)  # diametre a la base, hauteur
 COL_DIAMOND_SLOPE = math.tan(math.radians(30))  # flancs, depuis la verticale
-COL_DIAMOND_FIT = 0.15  # compensation d'impression du logement, par cote
+COL_DIAMOND_FIT = 0.35  # compensation d'impression du logement, par cote
 COL_DIAMOND_ROOF = 1.0  # le sommet du cone reste a cette distance du fond du logement
 
 
