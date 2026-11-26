@@ -37,6 +37,9 @@ PLATES = [
     ("3 Anneau lumineux (bobine blanche)", f"{B}-ring.stl", 1, {}, None),
     ("4 Coque arriere", f"{B}-rear.stl", 1, SOLID | ON_PLATE, "corps-coque-arriere"),
     ("5 Trappe", f"{B}-cover.stl", 1, SOLID, "corps-trappe"),
+    # eprouvette de fixation du col (26 nov. 2026) : diamant et crochet, a comparer avant de redessiner capot et col
+    ("6 Eprouvette fixation du col", [str(OUT / "coupons" / f"fix-{n}.stl") for n in ("diamant-capot", "diamant-col", "crochet-capot", "crochet-col")],
+     1, SOLID | ON_PLATE, "eprouvette-fixation-col"),
 ]
 
 
@@ -64,7 +67,8 @@ def main():
         subprocess.run(["cad/bambu_3mf.sh"], cwd=ROOT, env={**__import__("os").environ, "BAMBU_TMP": str(tmp), "ONLY": "aucun"},
                        check=True, stdout=subprocess.DEVNULL)
     assemble = {"plates": [{"plate_name": name, "need_arrange": True,
-                            "objects": [{"path": stl, "count": 1, "filaments": [fil], "print_params": params}]}
+                            "objects": [{"path": path, "count": 1, "filaments": [fil], "print_params": params}
+                                        for path in (stl if isinstance(stl, list) else [stl])]}
                            for name, stl, fil, params, _ in PLATES]}
     (tmp / "assemble.json").write_text(json.dumps(assemble, indent=1, ensure_ascii=False))
     # une version numerotee par livraison : le plus grand numero est la derniere, la seule a ouvrir (Clement, 26 nov. 2026)

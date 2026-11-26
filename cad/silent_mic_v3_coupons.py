@@ -432,6 +432,54 @@ def light_walls(width=10.0, gap=4.0, base=0.6):
     return out
 
 
+# ---------- fixation du col sur le capot : eprouvettes (26 nov. 2026) ----------
+# Deux idees a comparer a la main avant de redessiner capot et col : un tenon en diamant (pyramide tronquee) qui centre le
+# col par ses pentes quand les vis le tirent, et un crochet souple (idee de Clement) qui passe sous le col et accroche
+# une gorge de son interieur. Chaque eprouvette : un morceau d'appui de capot (imprime face d'appui en haut, comme le capot
+# retourne) et un morceau de col (imprime dos au plateau). Repere : x vers l'exterieur du col, z vers le visage.
+FIX_SLOPE = math.tan(math.radians(30))  # flancs du diamant, depuis la verticale
+FIX_DIAMOND = (4.0, 7.0, 2.25)  # base (radiale, tangentielle), hauteur
+FIX_FOAM = 0.5  # jour laisse entre col et appui pour la mousse ecrasee : les pentes portent le col
+FIX_PLATE = (28.0, 16.0, 3.0)  # morceau d'appui
+FIX_COL_H = 6.0
+
+
+def _frustum(base, top, z0, z1):
+    return cq.Workplane("XY", origin=(0, 0, z0)).rect(*base).workplane(offset=z1 - z0).rect(*top).loft()
+
+
+def fix_diamond_pair():
+    b0, b1, h = FIX_DIAMOND
+    shrink = 2 * h * FIX_SLOPE
+    plate = cq.Workplane("XY").box(*FIX_PLATE, centered=(True, True, False))
+    capot = plate.union(_frustum((b0, b1), (b0 - shrink, b1 - shrink), FIX_PLATE[2], FIX_PLATE[2] + h))
+    # logement : les memes pentes, prises a FIX_FOAM au-dessus de l'appui, et 0.6 mm plus profond que le sommet du tenon
+    mouth = (b0 - 2 * FIX_FOAM * FIX_SLOPE, b1 - 2 * FIX_FOAM * FIX_SLOPE)
+    depth = h - FIX_FOAM + 0.6
+    col = cq.Workplane("XY").box(FIX_PLATE[0], FIX_PLATE[1], FIX_COL_H, centered=(True, True, False))
+    col = col.cut(_frustum(mouth, (mouth[0] - 2 * depth * FIX_SLOPE, mouth[1] - 2 * depth * FIX_SLOPE), -0.01, depth))
+    assert mouth[0] - 2 * depth * FIX_SLOPE > 0.3
+    return capot, col
+
+
+def fix_hook_pair():
+    """Crochet : languette de 1.1 mm sous le col (0.1 de jour), montant de 1 mm dans l'interieur du col, bec de 0.6 mm
+    dans une gorge du col ; le montant appuie de 0.15 mm sur la paroi du col, la languette flechit."""
+    zt = FIX_PLATE[2]
+    plate = cq.Workplane("XY").box(14.0, FIX_PLATE[1], zt, centered=(False, True, False))
+    tab = box(-7.5, 0.5, -3.0, 3.0, zt - 1.2, zt - 0.1)
+    post = box(-7.5, -6.5, -3.0, 3.0, zt - 1.2, zt + 2.6)
+    beak = (cq.Workplane("XZ", origin=(0, 3.0, 0)).polyline([(-6.55, zt + 1.1), (-5.9, zt + 1.9), (-6.55, zt + 2.6)]).close().extrude(6.0))
+    capot = plate.union(tab).union(post).union(beak)
+    col = box(-6.65, 14.0, -FIX_PLATE[1] / 2, FIX_PLATE[1] / 2, 0.0, FIX_COL_H)
+    col = col.cut(box(-7.0, -5.75, -3.5, 3.5, 0.9, 2.8))  # gorge en face du bec (col pose a z = 0)
+    return capot, col
+
+
+def box(x0, x1, y0, y1, z0, z1):
+    return cq.Workplane("XY").box(x1 - x0, y1 - y0, z1 - z0, centered=False).translate((x0, y0, z0))
+
+
 def check():
     ci = collar_inner()
     assert ci[0] >= MIN_COLLAR_INNER[0] - 1e-9 and ci[1] >= MIN_COLLAR_INNER[1] - 1e-9, ci
@@ -499,6 +547,9 @@ def export(out=HERE / "out" / "v3-galet" / "coupons"):
     save("joint-coupon-rear", rear, rear.translate((0, 0, -rear.val().BoundingBox().zmin)))
     save("light-coupon-petg", light_coupon())
     save("light-walls", light_walls())
+    for name, (capot, col) in (("diamant", fix_diamond_pair()), ("crochet", fix_hook_pair())):
+        save(f"fix-{name}-capot", capot, capot.translate((0, 0, -capot.val().BoundingBox().zmin)))
+        save(f"fix-{name}-col", col)
     (out / "coupons.json").write_text(json.dumps({"gasket_compression_mm": comp, "parts": report}, indent=2))
     print(f"OK compression joint {comp:.2f} mm, sorties {out}")
 

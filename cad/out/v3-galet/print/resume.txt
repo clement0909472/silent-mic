@@ -11,3 +11,4 @@ corps-anneau-pla-basic : 0h09, 1.74 g, blocs de support au controle=0, retranche
 corps-coque-arriere : 3h18, 111.74 g, blocs de support au controle=375, retranche : 3h 18m 39s
 corps-capot-avant : 1h56, 56.55 g, blocs de support au controle=230, retranche : 1h 56m 41s
 corps-assise : 2h17, 83.40 g, blocs de support au controle=0, retranche : 2h 17m 29s
+eprouvette-fixation-col : 0h23, 9.36 g, blocs de support au controle=6, retranche : 23m 10s
