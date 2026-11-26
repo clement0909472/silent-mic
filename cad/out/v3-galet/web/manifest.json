@@ -164,7 +164,7 @@
     },
     {
       "file": "joint-screws.stl",
-      "label": "Vis M3 x 10 fraisees du joint",
+      "label": "Vis M3 x 10 a tete cylindrique du joint, sur rondelle",
       "role": "metal",
       "explode": [
         0,
@@ -174,7 +174,7 @@
     },
     {
       "file": "joint-nuts.stl",
-      "label": "Ecrous M3 du joint",
+      "label": "Ecrous M3 du joint et leurs rondelles",
       "role": "metal",
       "explode": [
         0,

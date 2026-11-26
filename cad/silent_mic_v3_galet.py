@@ -342,15 +342,19 @@ def section_point(t, d, z):
 
 # ---------- col visse sur l'appui (Clement, 25-26 nov. 2026) ----------
 # L'assise et son col se vissent sur l'appui du capot au lieu d'y etre colles : un joint colle juste devant la bouche
-# ne se controle ni ne se rouvre. 4 vis M3 x 10 fraisees, posees par le dessus du col (sous le coussin, seul colle),
+# ne se controle ni ne se rouvre. 4 vis M3 x 10 a tete cylindrique sur rondelle, posees par le dessus du col (sous le coussin, seul colle),
 # serrent un anneau de mousse a cellules fermees de 1 mm entre le col et l'appui. Par en dessous, aucun outil
 # n'atteindrait la plaque : le capot se resserre en entonnoir jusqu'au joint. Ecrou prisonnier dans la plaque, comme
 # a la coque arriere : il tire vers le col. Mais le col reste sur ses diamants, 0.5 mm au-dessus, sur de la mousse :
 # la peau au-dessus de l'ecrou travaille en poinconnement, pas en compression comme a la coque (ou les bossages se touchent).
 COL_SCREW_T_DEG = (45, 135, 225, 315)
-COL_SCREW_FRAC = 0.3  # dans la bande d'appui, du bord de l'ouverture (0) a la peau (1) : ecrou a 1.4 mm de la peau, qui se resserre sous l'appui, et couvert par la plaque
+# dans la bande d'appui, du bord de l'ouverture (0) a la peau (1) ; 0.3 jusqu'a la v06, 0.25 depuis la rondelle d'ecrou
+# (27 nov. 2026), qui descend l'ecrou de 0.5 mm la ou la peau se resserre : logement a 1.4 mm de la peau (controle)
+COL_SCREW_FRAC = 0.25
 COL_NUT_SKIN = 2.0  # serrage ferme demande (Clement, 26 nov. 2026) ; FEM (mechanics/fem) : rupture de la peau vers 650-810 N par vis au lieu de 480-600 avec 1.2 mm
-COL_HEAD_Z = 3.5  # haut de la tete au-dessus du dos du col : la pointe d'une M3 x 10 sort de l'ecrou de 2.1 mm
+# portee plate de la rondelle au-dessus du dos du col : 2.5 mm de col sous la rondelle (2.2 sous l'ancienne fraisure) ;
+# la pointe d'une M3 x 10 sort de l'ecrou serre et de sa rondelle de 1.6 mm (controle dans export())
+COL_SEAT_Z = 2.5
 
 
 def col_screw_xy():
@@ -359,9 +363,15 @@ def col_screw_xy():
     return [(a * math.cos(math.radians(t)), b * math.sin(math.radians(t))) for t in COL_SCREW_T_DEG]
 
 
+def col_screw_tip_z():
+    """Pointe d'une M3 x 10 serree, rondelle sous la tete, col pose sur ses diamants."""
+    return Z_SEAT + SADDLE_GAP + COL_SEAT_Z + cp.WASHER[1] - cp.SCREW_LEN
+
+
 def col_nut_z():
+    """Bas du logement (niveau de l'ecrou) et plafond (sous la peau) ; le niveau de la rondelle est en haut."""
     z1 = Z_SEAT - COL_NUT_SKIN
-    return z1 - cp.NUT[1], z1
+    return z1 - cp.WASHER_LEVEL - cp.NUT[1], z1
 
 
 def build_col_bosses():
@@ -375,28 +385,39 @@ def build_col_bosses():
 
 
 def col_screw_cut_front():
-    """Passage de la vis et logement d'ecrou, ouvert vers le centre pour y glisser l'ecrou par l'ouverture du capot ;
-    un plat de l'ecrou face a la peau, qui se resserre sous l'appui."""
+    """Passage de la vis, logement d'ecrou et, au-dessus, niveau de la rondelle, ouverts vers le centre pour y glisser
+    l'ecrou puis la rondelle par l'ouverture du capot ; un plat de l'ecrou face a la peau, qui se resserre sous l'appui.
+    Capot imprime joint au plateau : le plafond du niveau de la rondelle est un pont, dont la premiere couche
+    (cp.MEMBRANE) reste pleine pour que la rondelle porte sur toute sa surface : elle n'est que dans le STL d'impression
+    (print_membranes), on la perce au montage."""
     z0, z1 = col_nut_z()
-    r, half = cp.SCREW[0] / 2, cp.NUT[0] * math.cos(math.radians(30)) / 2
+    zw = z0 + cp.NUT[1]
+    r, rw, half = cp.SCREW[0] / 2, cp.WASHER_WELL_R, cp.NUT[0] * math.cos(math.radians(30)) / 2
     out = []
     for x, y in col_screw_xy():
-        local = (cq.Workplane("XY", origin=(0, 0, z0 - 3.5)).circle(r).extrude(Z_SEAT + 0.5 - z0 + 3.5)
+        # passage borgne, 0.8 mm sous la pointe : traversant (3.5 sous l'ecrou), il passait a 0.6 mm de la peau en entonnoir
+        zb = col_screw_tip_z() - 0.8
+        local = (cq.Workplane("XY", origin=(0, 0, zb)).circle(r).extrude(Z_SEAT + 0.5 - zb)
                  .union(cq.Workplane("XY", origin=(0, 0, z0)).polygon(6, cp.NUT[0]).extrude(cp.NUT[1]).rotate((0, 0, 0), (0, 0, 1), 30))
-                 .union(cp._lbox(0, cp.BOSS_R + 6.0, half, z0, z1)))
+                 .union(cp._lbox(0, cp.BOSS_R + 6.0, half, z0, zw))
+                 .union(cq.Workplane("XY", origin=(0, 0, zw)).circle(rw).extrude(z1 - zw)).union(cp._lbox(0, cp.BOSS_R + 6.0, rw, zw, z1)))
         out.append(local.rotate((0, 0, 0), (0, 0, 1), math.degrees(math.atan2(-y, -x))).translate((x, y, 0)))
     return union_all(out)
 
 
+def print_membranes():
+    """Membranes des logements de rondelle d'ecrou (cp.nut_membrane), pour les STL d'impression : capot (col), coque (joint)."""
+    return {"front": union_all(cp.nut_membrane(x, y, col_nut_z()[1]) for x, y in col_screw_xy()),
+            "rear": union_all(cp.nut_membrane(x, y, -cp.NUT_SKIN) for x, y in screw_xy())}
+
+
 def col_screw_cut_saddle():
-    """Dans le col (repere du col, dos a z = 0) : passage, fraisure a 90 deg, puits de la tete jusqu'au-dessus."""
-    r, rh, dh = cp.SCREW[0] / 2, cp.SCREW[1] / 2, cp.SCREW[2]
-    out = []
-    for x, y in col_screw_xy():
-        out.append(cq.Workplane("XY", origin=(x, y, -0.5)).circle(r).extrude(COL_HEAD_Z + 0.5)
-                   .union(wp(cq.Solid.makeCone(r, rh, dh, cq.Vector(x, y, COL_HEAD_Z - dh), cq.Vector(0, 0, 1))))
-                   .union(cq.Workplane("XY", origin=(x, y, COL_HEAD_Z - 0.01)).circle(cp.HEAD_WELL_R).extrude(60)))
-    return union_all(out)
+    """Dans le col (repere du col, dos a z = 0, imprime dos au plateau) : passage, portee plate de la rondelle,
+    puits de la rondelle et de la tete jusqu'au-dessus."""
+    r = cp.SCREW[0] / 2
+    return union_all(cq.Workplane("XY", origin=(x, y, -0.5)).circle(r).extrude(COL_SEAT_Z + 0.5)
+                     .union(cq.Workplane("XY", origin=(x, y, COL_SEAT_Z - 0.01)).circle(cp.WASHER_WELL_R).extrude(60))
+                     for x, y in col_screw_xy())
 
 
 # Centrage du col par 4 diamants (Clement, 26 nov. 2026) : pyramides tronquees sur l'appui du capot, aux bouts des axes,
@@ -477,7 +498,7 @@ def build_front_bosses():
     """Bossages des vis du capot (imprime appui du coussin en bas, joint en haut) : un pave au-dessus du joint,
     tenu par deux nervures de 1.3 mm qui montent a 38 deg jusqu'a la paroi et a la plaque d'appui. Entre les
     nervures, le puits de la tete reste ouvert vers la chambre (voir cp.screw_hole_front)."""
-    h, far, half, rw = cp.BOSS_FRONT_H, cp.BOSS_FAR, cp.BOSS_HALF, cp.HEAD_WELL_R
+    h, far, half, rw = cp.BOSS_FRONT_H, cp.BOSS_FAR, cp.BOSS_HALF, cp.WASHER_WELL_R
     z_end = Z_SEAT - SEAT_PLATE + 0.5
     prof = [(-40.0, h - 0.01), (far, h - 0.01), (far - (z_end - h) / STEEP, z_end), (-40.0, z_end)]
     local = box(-(SCREW_OFFSET - 9.0), far, -half, half, 0, h)
@@ -652,8 +673,17 @@ def rear_screw_cut():
     return union_all(cp.screw_hole_rear(x, y, -90 if y > 0 else 90) for x, y in screw_xy())
 
 
+def cap_screw_solid(x, y, z_seat):
+    """Vis M3 x 10 a tete cylindrique (ISO 4762) sur sa rondelle, posee sur une portee plate a z_seat, tige vers -z."""
+    wt, (dh, hh) = cp.WASHER[1], cp.CAP_HEAD
+    washer = cq.Workplane("XY", origin=(x, y, z_seat)).circle(cp.WASHER[0] / 2).circle(1.6).extrude(wt)
+    head = cq.Workplane("XY", origin=(x, y, z_seat + wt)).circle(dh / 2).extrude(hh)
+    shank = cq.Workplane("XY", origin=(x, y, z_seat + wt - cp.SCREW_LEN)).circle(1.5).extrude(cp.SCREW_LEN + 0.01)
+    return washer.union(head).union(shank)
+
+
 def screw_solid(x, y, z_head, up, shank_r=1.5):
-    """Vis M3 x 10 fraisee de reference : dessus de la tete a z_head, tige vers +z (up = 1) ou -z (up = -1)."""
+    """Vis M3 x 10 fraisee de reference (trappe) : dessus de la tete a z_head, tige vers +z (up = 1) ou -z (up = -1)."""
     d = cq.Vector(0, 0, up)
     rh = cp.SCREW[1] / 2 - 0.2
     head = wp(cq.Solid.makeCone(rh, shank_r, rh - shank_r, cq.Vector(x, y, z_head), d))  # tete a 90 deg
@@ -664,16 +694,16 @@ def screw_solid(x, y, z_head, up, shank_r=1.5):
 def build_rear_bosses():
     """Bossages des ecrous, prolonges par un contrefort a 38 deg qui finit dans la paroi
     interieure du conduit (coque imprimee z vers le haut : pas de pointe pendante)."""
-    h = cp.BOSS_REAR_H
+    h, R = cp.BOSS_REAR_H, BOSS_R
     r_end, d_end = 0.8, 10.0
     out = []
     for t in SCREW_T_DEG:
         x, y = eq_point(math.radians(t), SCREW_OFFSET)[0]
-        z_end = -h - STEEP * ((SCREW_OFFSET + BOSS_R) - (d_end + r_end))
+        z_end = -h - STEEP * ((SCREW_OFFSET + R) - (d_end + r_end))
         xe, ye = section_point(math.radians(t), d_end, z_end)
-        cyl = cq.Workplane("XY", origin=(x, y, -h)).circle(BOSS_R).extrude(h)
+        cyl = cq.Workplane("XY", origin=(x, y, -h)).circle(R).extrude(h)
         but = wp(cq.Solid.makeLoft([cq.Workplane("XY", origin=(xe, ye, z_end)).circle(r_end).wire().val(),
-                                    cq.Workplane("XY", origin=(x, y, -h)).circle(BOSS_R).wire().val()], True))
+                                    cq.Workplane("XY", origin=(x, y, -h)).circle(R).wire().val()], True))
         out.append(cyl.union(but))
     return union_all(out)
 
@@ -1002,10 +1032,11 @@ def build_refs():
     # ses 108 mm ; a reprendre si un controle porte un jour sur le bord du coussin
     ring_pad = eprism(*cp.SEAT, Z_SEAT, Z_SEAT + 80).cut(eprism(*PAD["opening"], Z_SEAT - 1, Z_SEAT + 81))
     pad = ring_pad.intersect(cp.below_face(PAD_BASE + PAD["thickness"], SEAT_RADIUS)).cut(cp.below_face(PAD_BASE + SADDLE_GAP, SEAT_RADIUS))
-    # tete 0.1 mm au-dessus de sa portee dans la fraisure, ecrou 0.05 mm sous son plafond (position serree)
-    jscrews = union_all(screw_solid(x, y, cp.BOSS_FRONT_H - 0.1, -1) for x, y in screw_xy())
-    nut_z = -cp.NUT_SKIN - 2.4 - 0.05
-    jnuts = union_all(cq.Workplane("XY", origin=(x, y, nut_z)).polygon(6, 6.35).extrude(2.4).rotate((x, y, 0), (x, y, 1), 90)
+    # rondelle 0.05 mm au-dessus de sa portee, ecrou 0.05 mm sous son plafond (position serree)
+    jscrews = union_all(cap_screw_solid(x, y, cp.FRONT_SEAT_Z + 0.05) for x, y in screw_xy())
+    wz = -cp.NUT_SKIN - cp.WASHER[1] - 0.05
+    jnuts = union_all(cq.Workplane("XY", origin=(x, y, wz - 2.4)).polygon(6, 6.35).extrude(2.4).rotate((x, y, 0), (x, y, 1), 90)
+                      .union(cq.Workplane("XY", origin=(x, y, wz)).circle(cp.WASHER[0] / 2).circle(1.6).extrude(cp.WASHER[1]))
                       for x, y in screw_xy()).cut(jscrews)
     cscrews = union_all(screw_solid(x, y, COVER_HEAD_Z + 0.1, 1, cp.PILOT_D / 2 - 0.1) for x, y in COVER_SCREW_XY)
     return {
@@ -1165,7 +1196,7 @@ def export():
     # les passages des vis sont exclus du volume d'air : les deux percages coaxiaux de meme rayon (capot, coque)
     # y laissaient une face invalide dans le STEP du volume d'air, refuse par cad/check_exports.py (0.4 cm3 en moins)
     plugs = union_all(cq.Workplane("XY", origin=(x, y, -(cp.SCREW_LEN - cp.BOSS_FRONT_H + 1.1))).circle(cp.SCREW[0] / 2 + 0.05)
-                      .extrude(cp.SCREW_LEN + 1.1 - cp.SCREW[2] + 0.05) for x, y in screw_xy())
+                      .extrude(cp.SCREW_LEN - cp.BOSS_FRONT_H + 1.1 + cp.FRONT_SEAT_Z - 0.35) for x, y in screw_xy())
     cav = cav.cut(front).cut(rear).cut(insert).cut(build_tunnel()).cut(refs["mic"]).cut(refs["mic-disc"]).cut(plugs)
     v_cav = vol(cav) / 1000
     foam = {k: vol(refs[k]) / 1000 for k in ("foam-disc", "foam-liner")}
@@ -1297,27 +1328,46 @@ def export():
     # les percages ne doivent rien crever : ni l'exterieur, ni la rainure du joint, ni le conduit, ni la baie
     fs, rs, pil = front_screw_cut(), rear_screw_cut(), cover_pilots()
     gaps = {"capot_vers_exterieur": min_distance(fs, outside), "capot_vers_rainure": min_distance(fs, ring(GROOVE[0], GROOVE[1], -1, GROOVE_DEPTH)),
+            "capot_col_vers_exterieur": min_distance(col_screw_cut_front(), outside),
             "coque_vers_exterieur": min_distance(rs, outside), "coque_vers_conduit": min_distance(rs, duct),
             "trappe_vers_exterieur_et_baie": min_distance(pil, outside), "trappe_vers_chambre": min_distance(pil, cav)}
     m["screw_walls_mm"] = {k: round(v, 2) for k, v in gaps.items()}
     assert min(gaps["capot_vers_exterieur"], gaps["coque_vers_exterieur"], gaps["coque_vers_conduit"], gaps["trappe_vers_chambre"]) >= 1.5, m["screw_walls_mm"]
     assert gaps["capot_vers_rainure"] >= 0.9 and gaps["trappe_vers_exterieur_et_baie"] >= 0.8, m["screw_walls_mm"]
+    assert gaps["capot_col_vers_exterieur"] >= 1.0, m["screw_walls_mm"]
     # siege des vis de la trappe : 1 mm de matiere autour de la tete sur toute la hauteur sous le puits
     seat = union_all(cq.Workplane("XY", origin=(x, y, COVER_HEAD_Z)).circle(cp.HEAD_WELL_R + 1.0).extrude(Z_RF - COVER_HEAD_Z) for x, y in COVER_SCREW_XY)
     m["cover_seat_fill"] = round(vol(seat.intersect(build_cover(rear_env, holes=False))) / vol(seat), 4)
     assert m["cover_seat_fill"] > 0.999, "siege d'une vis de trappe au bord de la peau"
-    # tournevis : un cylindre du diametre de la tete, de chaque vis jusqu'au-dela du col, ne rencontre ni le capot ni le manchon
-    driver = union_all(cq.Workplane("XY", origin=(x, y, cp.BOSS_FRONT_H + 0.05)).circle(cp.HEAD_WELL_R - 0.1).extrude(z_rim + 5.0 - cp.BOSS_FRONT_H)
+    # pose : un cylindre du diametre de la rondelle (+ 0.2), de chaque portee jusqu'au-dela du col, ne rencontre ni le
+    # capot ni le manchon : vis et rondelle descendent jusqu'a leur portee, col retire
+    z_s, z_top = cp.FRONT_SEAT_Z + 0.05, cp.FRONT_SEAT_Z + cp.WASHER[1] + cp.CAP_HEAD[1] + 0.05
+    driver = union_all(cq.Workplane("XY", origin=(x, y, z_s)).circle(cp.WASHER_WELL_R - 0.1).extrude(z_rim + 5.0 - z_s)
                        for x, y in screw_xy())
-    # cle six pans de 2 mm (2.3 sur angles, comptee a 2.6) : elle atteint chaque tete a travers le col en place,
+    # cle six pans de 2.5 mm (2.9 sur angles, comptee a 3.2) : elle atteint chaque tete a travers le col en place,
     # pour rouvrir sans decoller le coussin ; les vis desserrees restent dans leurs puits
-    key = union_all(cq.Workplane("XY", origin=(x, y, cp.BOSS_FRONT_H + 0.05)).circle(1.3).extrude(z_rim + 5.0 - cp.BOSS_FRONT_H) for x, y in screw_xy())
+    key = union_all(cq.Workplane("XY", origin=(x, y, z_top)).circle(1.6).extrude(z_rim + 5.0 - z_top) for x, y in screw_xy())
     acc = {"capot": vol(driver.intersect(front)), "manchon": vol(driver.intersect(refs["foam-liner"])), "col_en_place_info": vol(driver.intersect(insert)),
-           "cle_2mm_col_en_place": vol(key.intersect(union_all([front, insert, refs["foam-liner"]]))),
-           "cle_2mm_jeu_au_col_mm": min_distance(key, insert)}
+           "cle_2_5mm_col_en_place": vol(key.intersect(union_all([front, insert, refs["foam-liner"]]))),
+           "cle_2_5mm_jeu_au_col_mm": min_distance(key, insert)}
     m["gasket_compression_mm"] = round(comp, 2)
-    m["screws"] = {"joint": len(screw_xy()), "trappe": len(COVER_SCREW_XY), "acces_tournevis_obstacle_mm3": {k: round(v, 2) for k, v in acc.items()}}
-    assert acc["capot"] < 0.01 and acc["manchon"] < 0.01 and acc["cle_2mm_col_en_place"] < 0.01 and acc["cle_2mm_jeu_au_col_mm"] >= 1.0, acc
+    # vis serrees : la pointe d'une M3 x 10 doit depasser l'ecrou d'un filet au moins, sans toucher le fond du percage
+    nut_low = {"joint": -cp.NUT_SKIN - cp.WASHER[1] - 2.4, "col": col_nut_z()[1] - cp.WASHER[1] - 2.4}
+    tip = {"joint": cp.FRONT_SEAT_Z + cp.WASHER[1] - cp.SCREW_LEN,
+           "col": col_screw_tip_z()}
+    hole_low = {"joint": -(cp.SCREW_LEN - cp.BOSS_FRONT_H + 1.0), "col": col_screw_tip_z() - 0.8}
+    m["screws"] = {"joint": len(screw_xy()), "trappe": len(COVER_SCREW_XY), "acces_tournevis_obstacle_mm3": {k: round(v, 2) for k, v in acc.items()},
+                   "pointe_sous_l_ecrou_mm": {k: round(nut_low[k] - tip[k], 2) for k in tip},
+                   "pointe_au_fond_du_percage_mm": {k: round(tip[k] - hole_low[k], 2) for k in tip}}
+    assert acc["capot"] < 0.01 and acc["manchon"] < 0.01 and acc["cle_2_5mm_col_en_place"] < 0.01 and acc["cle_2_5mm_jeu_au_col_mm"] >= 1.0, acc
+    assert all(1.0 <= nut_low[k] - tip[k] and tip[k] - hole_low[k] >= 0.3 for k in tip), m["screws"]
+    # col : 1 mm de col plein autour du puits de chaque vis, du dos jusqu'au haut de la tete, et la tete sous l'assise
+    body = cp.body_saddle()
+    hh = COL_SEAT_Z + cp.WASHER[1] + cp.CAP_HEAD[1]
+    shell_ = union_all(cq.Workplane("XY", origin=(x, y, 0)).circle(cp.WASHER_WELL_R + 1.0).circle(cp.WASHER_WELL_R).extrude(hh)
+                       for x, y in col_screw_xy())
+    m["col_screw_wall_fill"] = round(vol(shell_.intersect(body)) / vol(shell_), 4)
+    assert m["col_screw_wall_fill"] > 0.999, "puits d'une vis du col au bord du col, ou tete au-dessus de l'assise"
     assert len(screw_xy()) == 4 and refs["joint-screws"].solids().size() == 4 and refs["joint-nuts"].solids().size() == 4
     assert refs["cover-screws"].solids().size() == 2
     log("vis", t)
@@ -1379,13 +1429,14 @@ def export():
     written = {}
     for n, p in parts.items():
         written[n] = cp.export_step(p, out / f"{stem}-{n}.step")
+    membranes = print_membranes()  # premiere couche pleine des plafonds de rondelle d'ecrou, percee au montage
     # STL en orientation d'impression : capot appui en bas, coque face arriere en bas,
     # couvercle face plane en bas, anneau et collier a plat.
     printed = {
         # retourne depuis le 26 nov. 2026 : joint sur le plateau, appui et diamants en haut. Une copie : mailler le capot
         # lui-meme pour le STL accrochait le maillage a ses faces, que partage le volume d'air, dont le STEP ne se relisait plus
-        "front": wp(front.val().copy()),
-        "rear": rear.translate((0, 0, -Z_RF)),
+        "front": wp(front.union(membranes["front"]).val().copy()),
+        "rear": rear.union(membranes["rear"]).translate((0, 0, -Z_RF)),
         "cover": cover.rotate((0, 0, 0), (1, 0, 0), 180).translate((0, 0, Z_RF)),
         # retourne : face haute (contre le capot) sur le plateau, plots imprimes en dernier
         "ring": build_ring(printed=True).rotate((0, 0, 0), (1, 0, 0), 180).translate((0, 0, -0.02)),
@@ -1437,8 +1488,8 @@ def export():
              "foam-liner": ("Manchon de mousse 10 mm", "foam", (0, 0, 100)), "foam-liner-rear": ("Mousse des flancs arriere 8 mm", "foam", (0, 0, 58)),
              "bonnette": ("Bonnette DJI (encombrement estime)", "soft", (0, 0, 250)),
              "battery": ("LiPo 30 x 20 x 5", "electronics", (0, 0, -26)), "charger": ("Chargeur USB-C TP4056", "electronics", (0, 0, -44)),
-             "switch": ("Interrupteur", "electronics", (0, 0, -44)), "joint-screws": ("Vis M3 x 10 fraisees du joint", "metal", (0, 0, 160)),
-             "joint-nuts": ("Ecrous M3 du joint", "metal", (0, 0, 0)), "cover-screws": ("Vis M3 x 10 de la trappe", "metal", (0, 0, -80))}
+             "switch": ("Interrupteur", "electronics", (0, 0, -44)), "joint-screws": ("Vis M3 x 10 a tete cylindrique du joint, sur rondelle", "metal", (0, 0, 160)),
+             "joint-nuts": ("Ecrous M3 du joint et leurs rondelles", "metal", (0, 0, 0)), "cover-screws": ("Vis M3 x 10 de la trappe", "metal", (0, 0, -80))}
     manifest = []
     shown = dict(parts) | refs | {"earpad": web_earpad()}
     for n, p in shown.items():

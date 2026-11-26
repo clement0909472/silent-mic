@@ -91,12 +91,12 @@ def sleeve_piece():
     # encoches des contreforts : largeur du bossage + 1 mm, hauteur jusqu'a leur retour dans la paroi
     # contrefort (g.build_front_bosses) : cercle de rayon BOSS_R a h, qui se reduit a 0.8 mm en rentrant
     # dans la paroi a zb ; l'encoche prend sa largeur au bas du manchon + 1 mm, jusqu'a zb
-    # nervures (g.build_front_bosses) : 1.3 mm d'epaisseur, a 3.95 mm de part et d'autre de l'axe de la vis, elles
+    # nervures (g.build_front_bosses) : 0.8 mm d'epaisseur, a 4.2 mm de part et d'autre de l'axe de la vis, elles
     # traversent presque toute l'epaisseur du manchon sur toute sa hauteur. La fente s'arrete 3 mm avant le bord
     # large : la bande reste d'un seul tenant, et la mousse entre deux nervures s'ecarte au passage de la vis
     n_h = slant - 3.0
     n_w = 2.0
-    off = (g.cp.HEAD_WELL_R + g.cp.BOSS_HALF) / 2
+    off = (g.cp.WASHER_WELL_R + g.cp.BOSS_HALF) / 2
     centres = [frac(a0, b0, math.radians(t)) for t in g.SCREW_T_DEG]
     # theta et rho0 sont connus ici : une fente de chaque cote de l'axe
     notches = sorted((f + sgn * off / (theta * rho0)) % 1.0 for f in centres for sgn in (-1, 1))

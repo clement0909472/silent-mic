@@ -16,16 +16,16 @@
     77.0
   ],
   "nose_clearance_ymax_mm": 38.5,
-  "cavity_air_plus_foam_cm3": 199.1,
-  "cavity_air_only_cm3": 155.3,
+  "cavity_air_plus_foam_cm3": 199.7,
+  "cavity_air_only_cm3": 156.0,
   "foam_cm3": {
     "foam-disc": 23.2,
     "foam-liner": 20.6,
     "total": 43.8
   },
   "free_passage_min_mm2": {
-    "area": 1488,
-    "z": -4.2
+    "area": 1477,
+    "z": -5.7
   },
   "duct": {
     "section_mm2": 42.17,
@@ -117,10 +117,11 @@
     ]
   },
   "screw_walls_mm": {
-    "capot_vers_exterieur": 7.09,
-    "capot_vers_rainure": 1.9,
-    "coque_vers_exterieur": 5.62,
-    "coque_vers_conduit": 5.1,
+    "capot_vers_exterieur": 6.47,
+    "capot_vers_rainure": 1.14,
+    "capot_col_vers_exterieur": 1.43,
+    "coque_vers_exterieur": 5.08,
+    "coque_vers_conduit": 4.78,
     "trappe_vers_exterieur_et_baie": 2.75,
     "trappe_vers_chambre": 5.15
   },
@@ -132,11 +133,20 @@
     "acces_tournevis_obstacle_mm3": {
       "capot": 0.0,
       "manchon": 0.0,
-      "col_en_place_info": 0.0,
-      "cle_2mm_col_en_place": 0.0,
-      "cle_2mm_jeu_au_col_mm": 2.21
+      "col_en_place_info": 23.09,
+      "cle_2_5mm_col_en_place": 0.0,
+      "cle_2_5mm_jeu_au_col_mm": 1.91
+    },
+    "pointe_sous_l_ecrou_mm": {
+      "joint": 1.4,
+      "col": 1.6
+    },
+    "pointe_au_fond_du_percage_mm": {
+      "joint": 0.5,
+      "col": 0.8
     }
   },
+  "col_screw_wall_fill": 1.0,
   "interferences": [],
   "demontage_volume_commun_mm3": {
     "capot_avant_et_col_micro_en_place": {
@@ -238,12 +248,12 @@
   ],
   "flat_faces_note": "plans > 35 mm : appui du coussin (couvert par le coussin, voulu plat) et face arriere du dos (maquette)",
   "mass_g_solid_pla": {
-    "front": 52.2,
+    "front": 51.5,
     "rear": 100.5,
     "cover": 15.0,
-    "assise-col": 76.3,
+    "assise-col": 75.6,
     "ring_petg": 1.7,
-    "total": 245.7
+    "total": 244.3
   },
   "warn": [
     "longueur entree -> centre de la sortie 164.4 mm < 175 (canal barrage a barrage 192.9)"
@@ -251,6 +261,6 @@
   "fail": [],
   "temoin_diamant_cm3": {
     "capot": 3.79,
-    "col": 7.69
+    "col": 7.61
   }
 }

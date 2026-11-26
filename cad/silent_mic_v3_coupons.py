@@ -65,21 +65,36 @@ GROOVE_DEPTH = TONGUE[2] + GASKET[1] - GASKET_COMPRESSION
 # passage, tete, hauteur de fraisure. Fraisure a 90 deg, comme la tete d'une vis ISO 10642 : a 72 deg (cotes du
 # v2), la tete ne portait que sur l'arete du haut (relecture independante du 23 nov. 2026)
 SCREW = (v2.M3_CLEARANCE_DIAMETER, v2.M3_HEAD_DIAMETER, (v2.M3_HEAD_DIAMETER - v2.M3_CLEARANCE_DIAMETER) / 2)
-# logement d'ecrou : sur angles, hauteur. 2.8 pour un ecrou de 2.4 : le plafond, imprime en pont, flechit un peu
-NUT = (v2.M3_NUT_POCKET_DIAMETER, 2.8)
+# logement d'ecrou : sur angles, hauteur du niveau de l'ecrou (2.4 + 0.1 de jeu). Au-dessus, le niveau de la rondelle
+# (WASHER_LEVEL), sous un plafond imprime en pont : c'est lui qui flechit, d'ou ses 0.3 mm de jeu
+NUT = (v2.M3_NUT_POCKET_DIAMETER, 2.5)
 SCREW_LEN = 10.0  # M3 x 10, tete comprise
 # axe des vis depuis la peau : a l'interieur de la rainure, rien ne traverse la paroi. A 13.9, une cle six pans
 # de 2 mm atteint chaque tete a travers le col en place (controle dans le corps) : on rouvre sans decoller le coussin
 SCREW_OFFSET = 13.9
-BOSS_R = 5.0  # bossage rond de la coque arriere (ecrou)
+BOSS_R = 5.0  # bossage rond de la coque arriere et des ecrous du col (6 : le micro, decolle de son aimant, l'accrochait)
 BOSS_HALF, BOSS_FAR = 4.6, 4.3  # bossage du capot : demi-largeur, et avancee vers la chambre depuis l'axe
 NUT_MOUTH = 3.3  # le logement d'ecrou est ferme par la peau jusque-la
+# et celui de la rondelle jusque-la : au-dela, ses parois tombent sous 0.5 mm ; la rondelle y perd 3 mm2 d'appui sur 28
+WASHER_MOUTH = 2.5
 # bossage du capot : 3.7 mm de matiere sous la fraisure. A 4.5, presque au niveau du dessus de la bride du
 # capot (4.45), OCCT rendait un capot invalide
 BOSS_FRONT_H = 5.0
-NUT_SKIN = 1.2  # entre l'ecrou et le plan de joint : pont de 5.8 mm, 6 couches
-BOSS_REAR_H = NUT_SKIN + NUT[1] + 1.2
-HEAD_WELL_R = SCREW[1] / 2 + 0.2  # puits de la tete et du tournevis
+NUT_SKIN = 1.2  # entre la rondelle et le plan de joint : pont de 7.6 mm, 6 couches
+HEAD_WELL_R = SCREW[1] / 2 + 0.2  # puits de la tete et du tournevis (trappe)
+# Joint et col (Clement, 26 nov. 2026) : vis a tete cylindrique ISO 4762 M3 x 10 de sa boite, une rondelle plate
+# ISO 7089 M3 sous la tete et une sur l'ecrou. Sous la tete, la rondelle porte a plat sur 28 mm2 au lieu des 13 mm2
+# projetes d'une fraisure, sans l'effet de coin d'un cone qui ouvre le bossage. Cote ecrou, elle porte sur 28 mm2 au
+# lieu de 16 sous l'ecrou seul ; le logement six pans empeche toujours l'ecrou de tourner, sans pince.
+WASHER = (7.0, 0.5)  # diametre exterieur, epaisseur
+CAP_HEAD = (5.5, 3.0)  # tete cylindrique : diametre, hauteur ; cle six pans de 2.5
+WASHER_WELL_R = WASHER[0] / 2 + 0.3  # logements de rondelle : les trous sortent 0.3 a 0.4 mm plus petits (temoins du 26 nov.)
+WASHER_LEVEL = WASHER[1] + 0.3  # niveau de la rondelle d'ecrou, sous la peau
+FRONT_SEAT_Z = BOSS_FRONT_H - 1.0  # portee plate de la rondelle dans le bossage du capot, 4 mm au-dessus du joint
+# nervures du bossage du capot : 0.8 mm (1.3 avec le puits de 6.6 de la fraisure). Les elargir faisait toucher le pouce
+# qui sort le micro (controle du corps) ; elles ne portent pas le serrage, qui passe du bossage au plan de joint
+BOSS_REAR_H = NUT_SKIN + WASHER_LEVEL + NUT[1] + 1.2
+MEMBRANE = 0.2  # une couche pleine sur le plafond des logements de rondelle d'ecrou, percee au montage
 PILOT_D = 2.7  # avant-trou d'une M3 qui taille son filet dans le PLA (trappe, hors volume acoustique)
 
 # ---------- assise courbe et col (23 nov. 2026) ----------
@@ -151,39 +166,49 @@ def _lbox(x0, x1, half_y, z0, z1):
 
 
 def screw_hole_front(x, y, top, angle):
-    """Cote tete (capot avant, tete vers +z) : passage, fraisure au sommet du bossage, puis puits de la tete et
-    du tournevis jusqu'a top, ouvert vers la chambre (direction angle, en degres).
+    """Cote tete (capot avant, tete vers +z) : passage, portee plate de la rondelle a FRONT_SEAT_Z, puis puits de
+    la rondelle, de la tete et de la cle jusqu'a top, ouvert vers la chambre (direction angle, en degres).
     Le capot s'imprime joint en haut : le puits est sous le bossage. Ouvert vers la chambre, rien ne s'y ferme
-    dans le vide ; la face du bossage se ferme en trois couches de 0.2 : un pont droit entre les deux nervures
-    (fente restante), puis un carre, puis le rond de la fraisure. Un puits rond dans un contrefort plein donnait
+    dans le vide ; la portee se ferme en trois couches de 0.2 : un pont droit d'une nervure a l'autre (fente du
+    passage restante), puis un carre, puis le rond du passage. Un puits rond dans un contrefort plein donnait
     un contour pose dans le vide, que le trancheur soutenait par une colonne de 24 mm dans chaque puits."""
-    r, rh, dh, rw, h = SCREW[0] / 2, SCREW[1] / 2, SCREW[2], HEAD_WELL_R, BOSS_FRONT_H
-    disc = lambda z0, z1: cq.Workplane("XY", origin=(0, 0, z0)).circle(rw).extrude(z1 - z0)
-    local = (cq.Workplane("XY", origin=(0, 0, -0.5)).circle(r).extrude(h + 0.5)
-             .union(cq.Workplane("XY").newObject([cq.Solid.makeCone(rh, r, dh, cq.Vector(0, 0, h), cq.Vector(0, 0, -1))]))
-             .union(_lbox(-rh, rh, rh, h - 0.4, h - 0.2))  # 2e couche : carre
-             .union(disc(h - 0.2, top)).union(_lbox(0, rh, rw, h - 0.2, h))  # 1re couche : pont au-dela de rh
-             .union(_lbox(0, BOSS_FAR + 1.0, rw, h, top)))  # puits ouvert vers la chambre, entre les nervures
+    r, rw, s = SCREW[0] / 2, WASHER_WELL_R, FRONT_SEAT_Z
+    local = (cq.Workplane("XY", origin=(0, 0, -0.5)).circle(r).extrude(s + 0.5)
+             .union(_lbox(-r, r, r, s - 0.4, s - 0.2))  # 2e couche : carre
+             .union(_lbox(-r, r, rw, s - 0.2, s))  # 1re couche : fente d'une nervure a l'autre
+             .union(cq.Workplane("XY", origin=(0, 0, s)).circle(rw).extrude(top - s))
+             .union(_lbox(0, BOSS_FAR + 1.0, rw, s, top)))  # puits ouvert vers la chambre, entre les nervures
     return local.rotate((0, 0, 0), (0, 0, 1), angle).translate((x, y, 0))
 
 
 def screw_hole_rear(x, y, angle):
-    """Cote ecrou (coque arriere) : passage de la vis sous le plan de joint et logement d'ecrou M3 ouvert de
-    cote (direction angle, en degres) pour y glisser l'ecrou. Le serrage ecrase la peau de NUT_SKIN entre
-    l'ecrou et le bossage d'en face : rien ne travaille en traction a travers les couches.
-    La peau s'imprime en pont au-dessus du logement : le trou de la vis s'y ferme en trois couches de 0.2
-    (fente de toute la portee, carre, rond). Au-dela de NUT_MOUTH les parois du bossage rond sont trop minces
-    pour porter un pont : le logement y est ouvert jusqu'en haut."""
-    r = SCREW[0] / 2
+    """Cote ecrou (coque arriere) : passage de la vis sous le plan de joint, logement d'ecrou M3 et, au-dessus, niveau
+    de la rondelle, ouverts de cote (direction angle, en degres) : on glisse l'ecrou, puis la rondelle. Le serrage
+    ecrase la peau de NUT_SKIN entre la rondelle et le bossage d'en face : rien ne travaille en traction a travers
+    les couches.
+    La peau s'imprime en pont au-dessus du niveau de la rondelle. Sa premiere couche (MEMBRANE) est pleine : la
+    rondelle porte sur toute sa surface (une fente de 3.6 mm dans cette couche, pour un trou propre, lui en retirait
+    la moitie) : elle n'est que dans le STL d'impression (nut_membrane), on la perce au montage, avant les ecrous.
+    Au-dela de NUT_MOUTH les parois du bossage rond sont trop
+    minces pour porter un pont : le logement y est ouvert jusqu'en haut (des WASHER_MOUTH pour la rondelle)."""
+    r, rw, R = SCREW[0] / 2, WASHER_WELL_R, BOSS_R
     depth = SCREW_LEN - BOSS_FRONT_H + 1.0
-    z0, z1 = -NUT_SKIN - NUT[1], -NUT_SKIN
+    z1 = -NUT_SKIN
+    zw = z1 - WASHER_LEVEL
+    z0 = zw - NUT[1]
     half = NUT[0] * math.cos(math.radians(30)) / 2
-    local = (cq.Workplane("XY", origin=(0, 0, -depth)).circle(r).extrude(depth + z1)
-             .union(cq.Workplane("XY", origin=(0, 0, z1 + 0.4)).circle(r).extrude(-z1 - 0.4 + 0.5))
+    local = (cq.Workplane("XY", origin=(0, 0, -depth)).circle(r).extrude(depth + 0.5)
              .union(cq.Workplane("XY", origin=(0, 0, z0)).polygon(6, NUT[0]).extrude(NUT[1]))  # un angle vers la fente
-             .union(_lbox(0, BOSS_R + 0.5, half, z0, z1)).union(_lbox(NUT_MOUTH, BOSS_R + 0.5, half, z0, 0.5))
-             .union(_lbox(-r, r, half, z1, z1 + 0.2)).union(_lbox(-r, r, r, z1 + 0.2, z1 + 0.4)))
+             .union(_lbox(0, R + 0.5, half, z0, zw))
+             .union(cq.Workplane("XY", origin=(0, 0, zw)).circle(rw).extrude(WASHER_LEVEL)).union(_lbox(0, R + 0.5, rw, zw, z1))
+             .union(_lbox(NUT_MOUTH, R + 0.5, half, z0, 0.5)).union(_lbox(WASHER_MOUTH, R + 0.5, rw, zw, 0.5)))
     return local.rotate((0, 0, 0), (0, 0, 1), angle).translate((x, y, 0))
+
+
+def nut_membrane(x, y, z_ceiling):
+    """Premiere couche pleine du plafond d'un logement de rondelle d'ecrou, a remettre dans le STL d'impression ; les
+    pieces et l'assemblage restent perces (etat monte)."""
+    return cq.Workplane("XY", origin=(x, y, z_ceiling)).circle(SCREW[0] / 2 + 0.05).extrude(MEMBRANE)
 
 
 def pilot_hole(x, y, z0, depth):
@@ -396,8 +421,8 @@ def bonnet_gauge():
 
 
 def joint_coupon_halves(length=40.0, width=19.0, thick=8.0):
-    """Troncon droit du joint : y = offset depuis la peau, z = 0 plan de joint. Deux vis M3 fraisees et leurs
-    ecrous prisonniers, comme au corps, et un avant-trou d'essai (vis de la trappe) sous la moitie arriere."""
+    """Troncon droit du joint : y = offset depuis la peau, z = 0 plan de joint. Deux vis M3 a tete cylindrique sur
+    rondelle et leurs ecrous prisonniers, comme au corps, et un avant-trou d'essai (vis de la trappe) sous la moitie arriere."""
     def strip(y0, y1, z0, z1):
         return cq.Workplane("XY").box(length + 2, y1 - y0, z1 - z0).translate((0, (y0 + y1) / 2, (z0 + z1) / 2))
 
@@ -409,7 +434,7 @@ def joint_coupon_halves(length=40.0, width=19.0, thick=8.0):
     rear = rear.cut(strip(-1, REBATE, -RING_H, 1)).cut(strip(LED_CH[0], LED_CH[1], -LED_CH[2], 1))
     for x in (-10, 10):
         front = front.cut(screw_hole_front(x, SCREW_OFFSET, thick + 1, 90))
-        rear = rear.cut(screw_hole_rear(x, SCREW_OFFSET, 90))  # fentes ouvertes sur le chant, cote chambre
+        rear = rear.cut(screw_hole_rear(x, SCREW_OFFSET, 90)).union(nut_membrane(x, SCREW_OFFSET, -NUT_SKIN))  # fentes ouvertes sur le chant, cote chambre
     rear = rear.cut(pilot_hole(0, SCREW_OFFSET, -thick, 5.0))
     return front, rear
 
