@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: CERN-OHL-S-2.0
 """Projet Bambu Studio unique du corps du galet : un plateau par impression, dans l'ordre de la vague.
 
-    python3 cad/bambu_projet.py            -> cad/out/v3-galet/print/silent-mic-corps.3mf
+    python3 cad/bambu_projet.py            -> cad/out/v3-galet/print/silent-mic-vNN.3mf (numero suivant)
 
 Demande de Clement (24 nov. 2026) : un seul projet a ouvrir, ou l'on choisit le plateau, tranche et lance, au lieu
 d'un fichier par piece. Les reglages des projets d'une piece (cad/bambu_3mf.sh) sont repris tels quels : procede
@@ -28,13 +28,15 @@ B = OUT / "silent-mic-v3-galet"
 SOLID = {"sparse_infill_density": "100%", "sparse_infill_pattern": "zig-zag"}
 ON_PLATE = {"enable_support": "1", "support_type": "normal(auto)", "bridge_no_support": "1", "support_on_build_plate_only": "1"}
 # (nom du plateau, stl, filament, reglages de l'objet, projet d'une piece de reference)
+# toutes les pieces imprimees, dans l'ordre du montage, du visage au dos (Clement, 26 nov. 2026)
 PLATES = [
-    ("1 Coque arriere", f"{B}-rear.stl", 1, SOLID | ON_PLATE, "corps-coque-arriere"),
+    ("1 Col", f"{B}-assise-col.stl", 1, SOLID, "corps-assise"),
     ("2 Capot avant", f"{B}-front.stl", 1, SOLID | ON_PLATE, "corps-capot-avant"),
-    ("3 Trappe", f"{B}-cover.stl", 1, SOLID, "corps-trappe"),
-    # anneau : meme filament 1 (PLA) que le reste, imprime avec la bobine blanche translucide une fois arrivee ; son
-    # projet d'une piece est regle pour du PETG, d'ou l'absence de reference
-    ("4 Anneau lumineux (bobine blanche)", f"{B}-ring.stl", 1, {}, None),
+    # anneau : meme filament 1 (PLA) que le reste, imprime avec la bobine blanche ; son projet d'une piece est regle
+    # pour du PETG, d'ou l'absence de reference
+    ("3 Anneau lumineux (bobine blanche)", f"{B}-ring.stl", 1, {}, None),
+    ("4 Coque arriere", f"{B}-rear.stl", 1, SOLID | ON_PLATE, "corps-coque-arriere"),
+    ("5 Trappe", f"{B}-cover.stl", 1, SOLID, "corps-trappe"),
 ]
 
 
@@ -65,7 +67,9 @@ def main():
                             "objects": [{"path": stl, "count": 1, "filaments": [fil], "print_params": params}]}
                            for name, stl, fil, params, _ in PLATES]}
     (tmp / "assemble.json").write_text(json.dumps(assemble, indent=1, ensure_ascii=False))
-    target = OUT / "print" / "silent-mic-corps.3mf"
+    # une version numerotee par livraison : le plus grand numero est la derniere, la seule a ouvrir (Clement, 26 nov. 2026)
+    done = [int(f.stem.rsplit("-v", 1)[1]) for f in (OUT / "print").glob("silent-mic-v[0-9][0-9].3mf")]
+    target = OUT / "print" / f"silent-mic-v{max(done, default=0) + 1:02d}.3mf"
     build = tmp / "projet"
     run([APP, "--load-settings", f"{tmp}/machine.json;{tmp}/process-off.json", "--load-filaments", f"{tmp}/pla.json",
          "--load-assemble-list", str(tmp / "assemble.json"), "--slice", "0", "--outputdir", str(build), "--export-3mf", target.name],
