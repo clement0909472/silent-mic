@@ -59,7 +59,7 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
       <li>Par l'avant : deux couches de mousse au fond de la coque.</li>
       <li>Le ruban LED et l'anneau translucide se posent sur le bord de la coque.</li>
       <li>Le capot avant, garni de son manchon de mousse, se pose sur le joint : 4 vis serrées par la bouche dans les écrous de la coque.</li>
-      <li>L'assise courbe et son col se collent sur l'appui du capot, le coussin sur l'assise, chacun par un anneau de ruban double face.</li>
+      <li>Le col (assise courbe et col) se visse sur l'appui du capot : 4 vis par le dessus, écrous glissés dans l'appui, anneau de mousse entre les deux. Le coussin se colle sur le col.</li>
       <li>Le micro, bonnette en place, entre par la bouche et se pose debout contre sa plaque, tenu par son aimant. C'est la seule pièce qu'on retire au quotidien.</li>
     </ol>
     <ol class="legend" id="legend-mouth" hidden>
@@ -67,6 +67,12 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
       <li>Assise retenue à l'essai des cales (rayon 53 mm, bords arrondis de 2 mm) : le coussin, posé dessus section par section, enveloppe les joues. Le col la suit, 20 mm au-dessus d'elle partout : le visage s'y appuie avant que le coussin ne descende à 15 mm.</li>
       <li>Visage schématique de même courbure que l'assise, lèvres en relief. Ce n'est pas ton visage.</li>
       <li>Bonnette à ta cote mesurée : 48 mm du bas du micro au haut des poils. Micro descendu au fond de la chambre, dans une entaille de la mousse.</li>
+    </ol>
+    <ol class="legend" id="legend-fix" hidden>
+      <li>Proposition du 26 nov. 2026, pas encore dans la CAO : col soulevé de 40 mm au-dessus du capot avant, en transparence.</li>
+      <li>Trait rouge : ouverture du capot (81,6 × 57,5 mm). Trait bleu : intérieur du col (66,6 × 42,5 mm). L'ouverture du capot est plus grande : le col la recouvre de 7,5 mm tout le tour, il n'y a pas de capot sous l'intérieur du col.</li>
+      <li>En vert, 4 tenons sur l'appui du capot (6 × 2,5 × 1,5 mm), aux 4 bouts des axes ; en orange, leurs logements sous le col. Ils bloquent le col à plat ; les 4 vis dorées le serrent.</li>
+      <li>Pour que les tenons s'impriment, le capot s'imprime retourné, joint sur le plateau, avec un chanfrein sous l'appui.</li>
     </ol>
     <ol class="legend" id="legend-light" hidden>
       <li>Coques et coussin en noir mat, anneau en PLA blanc éclairé par le filament LED caché derrière lui.</li>
@@ -90,6 +96,7 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
       <button id="t-air" aria-pressed="true">Trajet d'air</button>
       <button id="t-asm" aria-pressed="false">Montage</button>
       <button id="t-open" aria-pressed="false">Sans capot</button>
+      <button id="t-fix" aria-pressed="false">Fixation du col</button>
       <button id="t-mouth" aria-pressed="false">Bouche</button>
       <button id="t-light" aria-pressed="false">Éclairage</button>
       <button id="t-spin" aria-pressed="false">Rotation</button>
@@ -157,7 +164,7 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
   const device = new THREE.Group(); scene.add(device);
   device.rotation.set(0, Math.PI / 2, 0);    // z du modele (vers le visage) a l'horizontale, y du modele en haut
   const parts = [];
-  const state = { cut: false, air: true, spin: false, open: false, t: 0, mouth: false, crush: 13, lips: 15.5, light: false, led: "bleu", amb: "nuit", leak: false };
+  const state = { fix: false, cut: false, air: true, spin: false, open: false, t: 0, mouth: false, crush: 13, lips: 15.5, light: false, led: "bleu", amb: "nuit", leak: false };
 
   // Trajet d'air : fleches animees, vues a travers la coque. Cotes recopiees de cad/silent_mic_v3_galet.py
   // (section au milieu du conduit, offset du conduit, plancher du conduit et pente des goulottes, entree et sorties en abscisse
@@ -206,7 +213,8 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
     const asm = !state.air && state.t >= 0.5;
     flow.visible = state.air; document.getElementById("legend").hidden = !state.air; document.getElementById("legend-asm").hidden = !asm;
     document.getElementById("legend-mouth").hidden = !state.mouth;
-    stage.classList.toggle("note", state.air || asm || state.mouth || state.light); stage.classList.toggle("asm", asm); asmTags.forEach(s => { s.visible = asm; });
+    document.getElementById("legend-fix").hidden = !state.fix;
+    stage.classList.toggle("note", state.air || asm || state.mouth || state.light || state.fix); stage.classList.toggle("asm", asm); asmTags.forEach(s => { s.visible = asm; });
     document.getElementById("t-asm").setAttribute("aria-pressed", String(state.t >= 0.5));
     for (const p of parts) {
       if (p.role === "air") { p.mesh.visible = state.air; continue; }
@@ -372,10 +380,10 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
   }
   function applyCut() { for (const m of mats) { m.clippingPlanes = state.cut ? [clip] : []; m.needsUpdate = true; } applyAir(); }
   function view(name) {
-    const D = { air: [0.5, 0.26, 0.9], avant: [0.78, 0.3, 0.55], profil: [0.02, 0.08, 1], dos: [-0.75, 0.3, -0.5] }[name];
+    const D = { air: [0.5, 0.26, 0.9], avant: [0.78, 0.3, 0.55], profil: [0.02, 0.08, 1], dos: [-0.75, 0.3, -0.5], fix: [0.7, 0.55, 0.45] }[name];
     const d = new THREE.Vector3(...D).normalize(), tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-    const span = 150 + 3.4 * state.t * 100 + (state.mouth ? 30 : 0), dist = 1.15 * Math.max(span / 2 / tan, span / 2 / (tan * camera.aspect)) + 60;
-    controls.target.set(51 * state.t + (state.mouth ? 20 : 0), 66 * state.t, 0); camera.position.copy(d.multiplyScalar(dist)).add(controls.target); controls.update();   // l'eclate n'est pas centre sur la coque, et il passe sous la legende
+    const span = name === "fix" ? 190 : 150 + 3.4 * state.t * 100 + (state.mouth ? 30 : 0), dist = 1.15 * Math.max(span / 2 / tan, span / 2 / (tan * camera.aspect)) + 60;
+    if (name === "fix") controls.target.set(33, 0, 0); else controls.target.set(51 * state.t + (state.mouth ? 20 : 0), 66 * state.t, 0); camera.position.copy(d.multiplyScalar(dist)).add(controls.target); controls.update();   // l'eclate n'est pas centre sur la coque, et il passe sous la legende
   }
 
   fetch("parts.json").then(r => { if (!r.ok) throw new Error("fichier des pièces introuvable"); return r.json(); }).then(man => {
@@ -435,6 +443,42 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
     if (state.open && state.air) document.getElementById("t-air").click();
     parts.forEach(p => { if (p.explode.z >= 100 && !/^(mic|bonnette)\./.test(p.file)) { p.mesh.visible = !state.open; const c = document.getElementById("p-" + p.file.replace(/\W/g, "-")); if (c) c.checked = !state.open; } });
     if (state.open) { device.rotation.y = Math.PI / 2; view("avant"); }
+  });
+  // Fixation du col (proposition, pas encore en CAO) : col souleve et transparent, 4 tenons du capot et leurs logements, 4 vis,
+  // ouverture du capot et interieur du col en traits. Cotes recopiees de cad/silent_mic_v3_galet.py (col_screw_xy, SEAT_OPENING).
+  const FIX = { lift: 40, z: 26, band: [47.25, 34.5], screw: [32.07, 23.24], open: [40.8, 28.75], bore: [33.3, 21.25] };
+  const fixG = new THREE.Group(); fixG.position.z = -8; fixG.visible = false; device.add(fixG);
+  {
+    const green = new THREE.MeshStandardMaterial({ color: 0x3cc46b, roughness: 0.5 }), orange = new THREE.MeshStandardMaterial({ color: 0xf39c3d, roughness: 0.6 });
+    const gold = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.8, roughness: 0.3 });
+    for (const [x, y, radialX] of [[FIX.band[0], 0, 1], [-FIX.band[0], 0, 1], [0, FIX.band[1], 0], [0, -FIX.band[1], 0]]) {
+      const w = radialX ? [2.5, 6] : [6, 2.5];
+      const t = new THREE.Mesh(new THREE.BoxGeometry(w[0], w[1], 1.5), green); t.position.set(x, y, FIX.z + 0.75); fixG.add(t);
+      const p = new THREE.Mesh(new THREE.BoxGeometry(w[0] + 0.3, w[1] + 0.3, 1.7), orange); p.position.set(x, y, FIX.z + FIX.lift + 0.85); fixG.add(p);
+    }
+    for (const [sx, sy] of [[1, 1], [-1, 1], [-1, -1], [1, -1]]) {
+      const sc = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 10, 16), gold); sc.rotation.x = Math.PI / 2;
+      sc.position.set(sx * FIX.screw[0], sy * FIX.screw[1], FIX.z + FIX.lift + 3.5 - 5); fixG.add(sc);
+    }
+    const ring2 = (a, b, z, color) => {
+      const pts = []; for (let i = 0; i <= 96; i++) { const u = i / 96 * Math.PI * 2; pts.push(V(a * Math.cos(u), b * Math.sin(u), z)); }
+      const l = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true), 128, 0.5, 6, true), new THREE.MeshBasicMaterial({ color, depthTest: false, toneMapped: false }));
+      l.renderOrder = 9; fixG.add(l);
+    };
+    ring2(...FIX.open, FIX.z + 0.05, 0xff5a5a); ring2(...FIX.bore, FIX.z + FIX.lift - 0.05, 0x5aa9ff);
+  }
+  toggle("t-fix", "fix", () => {
+    if (state.fix) { mouthOff(); if (state.air) document.getElementById("t-air").click(); if (state.light) document.getElementById("t-light").click(); if (state.t > 0) setExplode(0); if (state.cut) document.getElementById("t-cut").click(); }
+    applyAir();
+    for (const p of parts) {
+      p.mesh.visible = !state.fix || p.file === "front.stl" || p.file === "assise-col.stl";
+      if (p.file !== "assise-col.stl") continue;
+      p.mesh.position.z = p.base.z + (state.fix ? FIX.lift : 0);
+      Object.assign(p.mesh.children[0].material, { transparent: state.fix, opacity: state.fix ? 0.45 : 1, depthWrite: !state.fix, needsUpdate: true });
+      p.mesh.children[1].visible = !state.fix;
+    }
+    fixG.visible = state.fix;
+    device.rotation.y = Math.PI / 2; view(state.fix ? "fix" : "avant");
   });
   document.getElementById("explode").addEventListener("input", e => setExplode(e.target.value / 100));
   document.querySelectorAll("[data-view]").forEach(b => b.addEventListener("click", () => { device.rotation.y = Math.PI / 2; view(b.dataset.view); }));
