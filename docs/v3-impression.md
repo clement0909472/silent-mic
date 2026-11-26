@@ -45,15 +45,16 @@ Grammes calculés par Bambu Studio avec la densité réelle du filament (1,32) :
 
 ### Corps : un seul projet pour la vague d'impression
 
-**Un seul projet, numéroté** (demande de Clément, 24 puis 26 nov. 2026) : `print/silent-mic-vNN.3mf`, le plus grand numéro est la dernière version, la seule à ouvrir. Chaque livraison crée le numéro suivant (`cad/bambu_projet.py`). Toutes les pièces imprimées y sont, une plaque chacune, dans l'ordre du montage, du visage au dos ; on coche les plaques à imprimer. Les réglages de chaque pièce y sont déjà, par objet : pleine, supports sur plateau seulement pour la coque et le capot. Version 1 : 26 nov. 2026.
+**Un seul projet, numéroté** (demande de Clément, 24 puis 26 nov. 2026) : `print/silent-mic-vNN.3mf`, le plus grand numéro est la dernière version, la seule à ouvrir. Chaque livraison crée le numéro suivant (`cad/bambu_projet.py`). Toutes les pièces imprimées y sont, une plaque chacune, dans l'ordre du montage, du visage au dos ; on coche les plaques à imprimer. Les réglages de chaque pièce y sont déjà, par objet : pleine, supports sur plateau seulement pour la coque et le capot. Version 3 : 26 nov. 2026 (diamants du col, capot retourné, témoin).
 
 | Plaque | Pièce | Temps | Filament |
 |---|---|---|---|
-| 1 | col (assise R53 et col de 20 mm, vissé sur le capot) | 2 h 17 | 83 g PLA noir |
-| 2 | capot avant (une colonne de support sous chaque puits de vis, 4 logements d'écrou du col) | 1 h 56 | 57 g PLA noir |
+| 1 | col (assise R53 et col de 20 mm, vissé sur le capot, 4 logements de diamant dessous) | 2 h 19 | 83 g PLA noir |
+| 2 | capot avant, imprimé retourné (joint sur le plateau), sans aucun support ; 4 diamants et 4 logements d'écrou du col | 1 h 51 | 57 g PLA noir |
 | 3 | anneau lumineux, bobine blanche (Bambu PLA Basic) ; épaisseur à choisir sur l'éprouvette de lumière | 9 min | 2 g PLA blanc |
 | 4 | coque arrière (supports sous le passage de la prise USB-C, dans la baie) | 3 h 18 | 112 g PLA noir |
 | 5 | trappe | 29 min | 16 g PLA noir |
+| 6 | témoin du col : bande d'appui du capot avec ses 4 diamants et bas du col avec ses logements, découpés dans les vraies pièces, à monter à la main | 33 min | 13 g PLA noir |
 
 L'anneau est en filament 1, comme le reste : on change de bobine avant la plaque 3 (la ligne de commande de Bambu Studio 2.9 plante quand un projet mélange deux filaments). Seules pièces imprimées du corps : ces quatre plaques et l'assise, déjà imprimée le 24 novembre ; tout le reste de la vue « Montage » s'achète ou se découpe (micro, disque, coussin, mousses, joint, filament LED, électronique, vis et écrous).
 
@@ -270,6 +271,7 @@ Onshape ne voit pas les défauts de passage trouvés par le contrôle d'étanch�
 
 ## Points ouverts
 
+- **Centrage du col par 4 diamants (26 nov. 2026, choix de Clément)** : pyramides tronquées sur l'appui du capot (base 4 × 7 mm, 2,25 mm de haut, flancs à 30°), aux bouts des axes, dans des logements de même pente sous le col. Les vis tirent le col, les pentes le centrent sans jeu à chaque remontage ; le col reste 0,5 mm au-dessus de l'appui, place de l'anneau de mousse. Écartés : tenons à nervures d'écrasement (rabotées au premier montage, quasi à usage unique) et crochets souples (le PLA flue sous effort permanent). Le capot s'imprime désormais retourné, joint sur le plateau, avec un chanfrein à 52° sous l'appui à la place du rebord plat ; le petit chanfrein sous le bord de l'ouverture disparaît. Plus aucun support sur le capot. Le manchon de mousse perd son haut sous le chanfrein (à recouper, gabarit pas encore mis à jour). Témoin : plaque 6, 33 min.
 - **Col vissé, fait le 26 nov. 2026** : 4 vis M3 × 10 par le dessus du col, écrous prisonniers dans la plaque d'appui du capot (ils tirent le col et écrasent 1,2 mm de plaque, comme à la coque arrière), anneau de mousse de 1 mm écrasé entre les deux. Par en dessous, comme Clément le voulait d'abord, aucun outil n'atteint la plaque : le capot se resserre en entonnoir jusqu'au joint ; les têtes sont donc sous le coussin, et changer de col veut de toute façon décoller le coussin. Le manchon de mousse avant porte 4 bossages de plus en haut : y entailler 4 encoches de 10 × 4 mm (pas encore dessinées sur le gabarit). Écrou à 1,6 mm de la peau au plus près, à vérifier à la pièce.
 
 - **Baie de l'électronique dessinée sur des cotes de catalogue.** Le chargeur est compté à 4 mm d'épaisseur avec sa prise, la batterie à 30 mm de long avec sa carte de protection. Décision de Clément du 20 novembre 2026 : l'électronique se commande plus tard, la coque arrière s'imprime telle quelle et se réimprime (4 h 42, 72 g) si une pièce ne rentre pas.

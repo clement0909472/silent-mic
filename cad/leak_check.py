@@ -58,7 +58,8 @@ def parts():
     stem = OUT / "silent-mic-v3-galet"
     collar = load(f"{stem}-assise-col.stl")
     collar[:, :, 2] += load(OUT / "web" / "assise-col.stl")[:, :, 2].min() - collar[:, :, 2].min()
-    return {FRONT: flip(load(f"{stem}-front.stl"), Z_SEAT), REAR: load(f"{stem}-rear.stl") + np.array([0, 0, Z_RF]),
+    # capot imprime joint sur le plateau depuis le 26 nov. 2026 : son fichier est deja en position de montage
+    return {FRONT: load(f"{stem}-front.stl"), REAR: load(f"{stem}-rear.stl") + np.array([0, 0, Z_RF]),
             COVER: flip(load(f"{stem}-cover.stl"), Z_RF), RING: load(OUT / "web" / "ring.stl"),  # position de montage ; le fichier a imprimer est retourne
             COLLAR: collar, GASKET: load(OUT / "web" / "gasket.stl")}
 
@@ -128,10 +129,13 @@ def add_plugs(mat, axes):
         air = mat[k] == 0
         if c > FACE_Z:  # le visage
             mat[k][air] = MOUTH
-        elif c > Z_SEAT:  # le coussin colle : tout sauf l'alesage du col
+        elif c > Z_SEAT + 0.6:  # le coussin colle : tout sauf l'alesage du col
             lab, _ = ndimage.label(air)
             assert lab[iy0, ix0] > 0, c
             mat[k][air & (lab != lab[iy0, ix0])] = MOUTH
+        if Z_SEAT < c <= Z_SEAT + 0.6:  # anneau de mousse ecrase sous le col, du bord de l'ouverture du capot a la peau
+            ring_ = ((XX / 42.5) ** 2 + (YY / 30.45) ** 2 > 1.0) & ((XX / 53.0) ** 2 + (YY / 39.5) ** 2 <= 1.0)
+            mat[k][air & ring_] = MOUTH
         if -27.6 < c < -18.4:  # debouche des goulottes de sortie, nez de la levre haute compris
             mat[k][air & band(axes, k, -1.2, 1.0) & (YY < 0.6)] = SLOTS
         if -18.5 < c < -7.5:  # entree du conduit, dans la cloison conduit / chambre

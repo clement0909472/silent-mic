@@ -193,6 +193,26 @@
       ]
     },
     {
+      "file": "temoin-diamant-capot.stl",
+      "label": "Temoin du col : capot",
+      "role": "coupon",
+      "explode": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "temoin-diamant-col.stl",
+      "label": "Temoin du col : col",
+      "role": "coupon",
+      "explode": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
       "file": "air-volume.stl",
       "label": "Air : cavite et conduit",
       "role": "air",

@@ -136,9 +136,8 @@ project cales-assise-2 "$tmp/pla.json" "$c/cale-assise-r60-12mm.stl" "$c/cale-as
 project lumiere-petg "$tmp/petg.json" "$c/light-coupon-petg.stl"
 # parois debout de 0.8 a 2.4 mm, la lumiere les traverse comme l'anneau : choix de son epaisseur (25 nov. 2026)
 project lumiere-pla-basic "$tmp/pla-basic.json" "$c/light-walls.stl"
-# fixation du col (26 nov. 2026) : diamant et crochet, chacun un morceau d'appui et un morceau de col ; support sous la
-# languette du crochet, comme sous le capot retourne
-SOLID=1 SUP=plate project eprouvette-fixation-col "$tmp/pla.json" "$c/fix-diamant-capot.stl" "$c/fix-diamant-col.stl" "$c/fix-crochet-capot.stl" "$c/fix-crochet-col.stl"
+# temoin du col visse sur diamants (26 nov. 2026) : anneaux decoupes dans le vrai capot et le vrai col
+project temoin-diamant "$tmp/pla.json" "$c/temoin-diamant-capot.stl" "$c/temoin-diamant-col.stl"
 fi
 if [ "$only" != essai ]; then
   b=cad/out/v3-galet/silent-mic-v3-galet

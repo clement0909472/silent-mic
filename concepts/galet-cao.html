@@ -69,14 +69,10 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
       <li>Bonnette à ta cote mesurée : 48 mm du bas du micro au haut des poils. Micro descendu au fond de la chambre, dans une entaille de la mousse.</li>
     </ol>
     <ol class="legend" id="legend-fix" hidden>
-      <li>Proposition du 26 nov. 2026, pas encore dans la CAO : col soulevé de 40 mm au-dessus du capot avant, en transparence.</li>
-      <li>Trait rouge : ouverture du capot (81,6 × 57,5 mm). Trait bleu : intérieur du col (66,6 × 42,5 mm). L'ouverture du capot est plus grande : le col la recouvre de 7,5 mm tout le tour, il n'y a pas de capot sous l'intérieur du col.</li>
-      <li class="fx-ten">Diamants : en vert, 4 tenons en pyramide tronquée sur l'appui du capot (base 4 × 7 mm, 2,25 mm de haut, flancs à 30°), aux 4 bouts des axes ; en orange, leurs logements de même pente sous le col.</li>
-      <li class="fx-ten">Les vis tirent le col vers le bas : les pentes le centrent seules, sans jeu, à chaque remontage. Un écart d'impression fait juste asseoir le col 0,1 à 0,2 mm plus haut ou plus bas, la mousse rattrape. Rien ne s'use ni ne travaille en ressort.</li>
-      <li class="fx-ten">Les diamants s'impriment capot retourné, joint sur le plateau, avec un chanfrein sous l'appui.</li>
-      <li class="fx-hook">Crochets : en vert, 4 languettes partent du bord de l'ouverture du capot vers le centre, passent sous le col et remontent dans son intérieur ; leur bec accroche une gorge du col (orange). Montées un peu serrées, elles appuient vers l'extérieur : leur souplesse rattrape le jeu.</li>
-      <li class="fx-hook">Les crochets s'impriment capot retourné, avec un support à casser sous chaque languette (caché dans le capot). Ils entrent de 1 mm dans le passage de la bouche, aux 4 bouts des axes, loin des doigts.</li>
-      <li>Dans les deux cas, les 4 vis dorées serrent le col sur sa mousse : les tenons ou crochets ne font que le centrer.</li>
+      <li>Témoin du col (plaque 6) : anneaux découpés dans les vraies pièces, le haut du capot et le bas du col, soulevé de 40 mm et transparent.</li>
+      <li>Sur l'appui du capot, 4 diamants (pyramides tronquées : base 4 × 7 mm, 2,25 mm de haut, flancs à 30°) aux bouts des axes ; sous le col, leurs logements de même pente.</li>
+      <li>Sur les vraies pièces, les 4 vis (dorées) tirent le col : les pentes le centrent sans jeu à chaque remontage, et il reste 0,5 mm au-dessus de l'appui, la place de l'anneau de mousse. Le témoin (33 min) se monte à la main, sans vis.</li>
+      <li>Trait rouge : ouverture du capot. Trait bleu : intérieur du col. Le capot s'imprime désormais retourné, joint sur le plateau, avec un chanfrein sous l'appui.</li>
     </ol>
     <ol class="legend" id="legend-light" hidden>
       <li>Coques et coussin en noir mat, anneau en PLA blanc éclairé par le filament LED caché derrière lui.</li>
@@ -100,8 +96,7 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
       <button id="t-air" aria-pressed="true">Trajet d'air</button>
       <button id="t-asm" aria-pressed="false">Montage</button>
       <button id="t-open" aria-pressed="false">Sans capot</button>
-      <button id="t-fix" aria-pressed="false">Col : diamants</button>
-      <button id="t-hook" aria-pressed="false">Col : crochets</button>
+      <button id="t-fix" aria-pressed="false">Témoin du col</button>
       <button id="t-mouth" aria-pressed="false">Bouche</button>
       <button id="t-light" aria-pressed="false">Éclairage</button>
       <button id="t-spin" aria-pressed="false">Rotation</button>
@@ -162,6 +157,7 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
     foam: { label: "Mousse", color: "#6f9a82", o: { roughness: 1, envMapIntensity: 0.1 } },
     metal: { label: "Vis, écrous et acier", color: "#d5d8de", o: { roughness: 0.3, metalness: 0.9, envMapIntensity: 0.8 } },
     electronics: { label: "Micro et électronique", color: "#e0a03c" },
+    coupon: { label: "Témoin", color: "#7b88a6" },
     air: { label: "Trajet d'air", color: "#2f7dff", o: { transparent: true, opacity: 0.22, depthWrite: false, side: THREE.DoubleSide } },
   };
   // les quatre pieces imprimees en noir recoivent des teintes voisines, pour lire les jonctions
@@ -169,7 +165,7 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
   const device = new THREE.Group(); scene.add(device);
   device.rotation.set(0, Math.PI / 2, 0);    // z du modele (vers le visage) a l'horizontale, y du modele en haut
   const parts = [];
-  const state = { fix: false, hook: false, cut: false, air: true, spin: false, open: false, t: 0, mouth: false, crush: 13, lips: 15.5, light: false, led: "bleu", amb: "nuit", leak: false };
+  const state = { fix: false, cut: false, air: true, spin: false, open: false, t: 0, mouth: false, crush: 13, lips: 15.5, light: false, led: "bleu", amb: "nuit", leak: false };
 
   // Trajet d'air : fleches animees, vues a travers la coque. Cotes recopiees de cad/silent_mic_v3_galet.py
   // (section au milieu du conduit, offset du conduit, plancher du conduit et pente des goulottes, entree et sorties en abscisse
@@ -218,10 +214,8 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
     const asm = !state.air && state.t >= 0.5;
     flow.visible = state.air; document.getElementById("legend").hidden = !state.air; document.getElementById("legend-asm").hidden = !asm;
     document.getElementById("legend-mouth").hidden = !state.mouth;
-    document.getElementById("legend-fix").hidden = !(state.fix || state.hook);
-    document.querySelectorAll(".fx-ten").forEach(e => { e.hidden = !state.fix; });
-    document.querySelectorAll(".fx-hook").forEach(e => { e.hidden = !state.hook; });
-    stage.classList.toggle("note", state.air || asm || state.mouth || state.light || state.fix || state.hook); stage.classList.toggle("asm", asm); asmTags.forEach(s => { s.visible = asm; });
+    document.getElementById("legend-fix").hidden = !state.fix;
+    stage.classList.toggle("note", state.air || asm || state.mouth || state.light || state.fix); stage.classList.toggle("asm", asm); asmTags.forEach(s => { s.visible = asm; });
     document.getElementById("t-asm").setAttribute("aria-pressed", String(state.t >= 0.5));
     for (const p of parts) {
       if (p.role === "air") { p.mesh.visible = state.air; continue; }
@@ -377,7 +371,7 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
   function ui() {
     const box = document.getElementById("parts");
     for (const p of parts) {
-      if (p.role === "air") continue;
+      if (p.role === "air" || p.role === "coupon") continue;
       const l = document.createElement("label"), c = document.createElement("input"), s = document.createElement("span");
       c.type = "checkbox"; c.checked = true; c.id = "p-" + p.file.replace(/\W/g, "-");
       c.addEventListener("change", () => { p.mesh.visible = c.checked; });
@@ -407,6 +401,7 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
       if (role !== "air") mesh.add(new THREE.Mesh(g, cap(hex)));
       mesh.position.z = -8;   // recentre : le modele va de z = -55 (dos) a z = +61 (face du coussin)
       if (ASM[p.file]) { g.computeBoundingBox(); asmTags.push(tag(ASM[p.file], V(0, 62, (g.boundingBox.min.z + g.boundingBox.max.z) / 2), mesh, 15)); }
+      if (role === "coupon") mesh.visible = false;
       device.add(mesh); parts.push({ ...p, role, mesh, base: mesh.position.clone(), explode: new THREE.Vector3(...p.explode) });
     }
     status.hidden = true; ui(); mouthSetup(); applyCut(); view("air");
@@ -454,28 +449,9 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
   // Fixation du col (proposition, pas encore en CAO) : col souleve et transparent, 4 tenons du capot et leurs logements, 4 vis,
   // ouverture du capot et interieur du col en traits. Cotes recopiees de cad/silent_mic_v3_galet.py (col_screw_xy, SEAT_OPENING).
   const FIX = { lift: 40, z: 26, band: [47.25, 34.5], screw: [32.07, 23.24], open: [40.8, 28.75], bore: [33.3, 21.25] };
-  const fixG = new THREE.Group(), tenG = new THREE.Group(), hookG = new THREE.Group();
-  for (const g of [fixG, tenG, hookG]) { g.position.z = -8; g.visible = false; device.add(g); }
+  const fixG = new THREE.Group(); fixG.position.z = -8; fixG.visible = false; device.add(fixG);
   {
-    const green = new THREE.MeshStandardMaterial({ color: 0x3cc46b, roughness: 0.5 }), orange = new THREE.MeshStandardMaterial({ color: 0xf39c3d, roughness: 0.6 });
-    const gold = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.8, roughness: 0.3 });
-    // piece dans un repere local (X = rayon, Y = hauteur z du modele, Z = tangente), tournee vers le bout d'axe k (0 a 3)
-    const place = (geo, k, mat, grp) => { const m = new THREE.Mesh(geo, mat); m.rotation.set(Math.PI / 2, 0, k * Math.PI / 2, "ZYX"); grp.add(m); return m; };
-    const box = (r0, r1, z0, z1, w) => new THREE.BoxGeometry(r1 - r0, z1 - z0, w).translate((r0 + r1) / 2, (z0 + z1) / 2, 0);
-    const tri = (pts, w) => { const sh = new THREE.Shape(pts.map(([a, b]) => new THREE.Vector2(a, b))); return new THREE.ExtrudeGeometry(sh, { depth: w, bevelEnabled: false }).translate(0, 0, -w / 2); };
-    const ab = k => k % 2 ? 1 : 0, lift = FIX.lift, z = FIX.z;
-    for (let k = 0; k < 4; k++) {
-      const band = FIX.band[ab(k)], open = FIX.open[ab(k)], bore = FIX.bore[ab(k)];
-      // diamants : pyramide tronquee (base 4 x 7, sommet 1.4 x 4.4, 2.25 de haut) et son logement sous le col
-      const frustum = (h, b0, b1, t0, t1) => new THREE.CylinderGeometry(Math.SQRT1_2 * t1, Math.SQRT1_2 * b1, h, 4, 1).rotateY(Math.PI / 4).scale(b0 / b1, 1, 1);
-      place(frustum(2.25, 4, 7, 1.4, 4.4).translate(band, z + 1.125, 0), k, green, tenG);
-      place(frustum(2.35, 3.42, 6.42, 0.71, 3.71).translate(band, z + lift + 1.175, 0), k, orange, tenG);
-      // crochets : languette sous le col, gousset dessous, montant dans l'interieur du col, bec vers la gorge
-      place(box(bore - 1.0, open + 1.0, z - 1.2, z - 0.1, 6), k, green, hookG);
-      place(box(bore - 1.0, bore, z - 1.2, z + 2.6, 6), k, green, hookG);
-      place(tri([[bore, z + 1.4], [bore + 0.6, z + 1.9], [bore, z + 2.6]], 6), k, green, hookG);
-      place(box(bore, bore + 0.8, z + lift + 1.2, z + lift + 2.8, 8), k, orange, hookG);
-    }
+    const gold = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.8, roughness: 0.3 }), z = FIX.z + 0.5, lift = FIX.lift;
     for (const [sx, sy] of [[1, 1], [-1, 1], [-1, -1], [1, -1]]) {
       const sc = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 10, 16), gold); sc.rotation.x = Math.PI / 2;
       sc.position.set(sx * FIX.screw[0], sy * FIX.screw[1], z + lift + 3.5 - 5); fixG.add(sc);
@@ -485,24 +461,24 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
       const l = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true), 128, 0.5, 6, true), new THREE.MeshBasicMaterial({ color, depthTest: false, toneMapped: false }));
       l.renderOrder = 9; fixG.add(l);
     };
-    ring2(...FIX.open, z + 0.05, 0xff5a5a); ring2(...FIX.bore, z + lift - 0.05, 0x5aa9ff);
+    ring2(...FIX.open, FIX.z + 0.05, 0xff5a5a); ring2(...FIX.bore, z + lift - 0.05, 0x5aa9ff);
   }
   function applyFix() {
-    const on = state.fix || state.hook;
+    const on = state.fix;
     if (on) { mouthOff(); if (state.air) document.getElementById("t-air").click(); if (state.light) document.getElementById("t-light").click(); if (state.t > 0) setExplode(0); if (state.cut) document.getElementById("t-cut").click(); }
     applyAir();
     for (const p of parts) {
-      p.mesh.visible = !on || p.file === "front.stl" || p.file === "assise-col.stl";
-      if (p.file !== "assise-col.stl") continue;
+      const coupon = p.role === "coupon";
+      p.mesh.visible = on ? coupon : !coupon;
+      if (p.file !== "temoin-diamant-col.stl") continue;
       p.mesh.position.z = p.base.z + (on ? FIX.lift : 0);
-      Object.assign(p.mesh.children[0].material, { transparent: on, opacity: on ? 0.45 : 1, depthWrite: !on, needsUpdate: true });
+      Object.assign(p.mesh.children[0].material, { transparent: on, opacity: on ? 0.5 : 1, depthWrite: !on, needsUpdate: true });
       p.mesh.children[1].visible = !on;
     }
-    fixG.visible = on; tenG.visible = state.fix; hookG.visible = state.hook;
+    fixG.visible = on;
     device.rotation.y = Math.PI / 2; view(on ? "fix" : "avant");
   }
-  toggle("t-fix", "fix", () => { if (state.fix && state.hook) { state.hook = false; press(document.getElementById("t-hook"), false); } applyFix(); });
-  toggle("t-hook", "hook", () => { if (state.hook && state.fix) { state.fix = false; press(document.getElementById("t-fix"), false); } applyFix(); });
+  toggle("t-fix", "fix", applyFix);
   document.getElementById("explode").addEventListener("input", e => setExplode(e.target.value / 100));
   document.querySelectorAll("[data-view]").forEach(b => b.addEventListener("click", () => { device.rotation.y = Math.PI / 2; view(b.dataset.view); }));
 

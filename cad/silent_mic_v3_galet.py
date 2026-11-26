@@ -98,11 +98,11 @@ PAD = cp.PAD
 # 20 mm au centre, dessus au rayon 53, bords 24 mm plus haut que l'assise R85)
 COLLAR_HEIGHT, SEAT_RADIUS, RIM_RADIUS = cp.BODY_SEAT
 COLLAR_INNER = cp.collar_inner()
-SADDLE_GAP = 0.02  # jeu sous l'assise : les controles d'interference ne voient pas le contact
+# Le col repose sur 4 diamants (COL_DIAMOND), 0.5 mm au-dessus de l'appui : la place de l'anneau de mousse ecrase
+SADDLE_GAP = 0.5
 PAD_BASE = Z_SEAT + SADDLE_GAP + cp.SADDLE_T0  # fond du coussin au centre, sur l'assise
 LEDGE = 1.5  # appui de la bride du collier (seul porte-a-faux au-dessus du plateau)
 SEAT_OPENING = tuple(f - 2 * LEDGE for f in cp.flange_outer())
-OPENING_CHAMFER = (2.5, 1.0)  # largeur, hauteur : sous le bord de l'ouverture, face au plateau en impression (pente libre)
 
 # ---------- conduit annulaire ----------
 # Conduit de 42 mm2, decale vers l'exterieur (Clement, 25 nov. 2026) : paroi vers la chambre du micro de 3.7 mm au lieu
@@ -322,12 +322,9 @@ def front_cavity_tool():
     z_low = Z_SEAT - STEEP * (top[0] - SEAT_OPENING[0]) / 2
     opening = eprism(*SEAT_OPENING, Z_SEAT - SEAT_PLATE - 1.0, z_low)
     cone_ = wp(cq.Solid.makeLoft([ell(*SEAT_OPENING, z_low), ell(*top, Z_SEAT), ell(top[0] + 0.02, top[1] + 0.02, Z_SEAT + 1)], True))
-    # chanfrein sous le bord de l'ouverture : le coin haut du micro voyait l'arete de la plaque a 1.25 mm
-    zp = Z_SEAT - SEAT_PLATE
-    cw, ch = OPENING_CHAMFER
-    chamfer = wp(cq.Solid.makeLoft([ell(SEAT_OPENING[0] + 2 * cw, SEAT_OPENING[1] + 2 * cw, zp - 0.01),
-                                    ell(*SEAT_OPENING, zp + ch)], True))
-    return joint.union(corbel).union(main).union(opening).union(cone_).union(chamfer)
+    # le chanfrein sous le bord de l'ouverture (le coin haut du micro voyait l'arete de la plaque a 1.25 mm) est retire le
+    # 26 nov. 2026 : capot retourne, il faisait un surplomb de 2,5 mm tout autour ; seat_corbel() degage le dessous de l'appui
+    return joint.union(corbel).union(main).union(opening).union(cone_)
 
 
 def section_point(t, d, z):
@@ -392,8 +389,73 @@ def col_screw_cut_saddle():
     return union_all(out)
 
 
+# Centrage du col par 4 diamants (Clement, 26 nov. 2026) : pyramides tronquees sur l'appui du capot, aux bouts des axes,
+# dans des logements de meme pente sous le col. Les vis tirent le col : les pentes le centrent sans jeu a chaque remontage,
+# rien ne s'use ni ne travaille en ressort ; un ecart d'impression fait juste asseoir le col un peu plus haut ou plus bas,
+# la mousse rattrape. Tenons a nervures ecartes (rabotees au premier montage), crochets souples ecartes (fluage du PLA).
+COL_DIAMOND = (4.0, 7.0, 2.25)  # base (radiale, tangentielle), hauteur
+COL_DIAMOND_SLOPE = math.tan(math.radians(30))  # flancs, depuis la verticale
+
+
+def col_diamond_xy():
+    """Bouts des axes, au milieu de la bande d'appui ; (x, y, radial le long de x ?)."""
+    fo, sk = cp.flange_outer(), outer_profile(S_SEAT)
+    a, b = ((fo[i] / 2 + cp.FLANGE_GAP + sk[i]) / 2 for i in (0, 1))
+    return [(a, 0.0, True), (-a, 0.0, True), (0.0, b, False), (0.0, -b, False)]
+
+
+def _frustum(base, top, z0, z1, x, y):
+    return cq.Workplane("XY", origin=(x, y, z0)).rect(*base).workplane(offset=z1 - z0).rect(*top).loft()
+
+
+def build_col_diamonds():
+    r, t, h = COL_DIAMOND
+    k = 2 * h * COL_DIAMOND_SLOPE
+    out = []
+    for x, y, along_x in col_diamond_xy():
+        base, top = ((r, t), (r - k, t - k)) if along_x else ((t, r), (t - k, r - k))
+        out.append(_frustum(base, top, Z_SEAT - 0.3, Z_SEAT + h, x, y).union(_frustum(base, base, Z_SEAT - 0.3, Z_SEAT, x, y)))
+    return union_all(out)
+
+
+def col_diamond_pockets():
+    """Logements sous le col (repere du col, dos a z = 0) : memes pentes, prises a SADDLE_GAP au-dessus de l'appui, 0.03 mm
+    de jeu en normale (les controles d'interference ne voient pas le contact), 0.6 mm plus profonds que le sommet."""
+    r, t, h = COL_DIAMOND
+    shrink = 2 * (SADDLE_GAP * COL_DIAMOND_SLOPE - 0.03 / math.cos(math.radians(30)))
+    depth = h - SADDLE_GAP + 0.6
+    k = 2 * depth * COL_DIAMOND_SLOPE
+    out = []
+    for x, y, along_x in col_diamond_xy():
+        m = (r - shrink, t - shrink) if along_x else (t - shrink, r - shrink)
+        out.append(_frustum(m, (m[0] - k, m[1] - k), -0.01, depth, x, y))
+    return union_all(out)
+
+
 def col_piece():
-    return cp.body_saddle().cut(col_screw_cut_saddle())
+    return cp.body_saddle().cut(col_screw_cut_saddle()).cut(col_diamond_pockets())
+
+
+def temoin_pieces(front):
+    """Temoin du col (26 nov. 2026) : les 4 diamants et leurs logements, decoupes dans les vraies pieces. Plaque d'appui
+    du capot sur 1.6 mm et bas du col sur 2.95 mm (0.6 mm au-dessus du fond des logements), reduit a la bande d'appui :
+    environ 30 min d'impression. Il se monte a la main, sans vis ni ecrous (deja eprouves sur le joint) : on y juge le
+    centrage par les pentes et le jeu, et on le demonte et remonte plusieurs fois."""
+    pocket_top = COL_DIAMOND[2] - SADDLE_GAP + 0.6
+    return {"capot": front.intersect(box(-80, 80, -80, 80, Z_SEAT - 1.6, Z_SEAT + 5.0)),
+            "col": col_piece().intersect(box(-80, 80, -80, 80, 0.0, pocket_top + 0.6)).cut(eprism(*(o + 2.0 for o in SEAT_OPENING), -1.0, 10.0))}
+
+
+def seat_corbel():
+    """Chanfrein sous l'appui du coussin : le capot s'imprime retourne, joint sur le plateau (26 nov. 2026), pour que les
+    diamants sortent par le haut ; sans lui, le dessous de l'appui (5 a 7 mm de rebord) et les bossages d'ecrou du col
+    seraient imprimes dans le vide. Il part du bord de l'ouverture (passage du micro inchange) et descend a 52 deg."""
+    # il monte jusqu'au pied du siege conique de l'ouverture, 0.3 mm en retrait de lui (pas d'arete commune)
+    top = tuple(f + 2 * cp.FLANGE_GAP for f in cp.flange_outer())
+    zt, drop = Z_SEAT - STEEP * (top[0] - SEAT_OPENING[0]) / 2, 10.0
+    w, h = (o + 0.6 for o in SEAT_OPENING)
+    cone = wp(cq.Solid.makeLoft([ell(w, h, zt + 0.01), ell(w + 2 * drop / STEEP, h + 2 * drop / STEEP, zt - drop)], True))
+    return box(-80, 80, -80, 80, zt - drop + 0.01, zt).cut(cone)
 
 
 def build_front_bosses():
@@ -414,6 +476,7 @@ def build_front(front_env):
     shell = front_env.cut(front_cavity_tool())
     log("  cavite avant", t)
     shell = shell.union(build_front_bosses().intersect(front_env)).union(build_col_bosses().intersect(front_env))
+    shell = shell.union(seat_corbel().intersect(front_env)).union(build_col_diamonds())
     log("  bossages", t)
     shell = shell.cut(ring(GROOVE[0], GROOVE[1], -1, GROOVE_DEPTH)).cut(front_screw_cut()).cut(col_screw_cut_front())
     log("capot avant", t)
@@ -880,7 +943,7 @@ def build_liner():
     # bande d'epaisseur constante (une plaque de 10 mm), sans rognage a l'ouverture : le passage libre est controle
     liner = outer.cut(inner)
     # la couche de 5 mm sur le chanfrein du joint est abandonnee : 8 encoches pour 4 cm3 (0.05 dB(A) au modele)
-    return liner.cut(build_front_bosses()).cut(front_screw_cut()).cut(build_col_bosses())
+    return liner.cut(build_front_bosses()).cut(front_screw_cut()).cut(build_col_bosses()).cut(seat_corbel())
 
 
 def liner_z():
@@ -1206,8 +1269,9 @@ def export():
                                                          "haut_de_la_bonnette": round(PAD_BASE - top_bonnet, 1), "regle_v2": AIR_GAP},
                 "bonnette_mm": list(BONNET)}
     assert PAD_BASE - top_bonnet >= AIR_GAP - 0.01, f"bonnette a {PAD_BASE - top_bonnet:.1f} mm sous le fond du coussin, regle du v2 : {AIR_GAP}"
-    # le temoin du capot d'essai reproduit cette marge : a refaire imprimer si elle change
-    assert abs(PAD_BASE - top_bonnet - cp.GAUGE_GAP) < 0.1, f"temoin de bonnette a {cp.GAUGE_GAP} mm, corps a {PAD_BASE - top_bonnet:.1f}"
+    # le temoin du capot d'essai reproduit cette marge, assise posee a plat ; le col du corps repose depuis le 26 nov. 2026 sur
+    # ses diamants, SADDLE_GAP au-dessus de l'appui (0.02 avant) : 0.48 mm de plus, sans effet sur l'essai deja fait
+    assert abs(PAD_BASE - top_bonnet - cp.GAUGE_GAP - (SADDLE_GAP - 0.02)) < 0.1, f"temoin de bonnette a {cp.GAUGE_GAP} mm, corps a {PAD_BASE - top_bonnet:.1f}"
     assert min(clear["front"], clear["insert"], clear["rear_hors_plaque"], clear["bonnette_capot_et_col"]) >= MIC_CLEARANCE - 0.01, clear
     assert clear["bonnette_plaque_et_disque"] >= 0.4, clear
     assert fingers["prise_le_long_de_la_bonnette_mm"] >= 8.0, fingers
@@ -1303,7 +1367,9 @@ def export():
     # STL en orientation d'impression : capot appui en bas, coque face arriere en bas,
     # couvercle face plane en bas, anneau et collier a plat.
     printed = {
-        "front": front.rotate((0, 0, 0), (1, 0, 0), 180).translate((0, 0, Z_SEAT)),
+        # retourne depuis le 26 nov. 2026 : joint sur le plateau, appui et diamants en haut. Une copie : mailler le capot
+        # lui-meme pour le STL accrochait le maillage a ses faces, que partage le volume d'air, dont le STEP ne se relisait plus
+        "front": wp(front.val().copy()),
         "rear": rear.translate((0, 0, -Z_RF)),
         "cover": cover.rotate((0, 0, 0), (1, 0, 0), 180).translate((0, 0, Z_RF)),
         # retourne : face haute (contre le capot) sur le plateau, plots imprimes en dernier
@@ -1317,6 +1383,14 @@ def export():
         cp.clean_stl(out / f"{stem}-{n}.stl")
     air = cav.union(duct).union(build_inlet()).union(build_outlet())
     air_written = cp.export_step(air, out / f"{stem}-air-volume.step")
+    temoin = temoin_pieces(front)
+    cdir = out / "coupons"
+    for n, p in temoin.items():
+        assert p.val().isValid() and p.solids().size() == 1, f"temoin {n}"
+        lay = p.translate((0, 0, -p.val().BoundingBox().zmin))
+        cq.exporters.export(lay, str(cdir / f"temoin-diamant-{n}.stl"), tolerance=LIN_TOL, angularTolerance=ANG_TOL)
+        cp.clean_stl(cdir / f"temoin-diamant-{n}.stl")
+    m["temoin_diamant_cm3"] = {n: round(vol(p) / 1000, 2) for n, p in temoin.items()}
     # corps de reference : meme controle de relecture (joint, filament LED et fond de mousse passent en NURBS)
     with tempfile.TemporaryDirectory() as tmp:
         ref_written = {n: cp.export_step(p, Path(tmp) / f"{n}.step") for n, p in refs.items()}
@@ -1363,6 +1437,10 @@ def export():
         assert f.stat().st_size < 1.5e6, (n, f.stat().st_size)
         label, role, ex = roles[n]
         manifest.append({"file": f.name, "label": label, "role": role, "explode": list(ex)})
+    for n, p in temoin.items():  # en position de montage ; la page les montre seuls, bouton Fixation du col
+        f = web / f"temoin-diamant-{n}.stl"
+        cq.exporters.export(p.translate((0, 0, Z_SEAT + SADDLE_GAP) if n == "col" else (0, 0, 0)), str(f), tolerance=0.1, angularTolerance=0.3)
+        manifest.append({"file": f.name, "label": f"Temoin du col : {n}", "role": "coupon", "explode": [0, 0, 0]})
     cq.exporters.export(air, str(web / "air-volume.stl"), tolerance=WEB_TOL[0], angularTolerance=WEB_TOL[1])
     manifest.append({"file": "air-volume.stl", "label": "Air : cavite et conduit", "role": "air", "explode": [0, 0, 0]})
     (web / "manifest.json").write_text(json.dumps({"units": "mm", "axes": "x lateral, y haut, z vers le visage, z=0 plan de joint",

@@ -37,9 +37,9 @@ PLATES = [
     ("3 Anneau lumineux (bobine blanche)", f"{B}-ring.stl", 1, {}, None),
     ("4 Coque arriere", f"{B}-rear.stl", 1, SOLID | ON_PLATE, "corps-coque-arriere"),
     ("5 Trappe", f"{B}-cover.stl", 1, SOLID, "corps-trappe"),
-    # eprouvette de fixation du col (26 nov. 2026) : diamant et crochet, a comparer avant de redessiner capot et col
-    ("6 Eprouvette fixation du col", [str(OUT / "coupons" / f"fix-{n}.stl") for n in ("diamant-capot", "diamant-col", "crochet-capot", "crochet-col")],
-     1, SOLID | ON_PLATE, "eprouvette-fixation-col"),
+    # temoin du col (26 nov. 2026) : anneau d'appui du capot et bas du col, decoupes dans les vraies pieces, pour essayer
+    # les 4 diamants, les vis et la mousse avant d'imprimer capot et col
+    ("6 Temoin du col (diamants)", [str(OUT / "coupons" / f"temoin-diamant-{n}.stl") for n in ("capot", "col")], 1, {}, "temoin-diamant"),
 ]
 
 
