@@ -94,10 +94,24 @@ La courbe n'a pas de coude : chaque 2 mm² retirés donnent environ 0,5 dB(A) po
 la cible v3 (50 Pa au plus à 0,2 L/s) s'atteint à 40 mm² ; 42 mm² garde une marge de 3 Pa. L'effort à l'expiration
 (200 Pa) est le point à vérifier au premier essai porté : s'il gêne, 48 mm² rend 36 Pa pour 1,3 dB(A).
 
+## Tenue des vissages et parois de la chambre (26 nov. 2026)
+
+Statique linéaire 3D, openCFS et tétraèdres quadratiques gmsh : `mechanics/fem/run.py` (`--selfcheck`, `--col`, `--boss`, `--shell`, `--post` pour relire un calcul). PLA plein isotrope (E = 3,5 GPa, ν = 0,36), écrous M3 en acier collés au seul plafond de leur logement. Validation : console sous charge répartie, flèche à 1,4 % et contrainte à 1,9 % de la théorie. Le PLA imprimé tient moins entre couches que dans leur plan : seuils de 15 à 25 MPa entre couches et de 40 à 50 MPa dans le plan (fourchettes de fiches, non mesurées sur nos pièces). Contraintes lues au 99e centile autour de chaque vis, pour écarter les pointes des angles vifs (singularités du modèle, émoussées dans une vraie pièce). Solveur : gradient conjugué natif d'openCFS (CHOLMOD dépasse 8 Go au-delà d'environ 100 000 tétraèdres quadratiques ; LIS, PETSc et Pardiso ne sont pas compilés), 5 à 30 minutes par calcul.
+
+| Vissage | Premières fissures | Rupture | Pour fermer le joint |
+|---|---|---|---|
+| Col sur capot v05 (peau de 1,2 mm sur l'écrou) | 130 à 210 N par vis | 480 à 600 N | 50 à 200 N (néoprène, estimation) |
+| Col sur capot v06 (peau de 2 mm) | 190 à 320 N | 650 à 810 N | idem |
+| Capot sur coque (tête fraisée dans le bossage) | 750 N : la tête marque sa fraisure | 1 800 N dans le bossage ; la vis plie vers 2 200 N | butée : écrasement fixé |
+
+Le col posé sur ses diamants ne touche pas la plaque au-dessus des écrous : la peau travaille en poinçonnement et la plaque fléchit (l'écrou monte de 0,9 µm par newton). Au joint capot/coque, tout est en compression entre deux bossages en butée. Repères de serrage d'une M3 (coefficient 0,2, estimation) : 0,1 N·m du bout des doigts, environ 170 N ; 0,5 N·m à pleine main, environ 800 N. Le col se serre donc du bout des doigts, le capot peut se serrer franchement.
+
+**Parois de la chambre.** Capot et coque collés au plan de joint, appui du col tenu, 1 Pa sur les 26 400 mm² qui bordent l'air de la chambre et du conduit : le volume d'air gagne 1,18 × 10⁻¹² m³/Pa, 0,08 % de la souplesse de l'air lui-même, et 2,6 fois moins que l'hypothèse du modèle 1D (3,06 × 10⁻¹²). Dans le modèle 1D, le chemin par les parois descend alors de 50-54 à 59-62 dB d'atténuation, quand l'évent est à 6-36 dB : 26,3 dB(A) dans les trois cas (hypothèse, calcul, parois rigides). Valable sous la première résonance des parois, non calculée (pas de solveur de valeurs propres compilé) : un panneau de PLA de 3 mm, encastré, de 50 à 80 mm de portée, résonne vers 1,6 à 4 kHz (calcul de plaque, estimation), là où la voix pondérée A pèse peu.
+
 ## Temps de calcul
 
 Sur ce Mac (openCFS 26.09 ARM64, 1 cœur) : 0,03 s de résolution par fréquence (6 700 à 15 300 nœuds avec le dispositif). Il faut 17 s pour v3-A complet (deux jeux, 20 bandes, maillage compris) et 3 s pour la validation.
 
 ## Limites
 
-Équivalent axisymétrique seulement : ni l'hélice, ni les sorties latérales, ni la tête. Parois rigides. Écrans ignorés. Mousse et fente en fluides équivalents (lois empiriques). Le prochain pas utile est une mesure au banc, pas un modèle 3D.
+Équivalent axisymétrique seulement : ni l'hélice, ni les sorties latérales, ni la tête. Parois rigides (justifié sous 1,5 kHz environ : voir « Parois de la chambre »). Écrans ignorés. Mousse et fente en fluides équivalents (lois empiriques). Le prochain pas utile est une mesure au banc, pas un modèle 3D.

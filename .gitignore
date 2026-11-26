@@ -13,6 +13,7 @@ __pycache__/
 # Sorties regenerables du modele acoustique
 acoustics/out/
 acoustics/fem/work/
+mechanics/fem/work/
 bench/sessions/
 
 # Journaux d erreur ecrits par la CLI OrcaSlicer dans le dossier courant

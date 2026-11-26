@@ -349,7 +349,7 @@ def section_point(t, d, z):
 # la peau au-dessus de l'ecrou travaille en poinconnement, pas en compression comme a la coque (ou les bossages se touchent).
 COL_SCREW_T_DEG = (45, 135, 225, 315)
 COL_SCREW_FRAC = 0.3  # dans la bande d'appui, du bord de l'ouverture (0) a la peau (1) : ecrou a 1.4 mm de la peau, qui se resserre sous l'appui, et couvert par la plaque
-COL_NUT_SKIN = 2.0  # serrage ferme demande (Clement, 26 nov. 2026) : 1.2 mm donnait environ 570 N au poinconnement (estimation), 2.0 environ 950 N
+COL_NUT_SKIN = 2.0  # serrage ferme demande (Clement, 26 nov. 2026) ; FEM (mechanics/fem) : rupture de la peau vers 650-810 N par vis au lieu de 480-600 avec 1.2 mm
 COL_HEAD_Z = 3.5  # haut de la tete au-dessus du dos du col : la pointe d'une M3 x 10 sort de l'ecrou de 2.1 mm
 
 
