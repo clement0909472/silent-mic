@@ -16,12 +16,12 @@
     77.0
   ],
   "nose_clearance_ymax_mm": 38.5,
-  "cavity_air_plus_foam_cm3": 201.1,
-  "cavity_air_only_cm3": 154.7,
+  "cavity_air_plus_foam_cm3": 200.7,
+  "cavity_air_only_cm3": 154.9,
   "foam_cm3": {
     "foam-disc": 23.2,
-    "foam-liner": 23.1,
-    "total": 46.3
+    "foam-liner": 22.6,
+    "total": 45.8
   },
   "free_passage_min_mm2": {
     "area": 1488,
@@ -241,9 +241,9 @@
     "front": 48.8,
     "rear": 100.5,
     "cover": 15.0,
-    "assise-col": 78.6,
+    "assise-col": 76.4,
     "ring_petg": 1.7,
-    "total": 244.6
+    "total": 242.4
   },
   "warn": [
     "longueur entree -> centre de la sortie 164.4 mm < 175 (canal barrage a barrage 192.9)"

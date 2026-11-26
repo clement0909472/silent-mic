@@ -49,8 +49,8 @@ Grammes calculés par Bambu Studio avec la densité réelle du filament (1,32) :
 
 | Plaque | Pièce | Temps | Filament |
 |---|---|---|---|
-| 1 | coque arrière (supports sous le passage de la prise USB-C, dans la baie) | 3 h 17 | 111 g PLA noir |
-| 2 | capot avant (une colonne de support sous chaque puits de vis) | 1 h 52 | 56 g PLA noir |
+| 1 | coque arrière (supports sous le passage de la prise USB-C, dans la baie) | 3 h 18 | 112 g PLA noir |
+| 2 | capot avant (une colonne de support sous chaque puits de vis, 4 logements d'écrou du col) | 1 h 56 | 57 g PLA noir |
 | 3 | trappe | 28 min | 16 g PLA noir |
 | 4 | anneau de la V0, en noir avec la même bobine (la version lumineuse s'imprime en PETG translucide avec `print/corps-anneau-petg.3mf`) | 9 min | 2 g PLA noir |
 
@@ -100,15 +100,15 @@ Sept contrôles tournent sur les fichiers produits eux-mêmes, pas sur l'intenti
 | Contrôle d'étanchéité | Résultat |
 |---|---|
 | La chambre rejoint l'extérieur par le conduit | oui |
-| Fentes bouchées : la chambre est étanche | oui, donc aucune autre ouverture |
+| Sortie bouchée : la chambre est étanche | oui, donc aucune autre ouverture |
 | Entrée bouchée : la chambre est étanche | oui, donc une seule entrée dans le conduit |
 | Conduit bouché à midi : la chambre est étanche | oui, donc l'air fait le tour complet |
 | Conduit bouché, matière non épaissie : la chambre est étanche | oui, donc aucun jeu de montage de plus de 0,25 mm ne relie la chambre à l'extérieur |
 | Trou témoin de 1 mm² percé dans la paroi | détecté |
 | Capot avant posé droit : surface accrochée | 0 mm² (110 mm² sur la version du 20 novembre, 155 avec le micro) |
-| Conductivité de l'évent dans les pièces imprimées | 0,3038 mm pour 0,3035 au modèle (écart 0,1 %), soit un conduit de 48 mm² long de 158 mm ; chambre de 201 cm³ pour 194 au modèle ; résonance chambre + évent à 67 Hz |
-| Fentes | 4, de 9,3 mm de long, horizontales depuis le 25 nov. 2026 : passage de 2,75 mm, 102 mm² en tout (62 mm² quand elles étaient inclinées) |
-| Entrée et section du conduit | 49 et 48 mm² |
+| Conductivité de l'évent dans les pièces imprimées | 0,2517 mm, autant qu'au modèle 1D (rapport 1,00), soit un conduit de 42 mm² long de 167 mm ; chambre de 210 cm³ pour 201 au modèle ; résonance chambre + évent vers 60 Hz (26 nov. 2026) |
+| Sortie | ligne fine de 5 fentes de 8,2 mm (26 nov. 2026) : 2,6 mm de haut à la peau, goulottes à 52° vers le dos sous le plancher du conduit, 59 mm² de section droite |
+| Entrée et section du conduit | 49 et 42 mm² |
 
 Le contrôle suppose trois fermetures qu'il ne prouve pas : le joint mousse du plan de joint, le coussin collé sur son appui, le visage sur le coussin. La baie de l'électronique, la prise USB-C, la fente de l'interrupteur, le tunnel des fils et la rainure LED sont ouverts sur l'extérieur, mais séparés de la chambre par des parois pleines.
 
@@ -202,7 +202,7 @@ Trois coques s'empilent le long de l'axe : trappe, coque arrière, capot avant. 
 6. Le ruban LED dans sa rainure, derrière l'anneau translucide.
 7. Le capot avant, garni de son manchon de mousse, se pose droit : la languette entre dans la rainure. Le col n'est pas encore en place.
 8. Les 4 vis par l'ouverture de l'appui du coussin (77 × 57 mm), avec une clé six pans de 2 mm ou un tournevis à lame longue. Chaque tête descend dans son puits, entre les deux nervures de son bossage ; la mousse du manchon s'écarte au passage. Serrer en croix, en deux passes, jusqu'au contact : les bords des coques se touchent, il n'y a plus de jour au plan de joint.
-9. L'assise courbe (R53, col de 20 mm) se colle sur l'appui du capot par un anneau continu de ruban double face, contour aligné sur celui du capot. Le coussin, voile de tissu découpé, se colle de même sur l'assise : le ruban le tient et ferme le jour.
+9. Le col (assise courbe R53 et col de 20 mm) se visse sur l'appui du capot, plus de colle (Clément, 25 nov. 2026) : glisser d'abord les 4 écrous M3 dans leurs logements sous la plaque d'appui, par l'ouverture du capot, chacun à plat, un plat vers la peau. Poser sur l'appui l'anneau de mousse à cellules fermées de 1 mm (tracer son contour extérieur avec le col posé dessus, son contour intérieur avec l'ouverture du capot, percer les 4 trous à l'emporte-pièce ou au foret), puis le col, et serrer en croix les 4 vis M3 × 10 fraisées par les puits du dessus du col, jusqu'à ce que le col ne bouge plus. Le coussin, voile de tissu découpé, se colle ensuite sur le col par un anneau continu de ruban double face : il cache les 4 vis. Pour changer de col, décoller le coussin, desserrer les 4 vis.
 10. Le micro, bonnette DJI en place, entre par la bouche, haut du boîtier vers soi, logo DJI blanc tourné vers l'avant : l'aimant du boîtier est dans la face opposée au logo (Clément, 24 nov. 2026), c'est elle qui se pose contre le disque. Il se pose debout contre la plaque, au fond de l'encoche de la mousse : son aimant le tient sur le disque d'acier.
 
 Au quotidien, rien ne s'ouvre : on sort le micro par la bouche pour le recharger, on le remet de même. **On le prend par sa bonnette**, qui sert de poignée : Clément a vérifié le 24 nov. 2026 que l'aimant ne la déclipse pas quand on tire. Depuis le col de 20 mm, le haut des poils est à 33 mm sous la crête du col au centre et le boîtier à 53 mm. Doigts adultes simulés dans la CAO (bout d'index de 14 mm, de pouce de 17 mm, doigts droits venus d'en haut) : pouce et index pincent la bonnette par ses flancs, 5 mm sous le haut des poils, fourrure écrasée de 3 mm, sans toucher aucune pièce rigide (seulement la fourrure et un peu la mousse du manchon), puis le micro sort tiré tout droit sur 60 mm sans que la main heurte rien (contrôlé à chaque export). Une glissière captive qui remontait le micro de 22 à 45 mm a été dessinée puis abandonnée le même jour : inutile, puisque la bonnette suffit comme poignée. Le corps du micro, lui, reste hors de portée des doigts dans l'appareil : la chambre fait environ 57 mm de large à sa hauteur, pour 28,6 mm de micro et deux doigts.
@@ -230,11 +230,12 @@ Abandonnés par rapport à la version précédente, pour couper moins de pièces
 
 | Article | Spécification | Quantité |
 |---|---|---|
-| Vis M3 × 10 mm à tête fraisée | acier noir, six pans creux de 2 mm (DIN 7991 / ISO 10642) | 6 |
-| Écrous M3 | hexagonaux standard, 5,5 mm sur plats, 2,4 mm d'épaisseur (DIN 934) | 4 |
+| Vis M3 × 10 mm à tête fraisée | acier noir, six pans creux de 2 mm (DIN 7991 / ISO 10642) | 10 (joint 4, col 4, trappe 2) |
+| Écrous M3 | hexagonaux standard, 5,5 mm sur plats, 2,4 mm d'épaisseur (DIN 934) | 8 (joint 4, col 4) |
 | Bande de mousse autocollante | cellules fermées (néoprène ou EPDM), 2 mm d'épaisseur ; pas de bande de 3 mm de large toute faite : en recouper au cutter et à la règle métallique dans une bande plus large, par exemple [néoprène 30 mm × 2 mm, 10 m](https://www.amazon.fr/Caoutchouc-N%C3%A9opr%C3%A8ne-auto-adh%C3%A9sif-large-%C3%A9paisseur/dp/B008ASE91U) ou [EPDM 50 mm × 2 mm, 10 m](https://www.amazon.fr/d%C3%A9tanch%C3%A9it%C3%A9-caoutchouc-cellulaire-autocollante-mousse/dp/B0841LXXSQ) | 25 cm de lanière de 3 mm |
 | Mousse acoustique | polyuréthane à cellules ouvertes, plaque de 10 mm | une plaque A4 |
 | Ruban double face | mousse fine d'environ 1 mm, 10 à 12 mm de large | 40 cm par coussin |
+| Mousse à cellules fermées en feuille | 1 mm (EVA ou néoprène, adhésive d'un côté ou non), pour l'anneau de joint sous le col | une feuille A5 |
 | PETG translucide | naturel ou transparent | 5 g |
 | Colle | cyanoacrylate | |
 
@@ -268,7 +269,7 @@ Onshape ne voit pas les défauts de passage trouvés par le contrôle d'étanch�
 
 ## Points ouverts
 
-- **À refaire : l'assise vissée, plus collée** (décision de Clément, 25 nov. 2026). Coller l'assise sur le capot laisse un joint rigide collé juste devant la bouche, impossible à rouvrir pour mettre au point : elle doit être serrée par vis sur un joint mousse comprimé (même principe que le plan de joint, butée face contre face), le coussin seul reste collé. Aucune vis directement dans le PLA : écrous prisonniers ou inserts laiton M3. Touche le capot avant (points d'ancrage) et l'assise : les deux sont à réimprimer, le capot avant de la plaque 2 n'est pas à lancer d'ici là.
+- **Col vissé, fait le 26 nov. 2026** : 4 vis M3 × 10 par le dessus du col, écrous prisonniers dans la plaque d'appui du capot (ils tirent le col et écrasent 1,2 mm de plaque, comme à la coque arrière), anneau de mousse de 1 mm écrasé entre les deux. Par en dessous, comme Clément le voulait d'abord, aucun outil n'atteint la plaque : le capot se resserre en entonnoir jusqu'au joint ; les têtes sont donc sous le coussin, et changer de col veut de toute façon décoller le coussin. Le manchon de mousse avant porte 4 bossages de plus en haut : y entailler 4 encoches de 10 × 4 mm (pas encore dessinées sur le gabarit). Écrou à 1,6 mm de la peau au plus près, à vérifier à la pièce.
 
 - **Baie de l'électronique dessinée sur des cotes de catalogue.** Le chargeur est compté à 4 mm d'épaisseur avec sa prise, la batterie à 30 mm de long avec sa carte de protection. Décision de Clément du 20 novembre 2026 : l'électronique se commande plus tard, la coque arrière s'imprime telle quelle et se réimprime (4 h 42, 72 g) si une pièce ne rentre pas.
 - **Aucun clip dans la baie.** Les composants tiennent par empilement, logements ajustés à 0,5 mm et trappe. Aucune cloison imprimée entre chargeur et batterie.
@@ -286,6 +287,6 @@ Onshape ne voit pas les défauts de passage trouvés par le contrôle d'étanch�
 - **Accroche du coussin : ruban double face.** Décision de Clément du 20 novembre 2026. Le scratch du prototype v2 laisse un jour tout autour (calcul : de -3 à 11 dB(A) au lieu de 21). La lèvre élastique du coussin sur une gorge de la coque est réservée à une version de production : même étanchéité attendue, coussin plus simple à changer, mais gorge à ajuster au millimètre.
 - **Bonnette DJI : hauteur mesurée, largeur et épaisseur encore estimées.** Clément a mesuré le 23 novembre 2026 environ 48 mm du bas du micro au haut des poils, soit 20 mm au-dessus du boîtier : c'est la cote de la CAO depuis la révision de l'appui visage. Largeur et épaisseur restent estimées à 36 × 26 mm, avec une jupe de 9 mm sur le haut du boîtier ; il reste 3,4 mm jusqu'au capot et au col. La simulation de la visionneuse (bouton « Bouche »), calée sur l'essai du v2 (coussin de 28 mm écrasé à 15, lèvres juste sous son fond), donne 12,5 mm entre les lèvres et les poils ; visage en butée sur le col, 7,6 mm ; lèvres avancées de 22 mm au-delà des joues et visage en butée, encore 1,1 mm. Visage schématique : à confirmer sur la pièce. Les cotes se règlent par `BONNET` dans `cad/silent_mic_v3_galet.py`.
 - **Micro couché : écarté le 23 novembre 2026.** Couché dans le sens de la largeur, il heurte les 4 bossages de vis du joint ; dans le sens de la hauteur, ses 48 mm ne ressortent plus par le col (42 mm). Pour raccourcir le corps plus tard : d'après le modèle 1D (estimation, non mesurée), environ 1 dB(A) perdu par 5 à 6 mm retirés.
-- **Fentes de sortie, horizontales depuis le 25 nov. 2026** (Clément : inclinées, elles descendaient vers le conduit et, l'appareil posé debout sur le dos, miettes et poussière y glissaient) : rien n'y entre plus par gravité, et le bas de la gorge d'ombre est en pente vers l'extérieur, comme son haut, pour que rien ne s'y pose. Passage de 2,75 mm (102 mm² au lieu de 62), plafond imprimé en pont de 9,3 mm, sans support (vérifié au tranchage : ponts vers 41 mm, supports seulement dans la baie). Évent : le modèle 1D et l'écoulement dans les pièces imprimées restent d'accord (rapport 1,004) ; atténuation estimée 24,9 dB(A) au lieu de 25,1, perte de charge 41 Pa au lieu de 48 à 0,2 L/s (estimations de modèle, non mesurées). À contrôler au souffle sur la pièce (voir « Contrôles avant impression »). Avant et après, en coupe : ![Fente d'évent avant et après](img/v3-fente-event-avant-apres.png)
+- **Sortie de l'évent en ligne fine (26 nov. 2026)** : Clément trouvait les 4 goulottes de toute la largeur du conduit trop visibles (6 à 7 mm de haut à la peau). Désormais 5 goulottes étroites de 2,6 mm de haut à la peau, alignées de 6 h à 9 h, toujours en pente à 52° vers le dos (posé sur le dos, ce qui y tombe ressort) et lèvre du haut arrondie de 0,5 mm. Section droite 59 mm² au lieu de 114 : 27,8 dB(A) au lieu de 27,5, effort 58 Pa au lieu de 50 à 0,2 L/s, 256 Pa au lieu de 211 à 0,5 L/s (estimations de modèle, non mesurées) ; en 3 mm de haut, 55 Pa. Prise USB-C : stade de 12 × 6 mm sans la pointe qui la faisait paraître deux fois plus haute. À contrôler au souffle sur la pièce.
 - **Plafond de la baie** : pont de 31 mm dans son sens le plus court (36 × 31 mm), imprimé sans support et caché par la trappe. Les seuls supports de la coque restent sous le passage de la prise USB-C. Un fléchissement de quelques dixièmes est possible : à mesurer sur la pièce avant de commander l'électronique.
 - **Dessous du coussin** : seulement posé sur l'appui, étanche par la pression de la main. Une fente de 0,5 mm sur 3 cm fait tomber l'atténuation calculée de 21 à 12 dB(A). Un anneau de ruban double face est en réserve, à trancher au test du capot (`bench/README.md`, étape 6).
