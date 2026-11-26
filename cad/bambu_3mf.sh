@@ -69,7 +69,9 @@ json.dump(machine, open(f"{tmp}/machine.json", "w"), indent=1)
 proc = flat("process", "0.20mm Standard @BBL A1M")
 assert len(proc) > 150, "prereglage de procede incomplet"
 json.dump(proc, open(f"{tmp}/process-system.json", "w"), indent=1)  # reference pour les ecarts declares dans le 3MF
-proc.update(wall_loops="4", sparse_infill_density="20%", seam_position="aligned", curr_bed_type="Textured PEI Plate")
+# reduce_crossing_wall : la buse contourne les vides au lieu de les traverser (fils dans la cavite du capot v05, 26 nov. 2026)
+proc.update(wall_loops="4", sparse_infill_density="20%", seam_position="aligned", curr_bed_type="Textured PEI Plate",
+            reduce_crossing_wall="1")
 for name, sup in (("process-off", "0"), ("process-auto", "1"), ("process-plate", "1")):
     q = dict(proc, enable_support=sup)
     if sup == "1":

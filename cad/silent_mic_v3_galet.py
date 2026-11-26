@@ -320,7 +320,12 @@ def front_cavity_tool():
     # siege conique a 38 deg de la bride biseautee du collier (pas de logement plat : capot imprime appui en bas)
     top = tuple(f + 2 * cp.FLANGE_GAP for f in cp.flange_outer())
     z_low = Z_SEAT - STEEP * (top[0] - SEAT_OPENING[0]) / 2
-    opening = eprism(*SEAT_OPENING, Z_SEAT - SEAT_PLATE - 1.0, z_low)
+    # sous le pied du siege, l'ouverture s'evase a la pente STEEP, parallele a seat_corbel() et 0.1 mm devant lui :
+    # droite (prisme), elle laissait 0.9 a 1.2 mm de plaque dans le vide sur tout le tour (capot v05 imprime le 26 nov.)
+    z_bot = Z_SEAT - SEAT_PLATE - 1.0
+    grow = 2 * (z_low - z_bot) / STEEP
+    opening = wp(cq.Solid.makeLoft([ell(SEAT_OPENING[0] + grow, SEAT_OPENING[1] + grow, z_bot),
+                                    ell(SEAT_OPENING[0] - 0.1, SEAT_OPENING[1] - 0.1, z_low + 0.05 * STEEP)], True))
     cone_ = wp(cq.Solid.makeLoft([ell(*SEAT_OPENING, z_low), ell(*top, Z_SEAT), ell(top[0] + 0.02, top[1] + 0.02, Z_SEAT + 1)], True))
     # le chanfrein sous le bord de l'ouverture (le coin haut du micro voyait l'arete de la plaque a 1.25 mm) est retire le
     # 26 nov. 2026 : capot retourne, il faisait un surplomb de 2,5 mm tout autour ; seat_corbel() degage le dessous de l'appui
@@ -340,10 +345,12 @@ def section_point(t, d, z):
 # ne se controle ni ne se rouvre. 4 vis M3 x 10 fraisees, posees par le dessus du col (sous le coussin, seul colle),
 # serrent un anneau de mousse a cellules fermees de 1 mm entre le col et l'appui. Par en dessous, aucun outil
 # n'atteindrait la plaque : le capot se resserre en entonnoir jusqu'au joint. Ecrou prisonnier dans la plaque, comme
-# a la coque arriere : il tire vers le col et ecrase la peau de NUT_SKIN, rien ne travaille en traction.
+# a la coque arriere : il tire vers le col. Mais le col reste sur ses diamants, 0.5 mm au-dessus, sur de la mousse :
+# la peau au-dessus de l'ecrou travaille en poinconnement, pas en compression comme a la coque (ou les bossages se touchent).
 COL_SCREW_T_DEG = (45, 135, 225, 315)
-COL_SCREW_FRAC = 0.3  # dans la bande d'appui, du bord de l'ouverture (0) a la peau (1) : ecrou a 1.6 mm de la peau, qui se resserre sous l'appui, et couvert par la plaque
-COL_HEAD_Z = 3.5  # haut de la tete au-dessus du dos du col : la pointe d'une M3 x 10 sort de l'ecrou de 2.9 mm
+COL_SCREW_FRAC = 0.3  # dans la bande d'appui, du bord de l'ouverture (0) a la peau (1) : ecrou a 1.4 mm de la peau, qui se resserre sous l'appui, et couvert par la plaque
+COL_NUT_SKIN = 2.0  # serrage ferme demande (Clement, 26 nov. 2026) : 1.2 mm donnait environ 570 N au poinconnement (estimation), 2.0 environ 950 N
+COL_HEAD_Z = 3.5  # haut de la tete au-dessus du dos du col : la pointe d'une M3 x 10 sort de l'ecrou de 2.1 mm
 
 
 def col_screw_xy():
@@ -353,14 +360,17 @@ def col_screw_xy():
 
 
 def col_nut_z():
-    z1 = Z_SEAT - cp.NUT_SKIN
+    z1 = Z_SEAT - COL_NUT_SKIN
     return z1 - cp.NUT[1], z1
 
 
 def build_col_bosses():
     """Sous la plaque d'appui : de quoi loger l'ecrou (il depasse de la plaque de 1 mm) et guider la vis."""
     z0 = col_nut_z()[0] - 3.0
+    # pied conique a la pente STEEP : a plat, le dessous du bossage s'imprimait a moitie dans le vide (capot v05, couche 19.2)
+    h = (cp.BOSS_R - 0.8) * STEEP
     return union_all(cq.Workplane("XY", origin=(x, y, z0)).circle(cp.BOSS_R).extrude(Z_SEAT - SEAT_PLATE + 0.5 - z0)
+                     .union(wp(cq.Solid.makeCone(0.8, cp.BOSS_R, h + 0.01, cq.Vector(x, y, z0 - h), cq.Vector(0, 0, 1))))
                      for x, y in col_screw_xy())
 
 
@@ -454,10 +464,11 @@ def seat_corbel():
     """Chanfrein sous l'appui du coussin : le capot s'imprime retourne, joint sur le plateau (26 nov. 2026), pour que les
     diamants sortent par le haut ; sans lui, le dessous de l'appui (5 a 7 mm de rebord) et les bossages d'ecrou du col
     seraient imprimes dans le vide. Il part du bord de l'ouverture (passage du micro inchange) et descend a 52 deg."""
-    # il monte jusqu'au pied du siege conique de l'ouverture, 0.3 mm en retrait de lui (pas d'arete commune)
+    # il monte jusqu'au pied du siege conique de l'ouverture, 0.1 mm en retrait de lui et de son evasement (pas d'arete
+    # commune) ; 0.3 laissait 0.45 mm de marche au G-code sous la plaque (une ligne dans le vide), 0.1 en laisse 0.25
     top = tuple(f + 2 * cp.FLANGE_GAP for f in cp.flange_outer())
     zt, drop = Z_SEAT - STEEP * (top[0] - SEAT_OPENING[0]) / 2, 10.0
-    w, h = (o + 0.6 for o in SEAT_OPENING)
+    w, h = (o + 0.2 for o in SEAT_OPENING)
     cone = wp(cq.Solid.makeLoft([ell(w, h, zt + 0.01), ell(w + 2 * drop / STEEP, h + 2 * drop / STEEP, zt - drop)], True))
     return box(-80, 80, -80, 80, zt - drop + 0.01, zt).cut(cone)
 
