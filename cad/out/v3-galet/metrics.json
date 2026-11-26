@@ -31,17 +31,17 @@
     "section_mm2": 42.17,
     "lap_mm": 202.3,
     "channel_dam_to_dam_mm": 192.9,
-    "inlet_to_first_outlet_mm": 182.4,
-    "inlet_to_outlet_centroid_mm": 166.4,
+    "inlet_to_first_outlet_mm": 183.0,
+    "inlet_to_outlet_centroid_mm": 164.4,
     "inlet_area_mm2": 48.8,
-    "outlet_count": 4,
-    "outlet_floor_opening_mm2": 143.8,
-    "outlet_min_section_mm2": 114.0,
-    "outlet_path_mm": 8.33,
+    "outlet_count": 5,
+    "outlet_floor_opening_mm2": 78.2,
+    "outlet_min_section_mm2": 62.0,
+    "outlet_path_mm": 6.48,
     "dam_mm": 9.4,
     "wall_openings_mm2": {
-      "sortie_a_la_peau": 233.7,
-      "sortie_au_plancher_du_conduit": 143.8,
+      "sortie_a_la_peau": 124.2,
+      "sortie_au_plancher_du_conduit": 78.2,
       "entree_a_la_paroi_du_conduit": 48.9,
       "entree_a_la_paroi_de_la_chambre": 48.9
     }
@@ -50,7 +50,7 @@
     "cavity_to_outside": 3.0,
     "duct_to_outside": 3.0,
     "duct_to_cavity": 3.75,
-    "outlet_to_cavity": 3.59
+    "outlet_to_cavity": 5.47
   },
   "mic": {
     "centre": [
@@ -239,14 +239,14 @@
   "flat_faces_note": "plans > 35 mm : appui du coussin (couvert par le coussin, voulu plat) et face arriere du dos (maquette)",
   "mass_g_solid_pla": {
     "front": 48.8,
-    "rear": 99.7,
+    "rear": 100.5,
     "cover": 15.0,
     "assise-col": 78.6,
     "ring_petg": 1.7,
-    "total": 243.8
+    "total": 244.6
   },
   "warn": [
-    "longueur entree -> centre de la sortie 166.4 mm < 175 (canal barrage a barrage 192.9)"
+    "longueur entree -> centre de la sortie 164.4 mm < 175 (canal barrage a barrage 192.9)"
   ],
   "fail": []
 }

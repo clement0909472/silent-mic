@@ -114,21 +114,21 @@
             "type": "duct",
             "width": 10.92,
             "height": 3.86,
-            "length": 158.2,
-            "_doc": "longueur equivalente calee sur l'ecoulement potentiel dans les pieces imprimees (cad/leak_check.py, conductivite 0.2514 mm) ; trajet de l'entree au centre de la sortie : 166.4 mm ; section 42.17 mm2 (3,86 mm de large, decale vers l'exterieur le 25 nov. 2026)",
+            "length": 155.5,
+            "_doc": "longueur equivalente calee sur l'ecoulement potentiel dans les pieces imprimees (cad/leak_check.py, conductivite 0.2517 mm) ; trajet de l'entree au centre de la sortie : 164.4 mm ; section 42.17 mm2 (3,86 mm de large, decale vers l'exterieur le 25 nov. 2026)",
             "minor_k": 1.5
           },
           {
             "type": "duct",
-            "width": 8.43,
-            "height": 3.38,
-            "length": 8.33,
-            "count": 4,
+            "width": 7.8,
+            "height": 1.59,
+            "length": 6.48,
+            "count": 5,
             "minor_k": 1.5,
-            "_doc": "4 goulottes de sortie a 52 deg sous le plancher du conduit (25 nov. 2026, contre les miettes, appareil pose debout) : section droite 3.38 mm, bouts arrondis, 114.0 mm2 en tout, longueur sur l'axe 8.33 mm ; ouverture a la peau 233.7 mm2"
+            "_doc": "5 goulottes etroites de sortie a 52 deg, en ligne fine (26 nov. 2026 ; pente contre les miettes, appareil pose debout) : section droite 1.59 mm, bouts arrondis, 62.0 mm2 en tout, longueur sur l'axe 6.48 mm ; ouverture a la peau 124.2 mm2"
           }
         ],
-        "outlet_area_mm2": 114.0
+        "outlet_area_mm2": 62.0
       },
       "seal": {
         "_cushion": "coussin Brainwavz mesure par Clement le 23 nov. 2026 : 108 x 81, ouverture 72,6 x 48,5, 28 mm, environ 15 mm comprime ; paroi souple exposee = integrale sur le perimetre de l'ouverture de (15 mm comprime - hauteur locale du col), 961 mm2 avec le col de 10 mm ; depuis le 24 nov. 2026, assise R53 et col de 20 mm au-dessus d'elle partout (cp.BODY_SEAT) : le col depasse partout le coussin comprime, plus de paroi souple exposee ; raideur laissee a la valeur du superviseur",

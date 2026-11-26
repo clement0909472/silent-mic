@@ -124,10 +124,14 @@ INLET_Z = DUCT_BOTTOM + 4.5  # repere de hauteur de l'entree (debut du controle 
 # ressort seul ; plus de gorge d'ombre ni de rebord. Les nervures entre ouvertures portent la levre du haut : une
 # ouverture unique de 42 mm l'imprimerait en pont courbe de 42 mm sans appui (supports "sur plateau uniquement"). Bouts
 # arrondis, levre du haut arrondie en quart de cercle (OUTLET_NOSE) : rien de tranchant.
-OUTLET_LEN, OUTLET_RIB, OUTLET_COUNT = 9.3, 1.5, 4
-OUTLET_NOSE = 1.0
-# goulotte plus large que le conduit de 0.2 mm de chaque cote : ses faces croisent franchement les parois du conduit
-# (aretes communes au plancher, la coque n'etait plus un solide valide avec le conduit a 3.15 mm)
+# Ligne fine (Clement, 26 nov. 2026 : les 4 goulottes de toute la largeur du conduit faisaient de gros trous de 6 a 7 mm
+# de haut) : 5 goulottes etroites, 2.6 mm de haut a la peau, alignees de 6 h a 9 h, au ras du bord du conduit. Section
+# droite d'environ 60 mm2 au lieu de 114 : 3 m/s a 0,2 L/s ; le conduit (42 mm2) garde la masse acoustique.
+OUTLET_LEN, OUTLET_RIB, OUTLET_COUNT = 8.2, 1.2, 5
+OUTLET_W = 1.6  # largeur horizontale de la goulotte au plancher du conduit, cote peau (hors OUTLET_WIDEN)
+OUTLET_NOSE = 0.5
+# goulotte elargie de 0.2 mm de chaque cote : ses faces croisent franchement les parois du conduit (aretes communes au
+# plancher, la coque n'etait plus un solide valide avec le conduit a 3.15 mm)
 OUTLET_WIDEN = 0.2
 OUTLET_SIN = STEEP / math.hypot(1.0, STEEP)  # section droite de la goulotte = largeur horizontale x OUTLET_SIN
 CORBEL_TOP = DUCT_BOTTOM - 1.6  # plancher du conduit garde 1.6 mm
@@ -334,6 +338,64 @@ def section_point(t, d, z):
     return a * math.cos(t) - d * n[0] / k, b * math.sin(t) - d * n[1] / k
 
 
+# ---------- col visse sur l'appui (Clement, 25-26 nov. 2026) ----------
+# L'assise et son col se vissent sur l'appui du capot au lieu d'y etre colles : un joint colle juste devant la bouche
+# ne se controle ni ne se rouvre. 4 vis M3 x 10 fraisees, posees par le dessus du col (sous le coussin, seul colle),
+# serrent un anneau de mousse a cellules fermees de 1 mm entre le col et l'appui. Par en dessous, aucun outil
+# n'atteindrait la plaque : le capot se resserre en entonnoir jusqu'au joint. Ecrou prisonnier dans la plaque, comme
+# a la coque arriere : il tire vers le col et ecrase la peau de NUT_SKIN, rien ne travaille en traction.
+COL_SCREW_T_DEG = (45, 135, 225, 315)
+COL_SCREW_FRAC = 0.3  # dans la bande d'appui, du bord de l'ouverture (0) a la peau (1) : ecrou a 1.6 mm de la peau, qui se resserre sous l'appui, et couvert par la plaque
+COL_HEAD_Z = 3.5  # haut de la tete au-dessus du dos du col : la pointe d'une M3 x 10 sort de l'ecrou de 2.9 mm
+
+
+def col_screw_xy():
+    fo, sk = cp.flange_outer(), outer_profile(S_SEAT)
+    a, b = (fo[i] / 2 + cp.FLANGE_GAP + COL_SCREW_FRAC * (sk[i] - fo[i] / 2 - cp.FLANGE_GAP) for i in (0, 1))
+    return [(a * math.cos(math.radians(t)), b * math.sin(math.radians(t))) for t in COL_SCREW_T_DEG]
+
+
+def col_nut_z():
+    z1 = Z_SEAT - cp.NUT_SKIN
+    return z1 - cp.NUT[1], z1
+
+
+def build_col_bosses():
+    """Sous la plaque d'appui : de quoi loger l'ecrou (il depasse de la plaque de 1 mm) et guider la vis."""
+    z0 = col_nut_z()[0] - 3.0
+    return union_all(cq.Workplane("XY", origin=(x, y, z0)).circle(cp.BOSS_R).extrude(Z_SEAT - SEAT_PLATE + 0.5 - z0)
+                     for x, y in col_screw_xy())
+
+
+def col_screw_cut_front():
+    """Passage de la vis et logement d'ecrou, ouvert vers le centre pour y glisser l'ecrou par l'ouverture du capot ;
+    un plat de l'ecrou face a la peau, qui se resserre sous l'appui."""
+    z0, z1 = col_nut_z()
+    r, half = cp.SCREW[0] / 2, cp.NUT[0] * math.cos(math.radians(30)) / 2
+    out = []
+    for x, y in col_screw_xy():
+        local = (cq.Workplane("XY", origin=(0, 0, z0 - 3.5)).circle(r).extrude(Z_SEAT + 0.5 - z0 + 3.5)
+                 .union(cq.Workplane("XY", origin=(0, 0, z0)).polygon(6, cp.NUT[0]).extrude(cp.NUT[1]).rotate((0, 0, 0), (0, 0, 1), 30))
+                 .union(cp._lbox(0, cp.BOSS_R + 6.0, half, z0, z1)))
+        out.append(local.rotate((0, 0, 0), (0, 0, 1), math.degrees(math.atan2(-y, -x))).translate((x, y, 0)))
+    return union_all(out)
+
+
+def col_screw_cut_saddle():
+    """Dans le col (repere du col, dos a z = 0) : passage, fraisure a 90 deg, puits de la tete jusqu'au-dessus."""
+    r, rh, dh = cp.SCREW[0] / 2, cp.SCREW[1] / 2, cp.SCREW[2]
+    out = []
+    for x, y in col_screw_xy():
+        out.append(cq.Workplane("XY", origin=(x, y, -0.5)).circle(r).extrude(COL_HEAD_Z + 0.5)
+                   .union(wp(cq.Solid.makeCone(r, rh, dh, cq.Vector(x, y, COL_HEAD_Z - dh), cq.Vector(0, 0, 1))))
+                   .union(cq.Workplane("XY", origin=(x, y, COL_HEAD_Z - 0.01)).circle(cp.HEAD_WELL_R).extrude(60)))
+    return union_all(out)
+
+
+def col_piece():
+    return cp.body_saddle().cut(col_screw_cut_saddle())
+
+
 def build_front_bosses():
     """Bossages des vis du capot (imprime appui du coussin en bas, joint en haut) : un pave au-dessus du joint,
     tenu par deux nervures de 1.3 mm qui montent a 38 deg jusqu'a la paroi et a la plaque d'appui. Entre les
@@ -351,9 +413,9 @@ def build_front(front_env):
     t = time.perf_counter()
     shell = front_env.cut(front_cavity_tool())
     log("  cavite avant", t)
-    shell = shell.union(build_front_bosses().intersect(front_env))
+    shell = shell.union(build_front_bosses().intersect(front_env)).union(build_col_bosses().intersect(front_env))
     log("  bossages", t)
-    shell = shell.cut(ring(GROOVE[0], GROOVE[1], -1, GROOVE_DEPTH)).cut(front_screw_cut())
+    shell = shell.cut(ring(GROOVE[0], GROOVE[1], -1, GROOVE_DEPTH)).cut(front_screw_cut()).cut(col_screw_cut_front())
     log("capot avant", t)
     return shell
 
@@ -409,22 +471,27 @@ def build_inlet():
     return place(port, t)
 
 
+def chute_edges():
+    """Plafond et plancher de la goulotte au plancher du conduit, en offsets depuis la peau."""
+    return DUCT[0] - OUTLET_WIDEN, DUCT[0] + OUTLET_W + OUTLET_WIDEN
+
+
 def outlet_lip():
     """Hauteurs de la levre haute : arete vive d'origine, bas du nez, haut du nez sur la peau."""
-    z_lip = DUCT_BOTTOM - STEEP * (DUCT[0] - OUTLET_WIDEN)
+    z_lip = DUCT_BOTTOM - STEEP * chute_edges()[0]
     return z_lip, z_lip + STEEP * OUTLET_NOSE, z_lip + (STEEP + 1.0) * OUTLET_NOSE
 
 
 def outlet_profile():
     """Goulotte et nez de la levre haute, tout le tour (offsets depuis la peau locale) ; build_outlet() en garde
-    les ouvertures. Goulotte : entre le plafond U(z) = DUCT[0] - OUTLET_WIDEN + (z - DUCT_BOTTOM) / STEEP et le
-    plancher L(z) = DUCT[1] + OUTLET_WIDEN + (z - DUCT_BOTTOM) / STEEP, du plancher du conduit jusqu'au-dela de la
-    peau. Nez : la levre haute (un coin de 38 deg entre peau et plafond) devient un quart de cercle, vertical sur la
+    les ouvertures. Goulotte : entre le plafond U(z) = c0 + (z - DUCT_BOTTOM) / STEEP et le plancher
+    L(z) = c1 + (z - DUCT_BOTTOM) / STEEP (chute_edges), du plancher du conduit jusqu'au-dela de la peau. Nez : la levre haute (un coin de 38 deg entre peau et plafond) devient un quart de cercle, vertical sur la
     peau, horizontal au plafond."""
-    o0, o1, zb, k = DUCT[0] - OUTLET_WIDEN, DUCT[1] + OUTLET_WIDEN, DUCT_BOTTOM, STEEP
+    (o0, o1), zb, k = chute_edges(), DUCT_BOTTOM, STEEP
     z_lo = zb - k * (o1 + 1.0)
-    ceil = loft_wires([(z_lo, o0 - o1 - 1.0), (zb, o0), (zb + 0.5, DUCT[0] + 0.2)])
-    floor = loft_wires([(z_lo - 1.0, -1.0 - 1.0 / k), (zb, o1), (zb + 1.0, DUCT[1] - 0.4)])
+    # droites prolongees de 0.5 mm au-dessus du plancher, dans l'air du conduit : elles le croisent franchement
+    ceil = loft_wires([(z_lo, o0 - o1 - 1.0), (zb + 0.5, o0 + 0.5 / k)])
+    floor = loft_wires([(z_lo - 1.0, -1.0 - 1.0 / k), (zb + 1.0, o1 + 1.0 / k)])
     chute = ceil.cut(floor)
     r = OUTLET_NOSE
     z_lip, z_t, z_s = outlet_lip()
@@ -439,7 +506,7 @@ def outlet_profile():
 
 def outlet_frames():
     """Axe de chaque goulotte (de la peau au plancher du conduit) et sa tangente, en coordonnees globales."""
-    o_mid, zb = sum(DUCT) / 2, DUCT_BOTTOM
+    o_mid, zb = sum(chute_edges()) / 2, DUCT_BOTTOM
     out = []
     for s in OUTLET_S:
         t = t_at(CENTER_TABLE, s)
@@ -453,12 +520,13 @@ def outlet_frames():
 def build_outlet():
     """Ouvertures de la sortie : la goulotte et le nez gardes dans un stade incline le long de la goulotte (bouts
     arrondis), plus large que la goulotte cote plafond pour garder le nez."""
-    h = (DUCT[1] - DUCT[0] + 2 * OUTLET_WIDEN) * OUTLET_SIN / 2  # demi-epaisseur droite de la goulotte
+    c0, c1 = chute_edges()
+    h = (c1 - c0) * OUTLET_SIN / 2  # demi-epaisseur droite de la goulotte
     z_lip, _, z_s = outlet_lip()
     nose = (z_s - z_lip) * math.cos(math.atan(STEEP))  # le nez depasse du plafond de cette distance, en section droite
     margin = 0.3
     width = 2 * h + nose + 2 * margin
-    prof = outlet_profile().intersect(box(-70, 70, -70, 0, z_lip - 10, DUCT_BOTTOM + 2))
+    prof = outlet_profile().intersect(box(-70, 70, -70, 4, z_lip - 10, DUCT_BOTTOM + 2))
     out = []
     for p, q, tan in outlet_frames():
         axis = (q - p).normalized()
@@ -622,9 +690,9 @@ def bay_cut():
         return box(q.xmin - mx0, q.xmax + mx1, q.ymin - my0, q.ymax + my1, Z_RF - 1, Z_RF + BAY_DEPTH)
     bay = union_all([full(lipo), full(charger, 0.0, 0.0, 0.2), full(switch, 0.5, 0.3, 0.2)])
     cb = charger.val().BoundingBox()
+    # stade de 12 x 6 pour le surmoulage de la fiche ; sans toit en pointe (Clement, 26 nov. 2026 : il la faisait paraitre
+    # deux fois trop haute) : son plafond, 3 mm de paroi, s'imprime en pont de 12 mm
     usb = cq.Workplane("XZ", origin=(0, cb.ymin + 2, Z_RF + 2.6)).slot2D(12.0, 6.0).extrude(20)
-    roof = cq.Workplane("XZ", origin=(0, cb.ymin + 2, 0)).polyline([(-3.0, Z_RF + 5.6), (3.0, Z_RF + 5.6), (0.0, Z_RF + 5.6 + 3.0 * STEEP)]).close().extrude(20)
-    usb = usb.union(roof)
     sb = switch.val().BoundingBox()
     lever = box(15.3 - 2.0, 15.3 + 2.0, -45, sb.ymin + 0.1, Z_RF + 1.2, Z_RF + 3.4)
     return bay.union(usb).union(lever)
@@ -719,7 +787,7 @@ def build_ring(printed=False, light=None):
 
 
 def saddle_placed():
-    return cp.body_saddle().translate((0, 0, Z_SEAT + SADDLE_GAP))  # dos plat sur l'appui plat du capot
+    return col_piece().translate((0, 0, Z_SEAT + SADDLE_GAP))  # dos plat sur l'appui plat du capot
 
 
 # ================= corps de reference =================
@@ -812,7 +880,7 @@ def build_liner():
     # bande d'epaisseur constante (une plaque de 10 mm), sans rognage a l'ouverture : le passage libre est controle
     liner = outer.cut(inner)
     # la couche de 5 mm sur le chanfrein du joint est abandonnee : 8 encoches pour 4 cm3 (0.05 dB(A) au modele)
-    return liner.cut(build_front_bosses()).cut(front_screw_cut())
+    return liner.cut(build_front_bosses()).cut(front_screw_cut()).cut(build_col_bosses())
 
 
 def liner_z():
@@ -930,7 +998,7 @@ def duct_metrics(duct, outlet):
             "inlet_to_first_outlet_mm": round(inlet_to_first, 1), "inlet_to_outlet_centroid_mm": round(inlet_to_centroid, 1),
             "inlet_area_mm2": round(INLET_AREA, 1), "outlet_count": OUTLET_COUNT,
             "outlet_floor_opening_mm2": round(floor_cut, 1), "outlet_min_section_mm2": round(floor_cut * OUTLET_SIN, 1),
-            "outlet_path_mm": round(sum(DUCT) / 2 / math.cos(math.atan(STEEP)), 2), "dam_mm": DAM}
+            "outlet_path_mm": round(sum(chute_edges()) / 2 / math.cos(math.atan(STEEP)), 2), "dam_mm": DAM}
 
 
 def min_distance(a, b):
@@ -1055,8 +1123,8 @@ def export():
     assert 40.0 <= dm["section_mm2"] <= 44.0, dm
     assert dm["channel_dam_to_dam_mm"] >= 175.0, dm
     assert dm["inlet_area_mm2"] >= 48.0 and DAM >= 5.0
-    # sortie large : vitesse d'air faible (pas de sifflement) et masse acoustique portee par le conduit seul
-    assert dm["outlet_min_section_mm2"] >= max(100.0, 1.25 * dm["section_mm2"]), dm
+    # sortie plus large que le conduit : la masse acoustique reste portee par le conduit, l'air y ralentit
+    assert dm["outlet_min_section_mm2"] >= 1.25 * dm["section_mm2"], dm
     # ouvertures reelles : les outils doivent traverser les parois, mesure sur les surfaces qu'ils percent
     z_flat = DUCT_TOP - DUCT_ROOF_H
     inlet = build_inlet()
@@ -1240,7 +1308,7 @@ def export():
         "cover": cover.rotate((0, 0, 0), (1, 0, 0), 180).translate((0, 0, Z_RF)),
         # retourne : face haute (contre le capot) sur le plateau, plots imprimes en dernier
         "ring": build_ring(printed=True).rotate((0, 0, 0), (1, 0, 0), 180).translate((0, 0, -0.02)),
-        "assise-col": cp.body_saddle(),
+        "assise-col": col_piece(),
     }
     for n, p in printed.items():
         pb = p.val().BoundingBox()

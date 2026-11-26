@@ -78,7 +78,7 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
       <li>La bouche souffle dans la chambre garnie de mousse.</li>
       <li>L'air entre dans le conduit par une ouverture en bas de la chambre.</li>
       <li>Il fait un tour complet dans l'épaisseur de la coque : 17 cm de conduit étroit, qui laisse passer le souffle et freine la voix.</li>
-      <li>Il ressort par quatre ouvertures en pente sous le conduit, tournées vers le dos : posé sur le dos, rien ne s'y dépose.</li>
+      <li>Il ressort par une ligne fine de cinq fentes en pente sous le conduit, tournées vers le dos : posé sur le dos, rien ne s'y dépose.</li>
     </ol>
   </div>
   <p id="status">Chargement des pièces…</p>
@@ -162,14 +162,14 @@ output { font: 500 12px var(--mono); min-width: 9ch; padding-right: 8px; }
   // Trajet d'air : fleches animees, vues a travers la coque. Cotes recopiees de cad/silent_mic_v3_galet.py
   // (section au milieu du conduit, offset du conduit, plancher du conduit et pente des goulottes, entree et sorties en abscisse
   // depuis 6 h) : a recopier si elles changent.
-  const FLOW = { a: 41.6, b: 32.7, d: 5.08, z: -11.3, floor: -17.33, steep: 1.3, inlet: 9.7, slots: [-42.75, -31.95, -21.15, -10.35] };
+  const FLOW = { a: 41.6, b: 32.7, d: 5.08, z: -11.3, floor: -17.33, steep: 1.3, inlet: 9.7, slots: [-47.4, -38.0, -28.6, -19.2, -9.8] };
   const flow = new THREE.Group(); flow.position.z = -8; device.add(flow);
   const off = (t, d, z) => { const nx = FLOW.b * Math.cos(t), ny = FLOW.a * Math.sin(t), k = Math.hypot(nx, ny); return new THREE.Vector3(FLOW.a * Math.cos(t) - d * nx / k, FLOW.b * Math.sin(t) - d * ny / k, z); };
   const table = []; { let s = 0, prev; for (let i = 0; i <= 720; i++) { const t = -Math.PI / 2 + 2 * Math.PI * i / 720, p = off(t, FLOW.d, 0); if (prev) s += p.distanceTo(prev); table.push([s, t]); prev = p; } }
   const LAP = table[720][0];
   const tAt = s => { s = ((s % LAP) + LAP) % LAP; const i = Math.max(table.findIndex(r => r[0] >= s), 1), [s0, t0] = table[i - 1], [s1, t1] = table[i]; return t0 + (t1 - t0) * (s - s0) / (s1 - s0); };
   const V = (x, y, z) => new THREE.Vector3(x, y, z), tIn = tAt(FLOW.inlet), loopPts = [];
-  for (let s = FLOW.inlet; s <= LAP + FLOW.slots[3]; s += 3) loopPts.push(off(tAt(s), FLOW.d, FLOW.z));
+  for (let s = FLOW.inlet; s <= LAP + FLOW.slots[4]; s += 3) loopPts.push(off(tAt(s), FLOW.d, FLOW.z));
   const curves = [
     new THREE.CatmullRomCurve3([V(0, 8, 62), V(0, 7, 42), V(1, 5, 22), V(4, -4, 4), V(7, -16, -8), off(tIn, 10, -12), off(tIn, FLOW.d, FLOW.z)]),
     new THREE.CatmullRomCurve3(loopPts),

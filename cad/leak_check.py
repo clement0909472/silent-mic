@@ -380,7 +380,7 @@ def main():
         bad.append("masse acoustique de l'event : le modele 1D ne decrit pas les pieces imprimees")
     if not 0.94 <= res["volume_chambre_cm3"] / res["volume_chambre_modele_1d_cm3"] <= 1.06:
         bad.append("volume de la chambre : le modele 1D ne decrit pas les pieces imprimees")
-    if res["sortie_ouvertures"] != 4 or res["sortie_section_droite_min_mm2"] < 95 or res["entree_surface_mm2"] < 43 or not 38 <= res["conduit_section_mm2"] <= 46:
+    if res["sortie_ouvertures"] != 5 or res["sortie_section_droite_min_mm2"] < 52 or res["entree_surface_mm2"] < 43 or not 38 <= res["conduit_section_mm2"] <= 46:
         bad.append("sections")
     if bad:
         raise SystemExit("ECHEC : " + ", ".join(bad))
