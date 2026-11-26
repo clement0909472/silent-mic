@@ -140,6 +140,8 @@ project lumiere-petg "$tmp/petg.json" "$c/light-coupon-petg.stl"
 project lumiere-pla-basic "$tmp/pla-basic.json" "$c/light-walls.stl"
 # temoin du col visse sur diamants (26 nov. 2026) : anneaux decoupes dans le vrai capot et le vrai col
 project temoin-diamant "$tmp/pla.json" "$c/temoin-diamant-capot.stl" "$c/temoin-diamant-col.stl"
+# gabarit de decoupe du joint capot/coque (26 nov. 2026) : anneau d'une piece suivi au cutter (cad/gabarit_joint.py)
+project gabarit-joint "$tmp/pla.json" "$c/gabarit-joint.stl"
 fi
 if [ "$only" != essai ]; then
   b=cad/out/v3-galet/silent-mic-v3-galet

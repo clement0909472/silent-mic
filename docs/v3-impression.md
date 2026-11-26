@@ -197,7 +197,7 @@ Trois coques s'empilent le long de l'axe : trappe, coque arrière, capot avant. 
 
 - Le disque d'acier de 30 mm, **recoupé d'abord à la cisaille** : retirer une bande de 10 mm (corde de 24 mm) d'un côté, pour qu'il descende jusqu'au fond sans y buter. Il se colle sur la face avant de la plaque du micro, bord droit en bas, bord rond au ras du haut de la plaque (il dépasse de 1 mm de chaque côté).
 - L'anneau dans sa feuillure, sur le bord de la coque arrière, plots vers le bas, sans colle : le capot le plaque en se fermant et les 8 plots s'écrasent de 0,2 mm. Pas de jour au ras du capot, donc ni ligne visible ni lumière directe. Pour le retirer, ôter le capot et le soulever.
-- La bande de mousse 3 × 2 au fond de la rainure du capot avant.
+- L'anneau de mousse du joint au fond de la rainure du capot avant, **d'une seule pièce** (Clément, 26 nov. 2026 : une bande droite raboutée laisse un jour ou une surépaisseur au raccord). Imprimer le gabarit `print/gabarit-joint.3mf` (9 min, 1,5 g), le poser sur deux couches de néoprène adhésif de 1,5 mm collées l'une sur l'autre (ou sur une plaque d'EPDM cellulaire de 3 mm), couper au cutter le long du bord extérieur, puis du bord intérieur, lame bien verticale. Le gabarit fait 2,8 mm de large pour une rainure de 3,2 mm : la lame rajoute un peu en suivant l'arête. À la butée, les 3 mm de mousse sont écrasés à 1,45 mm (52 %), sous moins de 150 N au total pour les 4 vis (estimation).
 
 **Par l'arrière, la baie (hors du volume acoustique)**
 
@@ -242,7 +242,7 @@ Abandonnés par rapport à la version précédente, pour couper moins de pièces
 |---|---|---|
 | Vis M3 × 10 mm à tête fraisée | acier noir, six pans creux de 2 mm (DIN 7991 / ISO 10642) | 10 (joint 4, col 4, trappe 2) |
 | Écrous M3 | hexagonaux standard, 5,5 mm sur plats, 2,4 mm d'épaisseur (DIN 934) | 8 (joint 4, col 4) |
-| Bande de mousse autocollante | cellules fermées (néoprène ou EPDM), 2 mm d'épaisseur ; pas de bande de 3 mm de large toute faite : en recouper au cutter et à la règle métallique dans une bande plus large, par exemple [néoprène 30 mm × 2 mm, 10 m](https://www.amazon.fr/Caoutchouc-N%C3%A9opr%C3%A8ne-auto-adh%C3%A9sif-large-%C3%A9paisseur/dp/B008ASE91U) ou [EPDM 50 mm × 2 mm, 10 m](https://www.amazon.fr/d%C3%A9tanch%C3%A9it%C3%A9-caoutchouc-cellulaire-autocollante-mousse/dp/B0841LXXSQ) | 25 cm de lanière de 3 mm |
+| Mousse du joint capot / coque | cellules fermées, 3 mm au total : deux couches du néoprène adhésif de 1,5 mm de la ligne suivante (rien d'autre à acheter), ou une plaque d'EPDM cellulaire adhésive de 3 mm ; anneau d'une pièce découpé au gabarit `print/gabarit-joint.3mf` | une plaque de 20 × 30 cm suffit |
 | Mousse acoustique | polyuréthane à cellules ouvertes, plaque de 10 mm | une plaque A4 |
 | Ruban double face | mousse fine d'environ 1 mm, 10 à 12 mm de large | 40 cm par coussin |
 | Néoprène ou EPDM adhésif, cellules fermées, en feuille | 1 mm (0,8 à 1,5 mm conviennent), adhésif d'un côté : joint sous le col (pas de mousse acoustique, poreuse) | une feuille A5 |
