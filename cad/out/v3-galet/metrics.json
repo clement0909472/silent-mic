@@ -19,9 +19,9 @@
   "cavity_air_plus_foam_cm3": 199.5,
   "cavity_air_only_cm3": 155.8,
   "foam_cm3": {
-    "foam-disc": 23.2,
-    "foam-liner": 20.6,
-    "total": 43.8
+    "foam-disc": 23.1,
+    "foam-liner": 20.5,
+    "total": 43.6
   },
   "free_passage_min_mm2": {
     "area": 1477,
@@ -119,8 +119,8 @@
   "screw_walls_mm": {
     "capot_vers_exterieur": 6.47,
     "capot_vers_rainure": 0.97,
-    "capot_col_vers_exterieur": 1.28,
-    "coque_vers_exterieur": 5.71,
+    "capot_col_vers_exterieur": 1.17,
+    "coque_vers_exterieur": 5.6,
     "coque_vers_conduit": 4.89,
     "trappe_vers_exterieur_et_baie": 2.75,
     "trappe_vers_chambre": 3.15
@@ -248,12 +248,12 @@
   ],
   "flat_faces_note": "plans > 35 mm : appui du coussin (couvert par le coussin, voulu plat) et face arriere du dos (maquette)",
   "mass_g_solid_pla": {
-    "front": 51.5,
-    "rear": 100.4,
+    "front": 51.6,
+    "rear": 100.5,
     "cover": 15.1,
-    "assise-col": 75.9,
+    "assise-col": 76.0,
     "ring_petg": 1.5,
-    "total": 244.4
+    "total": 244.7
   },
   "warn": [
     "longueur entree -> centre de la sortie 164.4 mm < 175 (canal barrage a barrage 192.9)"

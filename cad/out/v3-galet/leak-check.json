@@ -6,7 +6,7 @@
   "entree_bouchee_chambre_etanche": true,
   "conduit_bouche_a_midi_chambre_etanche": true,
   "temoin_trou_1mm2_detecte": true,
-  "volume_chambre_cm3": 208.9,
+  "volume_chambre_cm3": 208.8,
   "volume_conduit_cm3": 8.0,
   "sortie_ouvertures": 5,
   "sortie_section_dans_la_paroi_mm2": {
@@ -27,7 +27,7 @@
     "pieces_imprimees": 0.2517,
     "modele_1d": 0.2518,
     "rapport": 1.0,
-    "inconnues": 2591958
+    "inconnues": 2591963
   },
   "volume_chambre_modele_1d_cm3": 201.1,
   "event_longueur_equivalente_mm": 166.9,

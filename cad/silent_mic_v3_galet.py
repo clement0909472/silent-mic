@@ -350,7 +350,7 @@ def section_point(t, d, z):
 COL_SCREW_T_DEG = (45, 135, 225, 315)
 # dans la bande d'appui, du bord de l'ouverture (0) a la peau (1) ; 0.3 jusqu'a la v06, 0.25 depuis la rondelle d'ecrou
 # (27 nov. 2026), qui descend l'ecrou de 0.5 mm la ou la peau se resserre : logement a 1.4 mm de la peau (controle)
-COL_SCREW_FRAC = 0.25
+COL_SCREW_FRAC = 0.22  # 0.22 depuis la v14 : logement d'ecrou de 3.0 x 6.0, plus grand, a 1 mm au moins de la peau
 COL_NUT_SKIN = 2.0  # serrage ferme demande (Clement, 26 nov. 2026) ; FEM (mechanics/fem) : rupture de la peau vers 650-810 N par vis au lieu de 480-600 avec 1.2 mm
 # portee plate de la rondelle au-dessus du dos du col : 4.5 mm de col sous la rondelle depuis la v09 (M3 x 12 au lieu
 # de 10 : la portee monte de 2 mm, la pointe reste ou elle etait, 1.6 mm sous l'ecrou serre et sa rondelle ; plus bas,

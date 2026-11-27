@@ -75,9 +75,14 @@ GROOVE_DEPTH = TONGUE[2] + GASKET[1] - GASKET_COMPRESSION
 # passage, tete, hauteur de fraisure. Fraisure a 90 deg, comme la tete d'une vis ISO 10642 : a 72 deg (cotes du
 # v2), la tete ne portait que sur l'arete du haut (relecture independante du 23 nov. 2026)
 SCREW = (v2.M3_CLEARANCE_DIAMETER, v2.M3_HEAD_DIAMETER, (v2.M3_HEAD_DIAMETER - v2.M3_CLEARANCE_DIAMETER) / 2)
-# logement d'ecrou : sur angles, hauteur du niveau de l'ecrou (2.4 + 0.1 de jeu). Au-dessus, le niveau de la rondelle
+# logement d'ecrou : sur angles, hauteur du niveau de l'ecrou (2.4 + 0.6 de jeu). Au-dessus, le niveau de la rondelle
 # (WASHER_LEVEL), sous un plafond imprime en pont : c'est lui qui flechit, d'ou ses 0.3 mm de jeu
-NUT = (v2.M3_NUT_POCKET_DIAMETER, 2.5)
+# hauteur 3.0 depuis la v14 : a 2.5 (0.1 de jeu pour un ecrou DIN 934 de 2.4), l'ecrou entrait a peine dans
+# l'eprouvette du 27 nov. 2026 (Clement) : le plafond, imprime en pont, s'affaisse de 0.1 a 0.3 mm et la hauteur
+# s'arrondit aux couches de 0.2. Meme lecon que le niveau de la rondelle (0.8 pour 0.5, coince) : 0.6 de jeu
+# largeur 6.93 sur angles (6.0 sur plats) depuis la v14, 6.7 (5.8) avant ; ecrou de Clement : 5.5 sur plats et 2.3 de
+# haut (mesures au pied a coulisse le 27 nov. 2026). Il bute en rotation apres environ 10 deg (angles a 6.35)
+NUT = (6.93, 3.0)
 SCREW_LEN = 12.0  # M3 x 12 sous la tete (ISO 4762) : la boite de Clement n'a que des 6 et des 12, pas de 10 (27 nov. 2026)
 # axe des vis depuis la peau : a l'interieur de la rainure, rien ne traverse la paroi. A 13.9, une cle six pans
 # de 2 mm atteint chaque tete a travers le col en place (controle dans le corps) : on rouvre sans decoller le coussin
