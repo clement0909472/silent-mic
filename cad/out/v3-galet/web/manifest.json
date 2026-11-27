@@ -164,7 +164,7 @@
     },
     {
       "file": "joint-screws.stl",
-      "label": "Vis M3 x 10 a tete cylindrique du joint, sur rondelle",
+      "label": "Vis M3 x 12 a tete cylindrique du joint, sur rondelle",
       "role": "metal",
       "explode": [
         0,
@@ -174,7 +174,7 @@
     },
     {
       "file": "joint-nuts.stl",
-      "label": "Ecrous M3 du joint et leurs rondelles",
+      "label": "Ecrous M3 du joint",
       "role": "metal",
       "explode": [
         0,
@@ -184,7 +184,7 @@
     },
     {
       "file": "cover-screws.stl",
-      "label": "Vis M3 x 10 de la trappe",
+      "label": "Vis M3 x 12 a tete cylindrique de la trappe",
       "role": "metal",
       "explode": [
         0,

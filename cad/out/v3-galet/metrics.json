@@ -16,8 +16,8 @@
     77.0
   ],
   "nose_clearance_ymax_mm": 38.5,
-  "cavity_air_plus_foam_cm3": 199.7,
-  "cavity_air_only_cm3": 155.9,
+  "cavity_air_plus_foam_cm3": 199.6,
+  "cavity_air_only_cm3": 155.8,
   "foam_cm3": {
     "foam-disc": 23.2,
     "foam-liner": 20.6,
@@ -119,11 +119,11 @@
   "screw_walls_mm": {
     "capot_vers_exterieur": 6.47,
     "capot_vers_rainure": 1.14,
-    "capot_col_vers_exterieur": 1.43,
-    "coque_vers_exterieur": 5.08,
-    "coque_vers_conduit": 4.78,
+    "capot_col_vers_exterieur": 1.28,
+    "coque_vers_exterieur": 5.71,
+    "coque_vers_conduit": 4.89,
     "trappe_vers_exterieur_et_baie": 2.75,
-    "trappe_vers_chambre": 5.15
+    "trappe_vers_chambre": 3.15
   },
   "cover_seat_fill": 1.0,
   "gasket_compression_mm": 0.55,
@@ -138,7 +138,7 @@
       "cle_2_5mm_jeu_au_col_mm": 1.91
     },
     "pointe_sous_l_ecrou_mm": {
-      "joint": 1.4,
+      "joint": 3.9,
       "col": 1.6
     },
     "pointe_au_fond_du_percage_mm": {
@@ -248,12 +248,12 @@
   ],
   "flat_faces_note": "plans > 35 mm : appui du coussin (couvert par le coussin, voulu plat) et face arriere du dos (maquette)",
   "mass_g_solid_pla": {
-    "front": 51.5,
-    "rear": 100.5,
-    "cover": 15.0,
-    "assise-col": 75.6,
+    "front": 51.4,
+    "rear": 100.6,
+    "cover": 15.1,
+    "assise-col": 75.9,
     "ring_petg": 1.7,
-    "total": 244.3
+    "total": 244.7
   },
   "warn": [
     "longueur entree -> centre de la sortie 164.4 mm < 175 (canal barrage a barrage 192.9)"
@@ -261,6 +261,6 @@
   "fail": [],
   "temoin_diamant_cm3": {
     "capot": 3.79,
-    "col": 7.61
+    "col": 7.72
   }
 }
