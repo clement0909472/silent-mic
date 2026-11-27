@@ -50,7 +50,9 @@ def collar_inner(pad=PAD):
 
 
 # ---------- joint ----------
-RING_DEPTH, RING_H = 2.5, 2.8  # anneau translucide visible
+# anneau translucide visible : 0.35 mm de jeu contre la paroi de sa feuillure (REBATE) depuis la v13, comme la
+# languette ; a 0.1 (2.5 de profondeur), la boucle imprimee, dont le bord interieur sort plus petit, risquait de ne pas entrer
+RING_DEPTH, RING_H = 2.25, 2.8
 REBATE = 2.6
 LED_CH = (2.6, 5.0, 2.2)  # offsets et profondeur de la rainure du filament LED
 # languette (coque arriere) : offsets et hauteur. v10 : 2.4 de large au lieu de 2.8 et recentree vers l'interieur, pour
@@ -470,6 +472,7 @@ def check():
     assert GROOVE[1] - GROOVE[0] >= GASKET[0] and TONGUE[1] - TONGUE[0] <= GROOVE[1] - GROOVE[0]
     assert 0.3 <= TONGUE[0] - GROOVE[0] <= 0.4 and 0.3 <= GROOVE[1] - TONGUE[1] <= 0.4, "jeu languette/rainure (0.35 par cote depuis la v10)"
     assert LED_CH[0] >= REBATE and TONGUE[0] - LED_CH[1] >= 0.9
+    assert 0.3 <= REBATE - RING_DEPTH <= 0.4, "jeu de l'anneau dans sa feuillure"
     assert GROOVE[0] - max((w for w, _ in GROOVE_CHAMFER), default=0.0) - LED_CH[1] >= 0.95, "appui exterieur du joint trop etroit"
     return comp
 

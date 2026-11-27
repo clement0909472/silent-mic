@@ -509,6 +509,10 @@ def build_front_bosses():
     # (Clement, 27 nov. 2026, v12). Jamais plus large qu'avant : le jeu au pouce qui sort le micro ne peut que croitre
     keep = cq.Workplane("XY", origin=(0, 0, -1)).circle(cp.BOSS_R).extrude(100).union(box(-40, 0, -half - 1, half + 1, -1, 99))
     local = local.intersect(keep)
+    # et complete au cercle entier sur sa hauteur (v13) : a 4.6 de demi-largeur, il laissait de part et d'autre deux
+    # croissants de 0.4 mm du dessus du bossage de la coque sans rien en face (controle des faces du plan de joint)
+    # 0.02 mm sous BOSS_R : deux cylindres identiques face a face font echouer les booleens d'OCCT (passage d'air)
+    local = local.union(cq.Workplane("XY").circle(cp.BOSS_R - 0.02).extrude(h))
     return union_all(local.rotate((0, 0, 0), (0, 0, 1), ang).translate((x, y, 0)) for x, y, ang in screw_frames())
 
 
