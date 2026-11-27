@@ -16,7 +16,7 @@
     77.0
   ],
   "nose_clearance_ymax_mm": 38.5,
-  "cavity_air_plus_foam_cm3": 199.6,
+  "cavity_air_plus_foam_cm3": 199.5,
   "cavity_air_only_cm3": 155.8,
   "foam_cm3": {
     "foam-disc": 23.2,

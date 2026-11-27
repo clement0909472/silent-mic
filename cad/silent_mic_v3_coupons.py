@@ -81,7 +81,6 @@ SCREW_LEN = 12.0  # M3 x 12 sous la tete (ISO 4762) : la boite de Clement n'a qu
 SCREW_OFFSET = 13.9
 BOSS_R = 5.0  # bossage rond de la coque arriere et des ecrous du col (6 : le micro, decolle de son aimant, l'accrochait)
 BOSS_HALF, BOSS_FAR = 4.6, 4.3  # bossage du capot : demi-largeur, et avancee vers la chambre depuis l'axe
-NUT_MOUTH = 3.3  # le logement d'ecrou est ferme par la peau jusque-la
 # et celui de la rondelle jusque-la : au-dela, ses parois tombent sous 0.5 mm ; la rondelle y perd 3 mm2 d'appui sur 28
 # bossage du capot : 3.7 mm de matiere sous la fraisure. A 4.5, presque au niveau du dessus de la bride du
 # capot (4.45), OCCT rendait un capot invalide
@@ -192,8 +191,10 @@ def screw_hole_rear(x, y, angle):
     (direction angle, en degres) : on y glisse l'ecrou, sans rondelle depuis la v09. Le serrage ecrase la peau de
     NUT_SKIN entre l'ecrou et le bossage d'en face : rien ne travaille en traction a travers les couches.
     La peau s'imprime en pont au-dessus de l'ecrou. Sa premiere couche (MEMBRANE) est pleine (nut_membrane, seulement
-    dans le STL d'impression), on la perce au montage, avant les ecrous. Au-dela de NUT_MOUTH les parois du bossage
-    rond sont trop minces pour porter un pont : le logement y est ouvert jusqu'en haut."""
+    dans le STL d'impression), on la perce au montage, avant les ecrous. Depuis la v11, cette peau couvre toute la
+    fente jusqu'au bord du bossage (Clement, 27 nov. 2026) : jusqu'a la v10, elle s'arretait a 3.3 mm de l'axe, de peur
+    que le pont de 5.8 mm ne tienne pas sur les parois amincies du bossage rond ; un pont de 5.8 mm s'imprime sans
+    peine, et le dessus du bossage est maintenant un disque plein face au capot."""
     r, R = SCREW[0] / 2, BOSS_R
     depth = SCREW_LEN - BOSS_FRONT_H + 1.0
     z1 = -NUT_SKIN
@@ -201,8 +202,7 @@ def screw_hole_rear(x, y, angle):
     half = NUT[0] * math.cos(math.radians(30)) / 2
     local = (cq.Workplane("XY", origin=(0, 0, -depth)).circle(r).extrude(depth + 0.5)
              .union(cq.Workplane("XY", origin=(0, 0, z0)).polygon(6, NUT[0]).extrude(NUT[1]))  # un angle vers la fente
-             .union(_lbox(0, R + 0.5, half, z0, z1))
-             .union(_lbox(NUT_MOUTH, R + 0.5, half, z0, 0.5)))
+             .union(_lbox(0, R + 0.5, half, z0, z1)))
     return local.rotate((0, 0, 0), (0, 0, 1), angle).translate((x, y, 0))
 
 
