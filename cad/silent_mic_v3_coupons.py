@@ -53,8 +53,15 @@ def collar_inner(pad=PAD):
 RING_DEPTH, RING_H = 2.5, 2.8  # anneau translucide visible
 REBATE = 2.6
 LED_CH = (2.6, 5.0, 2.2)  # offsets et profondeur de la rainure du filament LED
-TONGUE = (6.1, 8.9, 2.0)  # offsets et hauteur de la languette (coque arriere) ; 0.2 mm de jeu par cote (0.1 coincait en FDM)
-GROOVE = (5.9, 9.1)  # rainure du capot avant
+# languette (coque arriere) : offsets et hauteur. v10 : 2.4 de large au lieu de 2.8 et recentree vers l'interieur, pour
+# 0.35 mm de jeu par cote (0.1 puis 0.2 coincaient) sans manger l'appui exterieur entre la rainure LED et la rainure
+TONGUE = (6.55, 8.95, 2.0)
+# rainure du capot avant, entree elargie d'une marche de 0.2 mm sur la premiere couche (GROOVE_CHAMFER : elargissement,
+# hauteur depuis le plan de joint). Essai du 27 nov. 2026 (Clement) : a 0.2 mm de jeu, la languette butait a l'entree
+# (premiere couche ecrasee du capot, imprime joint au plateau) et le capot basculait vers les vis autour de l'appui
+# exterieur, trop etroit (0.9 mm). Cet appui fait 1.0 mm depuis la v10 (controle dans check()).
+GROOVE = (6.2, 9.3)
+GROOVE_CHAMFER = ((0.2, 0.2),)
 GASKET = (3.0, 2.0)  # bande de mousse a cellules fermees
 GASKET_COMPRESSION = 0.55
 GROOVE_DEPTH = TONGUE[2] + GASKET[1] - GASKET_COMPRESSION
@@ -422,6 +429,8 @@ def joint_coupon_halves(length=40.0, width=19.0, thick=8.0):
 
     front = cq.Workplane("XY").box(length, width, thick).translate((0, width / 2, thick / 2))
     front = front.cut(strip(GROOVE[0], GROOVE[1], -1, GROOVE_DEPTH))
+    for w, z in GROOVE_CHAMFER:
+        front = front.cut(strip(GROOVE[0] - w, GROOVE[1] + w, -1, z))
     rt = max(thick, SCREW_LEN - BOSS_FRONT_H + 3.0)  # 2 mm de fond sous le percage de la vis
     rear = cq.Workplane("XY").box(length, width, rt).translate((0, width / 2, -rt / 2))
     rear = rear.union(cq.Workplane("XY").box(length, TONGUE[1] - TONGUE[0], TONGUE[2] + 0.5)
@@ -458,8 +467,9 @@ def check():
     comp = TONGUE[2] + GASKET[1] - GROOVE_DEPTH
     assert 0.5 <= comp <= 0.6, comp
     assert GROOVE[1] - GROOVE[0] >= GASKET[0] and TONGUE[1] - TONGUE[0] <= GROOVE[1] - GROOVE[0]
-    assert 0.15 <= TONGUE[0] - GROOVE[0] <= 0.25 and 0.15 <= GROOVE[1] - TONGUE[1] <= 0.25, "jeu languette/rainure"
+    assert 0.3 <= TONGUE[0] - GROOVE[0] <= 0.4 and 0.3 <= GROOVE[1] - TONGUE[1] <= 0.4, "jeu languette/rainure (0.35 par cote depuis la v10)"
     assert LED_CH[0] >= REBATE and TONGUE[0] - LED_CH[1] >= 0.9
+    assert GROOVE[0] - max(w for w, _ in GROOVE_CHAMFER) - LED_CH[1] >= 0.95, "appui exterieur du joint trop etroit"
     return comp
 
 

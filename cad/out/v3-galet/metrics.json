@@ -118,7 +118,7 @@
   },
   "screw_walls_mm": {
     "capot_vers_exterieur": 6.47,
-    "capot_vers_rainure": 1.14,
+    "capot_vers_rainure": 0.97,
     "capot_col_vers_exterieur": 1.28,
     "coque_vers_exterieur": 5.71,
     "coque_vers_conduit": 4.89,
@@ -248,12 +248,12 @@
   ],
   "flat_faces_note": "plans > 35 mm : appui du coussin (couvert par le coussin, voulu plat) et face arriere du dos (maquette)",
   "mass_g_solid_pla": {
-    "front": 51.4,
-    "rear": 100.6,
+    "front": 51.5,
+    "rear": 100.4,
     "cover": 15.1,
     "assise-col": 75.9,
     "ring_petg": 1.7,
-    "total": 244.7
+    "total": 244.6
   },
   "warn": [
     "longueur entree -> centre de la sortie 164.4 mm < 175 (canal barrage a barrage 192.9)"

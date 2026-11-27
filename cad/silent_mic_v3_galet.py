@@ -516,6 +516,8 @@ def build_front(front_env):
     shell = shell.union(seat_corbel().intersect(front_env)).union(build_col_diamonds())
     log("  bossages", t)
     shell = shell.cut(ring(GROOVE[0], GROOVE[1], -1, GROOVE_DEPTH)).cut(front_screw_cut()).cut(col_screw_cut_front())
+    for w, z in cp.GROOVE_CHAMFER:  # entree de la rainure en escalier a 45 deg (v10)
+        shell = shell.cut(ring(GROOVE[0] - w, GROOVE[1] + w, -1, z))
     log("capot avant", t)
     return shell
 
