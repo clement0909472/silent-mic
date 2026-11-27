@@ -40,6 +40,9 @@ PLATES = [
     # temoin du col (26 nov. 2026) : anneau d'appui du capot et bas du col, decoupes dans les vraies pieces, pour essayer
     # les 4 diamants, les vis et la mousse avant d'imprimer capot et col
     ("6 Temoin du col (diamants)", [str(OUT / "coupons" / f"temoin-diamant-{n}.stl") for n in ("capot", "col")], 1, {}, "temoin-diamant"),
+    # eprouvettes du joint (27 nov. 2026, inquietude de Clement sur l'ecrou) : logement d'ecrou, rondelle et membrane de la
+    # coque (meme cp.screw_hole_rear, joint en haut comme la coque), puits de tete du capot ; a serrer avant d'imprimer la coque
+    ("7 Eprouvettes du joint (ecrous, rondelles)", [str(OUT / "coupons" / f"joint-coupon-{n}.stl") for n in ("rear", "front")], 1, SOLID | ON_PLATE, None),
 ]
 
 

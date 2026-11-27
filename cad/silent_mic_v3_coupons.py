@@ -168,14 +168,11 @@ def _lbox(x0, x1, half_y, z0, z1):
 def screw_hole_front(x, y, top, angle):
     """Cote tete (capot avant, tete vers +z) : passage, portee plate de la rondelle a FRONT_SEAT_Z, puis puits de
     la rondelle, de la tete et de la cle jusqu'a top, ouvert vers la chambre (direction angle, en degres).
-    Le capot s'imprime joint en haut : le puits est sous le bossage. Ouvert vers la chambre, rien ne s'y ferme
-    dans le vide ; la portee se ferme en trois couches de 0.2 : un pont droit d'une nervure a l'autre (fente du
-    passage restante), puis un carre, puis le rond du passage. Un puits rond dans un contrefort plein donnait
-    un contour pose dans le vide, que le trancheur soutenait par une colonne de 24 mm dans chaque puits."""
+    Capot et eprouvette s'impriment joint au plateau : la portee est un fond plat, sans pont. Jusqu'au 27 nov. 2026,
+    l'ancienne astuce de pont (fente et carre de 0.2 mm sous la portee, pour une impression joint en haut) y
+    laissait une rainure de 3.6 mm sous la rondelle : 14.4 mm2 d'appui au lieu de 28.3."""
     r, rw, s = SCREW[0] / 2, WASHER_WELL_R, FRONT_SEAT_Z
     local = (cq.Workplane("XY", origin=(0, 0, -0.5)).circle(r).extrude(s + 0.5)
-             .union(_lbox(-r, r, r, s - 0.4, s - 0.2))  # 2e couche : carre
-             .union(_lbox(-r, r, rw, s - 0.2, s))  # 1re couche : fente d'une nervure a l'autre
              .union(cq.Workplane("XY", origin=(0, 0, s)).circle(rw).extrude(top - s))
              .union(_lbox(0, BOSS_FAR + 1.0, rw, s, top)))  # puits ouvert vers la chambre, entre les nervures
     return local.rotate((0, 0, 0), (0, 0, 1), angle).translate((x, y, 0))
@@ -518,8 +515,8 @@ def export(out=HERE / "out" / "v3-galet" / "coupons"):
     save("temoin-bonnette", gauge)
     front, rear = joint_coupon_halves()
     assert vol(front.intersect(rear)) < 1e-6
-    # imprimee comme le capot du corps : plan de joint en haut, fraisures vers le plateau
-    save("joint-coupon-front", front, front.rotate((0, 0, 0), (1, 0, 0), 180).translate((0, 0, front.val().BoundingBox().zmax)))
+    # imprimee comme le capot du corps depuis la v06 : plan de joint au plateau, portee de la rondelle en fond plat
+    save("joint-coupon-front", front, front)
     # impression languette en haut : on garde l'orientation du corps (z vers le haut), posee a z = 0
     save("joint-coupon-rear", rear, rear.translate((0, 0, -rear.val().BoundingBox().zmin)))
     save("light-coupon-petg", light_coupon())
