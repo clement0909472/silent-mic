@@ -115,3 +115,11 @@ Sur ce Mac (openCFS 26.09 ARM64, 1 cœur) : 0,03 s de résolution par fréquence
 ## Limites
 
 Équivalent axisymétrique seulement : ni l'hélice, ni les sorties latérales, ni la tête. Parois rigides (justifié sous 1,5 kHz environ : voir « Parois de la chambre »). Écrans ignorés. Mousse et fente en fluides équivalents (lois empiriques). Le prochain pas utile est une mesure au banc, pas un modèle 3D.
+
+## Modèle 3D de l'appareil assemblé (27 nov. 2026)
+
+Demande de Clément : simuler l'appareil complet, bouche appliquée sur le coussin. `acoustics/fem3d/run.py` (maillage `mesh3d.py`, gmsh, 114 000 nœuds ; `--selfcheck`, puis `--per-band 3`). Air de la chambre et du conduit tel que dessiné (STEP technique v12, inchangé en v13), mousses Mr Propre en fluide équivalent (Delany-Bazley, σ = 12 000 Pa·s/m², 23,1 et 20,5 cm³), conduit et fentes avec pertes visqueuses (Zwikker-Kosten), joint capot / coque et coussin hermétiques, parois et visage rigides, bouche = disque de 10 mm de rayon au centre du visage, sorties de l'évent (434 mm²) rayonnant comme un piston bafflé. Puissance et débit recalculés sur les triangles des sorties (le `acouPower` d'openCFS était faux sur le galet, juste sur un tube de contrôle).
+
+Estimations, non mesurées : **23,9 dB(A)** d'atténuation de la voix en puissance, 25,6 en débit (1D hermétique 27,7 ; 2D 25,9). Sous 1 kHz, le 3D suit le 1D à 1 dB près ; au-dessus, il voit des creux dus aux modes réels de la chambre et du conduit : 17 à 18 dB vers 1 et 2 kHz, 21 dB à 3,15 kHz. Micro : 137 dB SPL efficace, 149 en crête, pour 120 au DJI : la saturation reste le premier risque. Maillage : 114 000 contre 181 000 nœuds, 23,1 contre 23,0 dB(A).
+
+Limites : pas de domaine extérieur maillé (ni écran du corps, ni couplage entre fentes), bonnette comptée comme de l'air, point du micro supposé 1 mm au-dessus du DJI, coque et coussin rigides et étanches.
