@@ -505,6 +505,10 @@ def build_front_bosses():
     local = box(-(SCREW_OFFSET - 9.0), far, -half, half, 0, h)
     for yc in (-(rw + half) / 2, (rw + half) / 2):
         local = local.union(cq.Workplane("XZ", origin=(0, yc, 0)).polyline(prof).close().extrude((half - rw) / 2, both=True))
+    # cote chambre, arrondi au cercle du bossage de la coque (BOSS_R) : ses coins depassaient de 1.25 mm en diagonale
+    # (Clement, 27 nov. 2026, v12). Jamais plus large qu'avant : le jeu au pouce qui sort le micro ne peut que croitre
+    keep = cq.Workplane("XY", origin=(0, 0, -1)).circle(cp.BOSS_R).extrude(100).union(box(-40, 0, -half - 1, half + 1, -1, 99))
+    local = local.intersect(keep)
     return union_all(local.rotate((0, 0, 0), (0, 0, 1), ang).translate((x, y, 0)) for x, y, ang in screw_frames())
 
 

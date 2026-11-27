@@ -145,8 +145,9 @@ project gabarit-joint "$tmp/pla.json" "$c/gabarit-joint.stl"
 fi
 if [ "$only" != essai ]; then
   b=cad/out/v3-galet/silent-mic-v3-galet
-  # capot : une colonne de support par puits de vis, debout sur le plateau dans l'ouverture du coussin
-  SOLID=1 SUP=plate project corps-capot-avant "$tmp/pla.json" "$b-front.stl"
+  # capot : dessine sans support depuis le 26 nov. 2026 (imprime joint au plateau). Supports coupes depuis la v12 :
+  # avec la rainure de 3.1 mm (v10), Bambu Studio n'y reconnaissait plus un pont et la remplissait de supports
+  SOLID=1 SUP=off project corps-capot-avant "$tmp/pla.json" "$b-front.stl"
   SOLID=1 SUP=plate project corps-coque-arriere "$tmp/pla.json" "$b-rear.stl"
   # assise du corps : celle des essais du 24 nov. 2026 (R85 et ses deux paires de cales) d'une piece, pleine
   SOLID=1 project corps-assise "$tmp/pla.json" "$b-assise-col.stl"

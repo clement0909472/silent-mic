@@ -31,7 +31,8 @@ ON_PLATE = {"enable_support": "1", "support_type": "normal(auto)", "bridge_no_su
 # toutes les pieces imprimees, dans l'ordre du montage, du visage au dos (Clement, 26 nov. 2026)
 PLATES = [
     ("1 Col", f"{B}-assise-col.stl", 1, SOLID, "corps-assise"),
-    ("2 Capot avant", f"{B}-front.stl", 1, SOLID | ON_PLATE, "corps-capot-avant"),
+    # capot sans support (dessine pour, joint au plateau) : supports coupes depuis la v12, ils remplissaient la rainure
+    ("2 Capot avant", f"{B}-front.stl", 1, SOLID, "corps-capot-avant"),
     # anneau : meme filament 1 (PLA) que le reste, imprime avec la bobine blanche ; son projet d'une piece est regle
     # pour du PETG, d'ou l'absence de reference
     ("3 Anneau lumineux (bobine blanche)", f"{B}-ring.stl", 1, {}, None),
@@ -106,6 +107,11 @@ def main():
         if not ok:
             bad.append(name)
     assert not bad, f"plateaux differents des projets d'une piece : {bad}"
+    # aucun support hors coque (27 nov. 2026 : une marche de 0.2 mm en remplissait la rainure du capot, v10-v12)
+    z = zipfile.ZipFile(redo / "re.3mf")
+    sup = {name: z.read(f"Metadata/plate_{i}.gcode").decode().count("; FEATURE: Support")
+           for i, (name, *_) in enumerate(PLATES, start=1) if not name.startswith("4 ")}
+    assert not any(sup.values()), f"supports inattendus : { {k: v for k, v in sup.items() if v} }"
     print(f"-> {target.relative_to(ROOT)}")
 
 

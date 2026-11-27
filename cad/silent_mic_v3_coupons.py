@@ -56,12 +56,13 @@ LED_CH = (2.6, 5.0, 2.2)  # offsets et profondeur de la rainure du filament LED
 # languette (coque arriere) : offsets et hauteur. v10 : 2.4 de large au lieu de 2.8 et recentree vers l'interieur, pour
 # 0.35 mm de jeu par cote (0.1 puis 0.2 coincaient) sans manger l'appui exterieur entre la rainure LED et la rainure
 TONGUE = (6.55, 8.95, 2.0)
-# rainure du capot avant, entree elargie d'une marche de 0.2 mm sur la premiere couche (GROOVE_CHAMFER : elargissement,
-# hauteur depuis le plan de joint). Essai du 27 nov. 2026 (Clement) : a 0.2 mm de jeu, la languette butait a l'entree
-# (premiere couche ecrasee du capot, imprime joint au plateau) et le capot basculait vers les vis autour de l'appui
-# exterieur, trop etroit (0.9 mm). Cet appui fait 1.0 mm depuis la v10 (controle dans check()).
+# rainure du capot avant. Essai du 27 nov. 2026 (Clement) : a 0.2 mm de jeu, la languette butait a l'entree (premiere
+# couche ecrasee du capot, imprime joint au plateau) et le capot basculait vers les vis autour de l'appui exterieur,
+# trop etroit (0.9 mm). Depuis la v10 : 0.35 mm de jeu, appui de 1.2 mm (controle dans check()). Pas de marche ni de
+# chanfrein a l'entree (GROOVE_CHAMFER vide) : en v10-v12, une marche de 0.2 mm y faisait poser par Bambu Studio des
+# supports sur tout le tour de la rainure du capot, impossibles a retirer (G-code de la plaque 2)
 GROOVE = (6.2, 9.3)
-GROOVE_CHAMFER = ((0.2, 0.2),)
+GROOVE_CHAMFER = ()
 GASKET = (3.0, 2.0)  # bande de mousse a cellules fermees
 GASKET_COMPRESSION = 0.55
 GROOVE_DEPTH = TONGUE[2] + GASKET[1] - GASKET_COMPRESSION
@@ -469,7 +470,7 @@ def check():
     assert GROOVE[1] - GROOVE[0] >= GASKET[0] and TONGUE[1] - TONGUE[0] <= GROOVE[1] - GROOVE[0]
     assert 0.3 <= TONGUE[0] - GROOVE[0] <= 0.4 and 0.3 <= GROOVE[1] - TONGUE[1] <= 0.4, "jeu languette/rainure (0.35 par cote depuis la v10)"
     assert LED_CH[0] >= REBATE and TONGUE[0] - LED_CH[1] >= 0.9
-    assert GROOVE[0] - max(w for w, _ in GROOVE_CHAMFER) - LED_CH[1] >= 0.95, "appui exterieur du joint trop etroit"
+    assert GROOVE[0] - max((w for w, _ in GROOVE_CHAMFER), default=0.0) - LED_CH[1] >= 0.95, "appui exterieur du joint trop etroit"
     return comp
 
 
