@@ -111,7 +111,6 @@ FRONT_SEAT_Z = BOSS_FRONT_H - 1.0  # portee plate de la rondelle dans le bossage
 # qui sort le micro (controle du corps) ; elles ne portent pas le serrage, qui passe du bossage au plan de joint
 BOSS_REAR_H = NUT_SKIN + NUT[1] + 2.0
 MEMBRANE = 0.2  # une couche pleine sur le plafond des logements de rondelle d'ecrou, percee au montage
-PILOT_D = 2.7  # avant-trou d'une M3 qui taille son filet dans le PLA (trappe, hors volume acoustique)
 
 # ---------- assise courbe et col (23 nov. 2026) ----------
 # Clement : sur le v2 imprime, ses levres descendent un peu sous le fond du coussin, et l'assise du v2, creusee
@@ -218,14 +217,6 @@ def nut_membrane(x, y, z_ceiling):
     """Premiere couche pleine du plafond d'un logement de rondelle d'ecrou, a remettre dans le STL d'impression ; les
     pieces et l'assemblage restent perces (etat monte)."""
     return cq.Workplane("XY", origin=(x, y, z_ceiling)).circle(SCREW[0] / 2 + 0.05).extrude(MEMBRANE)
-
-
-def pilot_hole(x, y, z0, depth):
-    """Avant-trou borgne ouvert vers -z (face posee sur le plateau), fond en pointe a 45 deg : a fond plat, le
-    trancheur y pose un support impossible a retirer."""
-    r = PILOT_D / 2
-    tip = cq.Workplane("XY").newObject([cq.Solid.makeCone(r, 0.0, r, cq.Vector(x, y, z0 + depth), cq.Vector(0, 0, 1))])
-    return cq.Workplane("XY", origin=(x, y, z0 - 0.5)).circle(r).extrude(depth + 0.5).union(tip)
 
 
 def step_ready(shape):
@@ -431,7 +422,7 @@ def bonnet_gauge():
 
 def joint_coupon_halves(length=40.0, width=19.0, thick=8.0):
     """Troncon droit du joint : y = offset depuis la peau, z = 0 plan de joint. Deux vis M3 a tete cylindrique sur
-    rondelle et leurs ecrous prisonniers, comme au corps, et un avant-trou d'essai (vis de la trappe) sous la moitie arriere."""
+    rondelle et leurs ecrous prisonniers, comme au corps."""
     def strip(y0, y1, z0, z1):
         return cq.Workplane("XY").box(length + 2, y1 - y0, z1 - z0).translate((0, (y0 + y1) / 2, (z0 + z1) / 2))
 
@@ -447,7 +438,6 @@ def joint_coupon_halves(length=40.0, width=19.0, thick=8.0):
     for x in (-10, 10):
         front = front.cut(screw_hole_front(x, SCREW_OFFSET, thick + 1, 90))
         rear = rear.cut(screw_hole_rear(x, SCREW_OFFSET, 90)).union(nut_membrane(x, SCREW_OFFSET, -NUT_SKIN))  # fentes ouvertes sur le chant, cote chambre
-    rear = rear.cut(pilot_hole(0, SCREW_OFFSET, -rt, 5.0))
     return front, rear
 
 

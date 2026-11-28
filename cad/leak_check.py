@@ -36,7 +36,7 @@ LO = np.array([-58.03, -48.03, -58.03])  # decale : aucun plan de coupe ne tombe
 NX, NY, NZ = 464, 384, 432
 XC, YC, ZC = (LO[i] + (np.arange(n) + 0.5) * P for i, n in enumerate((NX, NY, NZ)))
 XX, YY = np.meshgrid(XC, YC)
-FRONT, REAR, COVER, RING, COLLAR, GASKET, MOUTH, SLOTS, INLET, TOP = range(1, 11)
+FRONT, REAR, COVER, RING, COLLAR, GASKET, SCREWS, MOUTH, SLOTS, INLET, TOP = range(1, 12)  # >= SLOTS : air marque
 DUCT_MID = 5.08  # milieu du conduit, en offset de la peau (cad/silent_mic_v3_galet.py, DUCT = (3.15, 7.01))
 OUTLET_COS = 1.0 / np.hypot(1.0, 1.3)  # goulottes a 52 deg : section droite = section dans une paroi verticale x OUTLET_COS
 STL = np.dtype([("n", "<f4", 3), ("v", "<f4", (3, 3)), ("a", "<u2")])
@@ -61,7 +61,9 @@ def parts():
     # capot imprime joint sur le plateau depuis le 26 nov. 2026 : son fichier est deja en position de montage
     return {FRONT: load(f"{stem}-front.stl"), REAR: load(f"{stem}-rear.stl") + np.array([0, 0, Z_RF]),
             COVER: flip(load(f"{stem}-cover.stl"), Z_RF), RING: load(OUT / "web" / "ring.stl"),  # position de montage ; le fichier a imprimer est retourne
-            COLLAR: collar, GASKET: load(OUT / "web" / "gasket.stl")}
+            COLLAR: collar, GASKET: load(OUT / "web" / "gasket.stl"),
+            # vis et ecrous de la trappe serres (v15) : la tete bouche le passage qui relie la baie au dos
+            SCREWS: np.concatenate([load(OUT / "web" / f"cover-{n}.stl") for n in ("screws", "nuts")])}
 
 
 def layer_segments(tri, c):
@@ -298,7 +300,7 @@ def figure(path, mat, lab, axes, res):
 
     def cat(m, l):
         c = np.full(m.shape, 7, np.uint8)
-        c[np.isin(m, (FRONT, REAR, COVER, COLLAR))] = 1
+        c[np.isin(m, (FRONT, REAR, COVER, COLLAR, SCREWS))] = 1
         c[m == RING], c[m == GASKET], c[m == MOUTH] = 2, 3, 6
         air = (m == 0) | (m >= SLOTS)
         c[air & (l == outside)] = 0

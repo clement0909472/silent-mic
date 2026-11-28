@@ -12,5 +12,5 @@ corps-assise : 2h21, 82.47 g, blocs de support au controle=1, retranche : 2h 21m
 cols-et-joint : 1h53, 65.41 g, blocs de support au controle=22, retranche : 1h 53m 28s
 temoin-diamant : 0h35, 13.70 g, blocs de support au controle=1, retranche : 35m 1s
 corps-capot-avant : 1h49, 56.20 g, blocs de support au controle=472, retranche : 1h 49m 17s
-corps-coque-arriere : 3h25, 111.74 g, blocs de support au controle=369, retranche : 3h 25m 51s
-corps-trappe : 0h29, 16.41 g, blocs de support au controle=0, retranche : 29m 15s
+corps-coque-arriere : 3h24, 111.33 g, blocs de support au controle=395, retranche : 3h 24m 38s
+corps-trappe : 0h29, 16.41 g, blocs de support au controle=0, retranche : 29m 14s

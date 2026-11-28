@@ -828,11 +828,25 @@ def cover_screw_cut():
     return union_all(out)
 
 
-def cover_pilots():
-    """Avant-trous borgnes dans le dos de la coque : les vis de la trappe y taillent leur filet. La baie est
-    hors du volume acoustique, la trappe ne serre aucun joint."""
-    depth = cp.SCREW_LEN - (Z_RF - COVER_HEAD_Z) + 1.0
-    return union_all(cp.pilot_hole(x, y, Z_RF, depth) for x, y in COVER_SCREW_XY)
+# plancher du logement d'ecrou de la trappe : 4.5 mm de coque sous l'ecrou, sur lesquels il tire ; logement de
+# NUT[1] + 1.0 de haut pour que la pointe serree (Z_RF + 8) reste 0.5 mm sous son plafond, sans percer le pont
+COVER_NUT_Z = Z_RF + 4.5
+COVER_NUT_H = cp.NUT[1] + 1.0
+
+
+def cover_nut_cut():
+    """Trappe sur ecrous prisonniers depuis la v15 (Clement, 28 nov. 2026 : la trappe s'ouvrira pendant les essais de
+    l'electronique, un filet taille dans le PLA s'use a chaque remontage). Passage de la vis depuis le dos, puis
+    logement d'ecrou M3 ouvert vers le centre, ou la baie est a 4 mm de l'axe : l'ecrou s'y glisse, trappe ouverte,
+    avant la batterie et le chargeur. Le serrage tire l'ecrou vers le dos, sur le plancher imprime plein."""
+    r, half = cp.SCREW[0] / 2, cp.NUT[0] * math.cos(math.radians(30)) / 2
+    out = []
+    for x, y in COVER_SCREW_XY:
+        local = (cq.Workplane("XY", origin=(0, 0, Z_RF - 0.5)).circle(r).extrude(COVER_NUT_Z - Z_RF + 0.6)
+                 .union(cq.Workplane("XY", origin=(0, 0, COVER_NUT_Z)).polygon(6, cp.NUT[0]).extrude(COVER_NUT_H))  # un angle vers la fente
+                 .union(cp._lbox(0, 8.0, half, COVER_NUT_Z, COVER_NUT_Z + COVER_NUT_H)))
+        out.append(local.rotate((0, 0, 0), (0, 0, 1), 180 if x > 0 else 0).translate((x, y, 0)))
+    return union_all(out)
 
 
 def build_rear(rear_env):
@@ -850,7 +864,7 @@ def build_rear(rear_env):
     log("  conduit, entree, sortie", t)
     shell = shell.cut(ring(-1.0, REBATE, -RING_H, 1)).cut(ring(LED_CH[0], LED_CH[1], -LED_CH[2], 1))
     shell = shell.cut(rear_screw_cut()).cut(build_tunnel())
-    shell = shell.cut(bay_cut()).cut(cover_pilots())
+    shell = shell.cut(bay_cut()).cut(cover_nut_cut())
     log("coque arriere", t)
     return shell
 
@@ -1046,14 +1060,16 @@ def build_refs():
     wz = -cp.NUT_SKIN - 0.05  # ecrou du joint sans rondelle depuis la v09
     jnuts = union_all(cq.Workplane("XY", origin=(x, y, wz - 2.4)).polygon(6, 6.35).extrude(2.4).rotate((x, y, 0), (x, y, 1), 90)
                       for x, y in screw_xy()).cut(jscrews)
-    cscrews = union_all(cover_screw_solid(x, y, COVER_HEAD_Z - 0.05, cp.PILOT_D / 2 - 0.1) for x, y in COVER_SCREW_XY)
+    cscrews = union_all(cover_screw_solid(x, y, COVER_HEAD_Z - 0.05, 1.5) for x, y in COVER_SCREW_XY)
+    cnuts = union_all(cq.Workplane("XY", origin=(x, y, COVER_NUT_Z + 0.05)).polygon(6, 6.35).extrude(2.4)
+                      for x, y in COVER_SCREW_XY).cut(cscrews)
     return {
         "mic": mic_box(), "mic-disc": mic_disc(), "bonnette": bonnet_envelope(), "earpad": pad,
         "gasket": ring(GROOVE[0] + 0.1, GROOVE[1] - 0.1, TONGUE[2], GROOVE_DEPTH),
         "led-filament": ring(LED_CH[0] + 0.2, LED_CH[1] - 0.2, -LED_CH[2] + 0.1, -0.1),
         "foam-disc": build_foam_disc(), "foam-liner": build_liner(),
         "battery": lipo, "charger": charger, "switch": switch,
-        "joint-screws": jscrews, "joint-nuts": jnuts, "cover-screws": cscrews,
+        "joint-screws": jscrews, "joint-nuts": jnuts, "cover-screws": cscrews, "cover-nuts": cnuts,
     }
 
 
@@ -1334,14 +1350,14 @@ def export():
     # --- joint et vis
     t = time.perf_counter()
     # les percages ne doivent rien crever : ni l'exterieur, ni la rainure du joint, ni le conduit, ni la baie
-    fs, rs, pil = front_screw_cut(), rear_screw_cut(), cover_pilots()
+    fs, rs, pil = front_screw_cut(), rear_screw_cut(), cover_nut_cut()
     gaps = {"capot_vers_exterieur": min_distance(fs, outside), "capot_vers_rainure": min_distance(fs, ring(GROOVE[0], GROOVE[1], -1, GROOVE_DEPTH)),
             "capot_col_vers_exterieur": min_distance(col_screw_cut_front(), outside),
             "coque_vers_exterieur": min_distance(rs, outside), "coque_vers_conduit": min_distance(rs, duct),
-            "trappe_vers_exterieur_et_baie": min_distance(pil, outside), "trappe_vers_chambre": min_distance(pil, cav)}
+            "trappe_vers_exterieur": min_distance(pil, box(-90, 90, -90, 90, Z_END - 10, Z_SEAT - 1.5).cut(env)), "trappe_vers_chambre": min_distance(pil, cav)}
     m["screw_walls_mm"] = {k: round(v, 2) for k, v in gaps.items()}
     assert min(gaps["capot_vers_exterieur"], gaps["coque_vers_exterieur"], gaps["coque_vers_conduit"], gaps["trappe_vers_chambre"]) >= 1.5, m["screw_walls_mm"]
-    assert gaps["capot_vers_rainure"] >= 0.9 and gaps["trappe_vers_exterieur_et_baie"] >= 0.8, m["screw_walls_mm"]
+    assert gaps["capot_vers_rainure"] >= 0.9 and gaps["trappe_vers_exterieur"] >= 1.5, m["screw_walls_mm"]
     assert gaps["capot_col_vers_exterieur"] >= 1.0, m["screw_walls_mm"]
     # siege des vis de la trappe : 1 mm de matiere autour de la tete sur toute la hauteur sous le puits
     seat = union_all(cq.Workplane("XY", origin=(x, y, COVER_HEAD_Z)).circle(cp.HEAD_WELL_R + 1.0).extrude(Z_RF - COVER_HEAD_Z) for x, y in COVER_SCREW_XY)
@@ -1369,6 +1385,11 @@ def export():
                    "pointe_au_fond_du_percage_mm": {k: round(tip[k] - hole_low[k], 2) for k in tip}}
     assert acc["capot"] < 0.01 and acc["manchon"] < 0.01 and acc["cle_2_5mm_col_en_place"] < 0.01 and acc["cle_2_5mm_jeu_au_col_mm"] >= 1.0, acc
     assert all(1.0 <= nut_low[k] - tip[k] and tip[k] - hole_low[k] >= 0.3 for k in tip), m["screws"]
+    # trappe, vis vers +z : pointe serree au-dessus de l'ecrou tire sur son plancher, et sous le plafond du logement
+    c_tip = COVER_HEAD_Z + cp.SCREW_LEN
+    m["screws"]["trappe_pointe_au_dessus_de_l_ecrou_mm"] = round(c_tip - (COVER_NUT_Z + 2.4), 2)
+    m["screws"]["trappe_pointe_sous_le_plafond_mm"] = round(COVER_NUT_Z + COVER_NUT_H - c_tip, 2)
+    assert c_tip - (COVER_NUT_Z + 2.4) >= 1.0 and COVER_NUT_Z + COVER_NUT_H - c_tip >= 0.3, m["screws"]
     # col : 1 mm de col plein autour du puits de chaque vis, du dos jusqu'au haut de la tete, et la tete sous l'assise
     body = cp.body_saddle()
     hh = COL_SEAT_Z + cp.WASHER[1] + cp.CAP_HEAD[1]
@@ -1377,7 +1398,7 @@ def export():
     m["col_screw_wall_fill"] = round(vol(shell_.intersect(body)) / vol(shell_), 4)
     assert m["col_screw_wall_fill"] > 0.999, "puits d'une vis du col au bord du col, ou tete au-dessus de l'assise"
     assert len(screw_xy()) == 4 and refs["joint-screws"].solids().size() == 4 and refs["joint-nuts"].solids().size() == 4
-    assert refs["cover-screws"].solids().size() == 2
+    assert refs["cover-screws"].solids().size() == 2 and refs["cover-nuts"].solids().size() == 2
     log("vis", t)
 
     # --- interferences deux a deux
@@ -1497,7 +1518,8 @@ def export():
              "bonnette": ("Bonnette DJI (encombrement estime)", "soft", (0, 0, 250)),
              "battery": ("LiPo 30 x 20 x 5", "electronics", (0, 0, -26)), "charger": ("Chargeur USB-C TP4056", "electronics", (0, 0, -44)),
              "switch": ("Interrupteur", "electronics", (0, 0, -44)), "joint-screws": ("Vis M3 x 12 a tete cylindrique du joint, sur rondelle", "metal", (0, 0, 160)),
-             "joint-nuts": ("Ecrous M3 du joint", "metal", (0, 0, 0)), "cover-screws": ("Vis M3 x 12 a tete cylindrique de la trappe", "metal", (0, 0, -80))}
+             "joint-nuts": ("Ecrous M3 du joint", "metal", (0, 0, 0)), "cover-screws": ("Vis M3 x 12 a tete cylindrique de la trappe", "metal", (0, 0, -80)),
+             "cover-nuts": ("Ecrous M3 de la trappe", "metal", (0, 0, 0))}
     manifest = []
     shown = dict(parts) | refs | {"earpad": web_earpad()}
     for n, p in shown.items():

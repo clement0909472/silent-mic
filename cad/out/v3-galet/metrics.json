@@ -122,8 +122,8 @@
     "capot_col_vers_exterieur": 1.17,
     "coque_vers_exterieur": 5.6,
     "coque_vers_conduit": 4.89,
-    "trappe_vers_exterieur_et_baie": 2.75,
-    "trappe_vers_chambre": 3.15
+    "trappe_vers_exterieur": 4.66,
+    "trappe_vers_chambre": 5.0
   },
   "cover_seat_fill": 1.0,
   "gasket_compression_mm": 0.55,
@@ -144,7 +144,9 @@
     "pointe_au_fond_du_percage_mm": {
       "joint": 0.5,
       "col": 0.8
-    }
+    },
+    "trappe_pointe_au_dessus_de_l_ecrou_mm": 1.1,
+    "trappe_pointe_sous_le_plafond_mm": 0.5
   },
   "col_screw_wall_fill": 1.0,
   "interferences": [],
@@ -249,11 +251,11 @@
   "flat_faces_note": "plans > 35 mm : appui du coussin (couvert par le coussin, voulu plat) et face arriere du dos (maquette)",
   "mass_g_solid_pla": {
     "front": 51.6,
-    "rear": 100.5,
+    "rear": 100.1,
     "cover": 15.1,
     "assise-col": 76.0,
     "ring_petg": 1.5,
-    "total": 244.7
+    "total": 244.3
   },
   "warn": [
     "longueur entree -> centre de la sortie 164.4 mm < 175 (canal barrage a barrage 192.9)"

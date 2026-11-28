@@ -193,6 +193,16 @@
       ]
     },
     {
+      "file": "cover-nuts.stl",
+      "label": "Ecrous M3 de la trappe",
+      "role": "metal",
+      "explode": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
       "file": "temoin-diamant-capot.stl",
       "label": "Temoin du col : capot",
       "role": "coupon",
