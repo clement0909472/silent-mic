@@ -1,6 +1,6 @@
 {
  "step": "silent-mic-v3-galet-technical.step",
- "pieces": 27,
+ "pieces": 29,
  "noms": [
   "air-cavity-and-duct",
   "assise-col",
@@ -10,6 +10,7 @@
   "ref-battery",
   "ref-bonnette",
   "ref-charger",
+  "ref-cover-nuts",
   "ref-cover-screws",
   "ref-earpad",
   "ref-foam-disc",
@@ -36,10 +37,10 @@
    "INTERFERE"
   ]
  ],
- "contacts_sans_recouvrement": 11,
+ "contacts_sans_recouvrement": 12,
  "exclus": [
   "air-cavity-and-duct"
  ],
- "controle_le": "2026-11-27 15:43",
- "duree_s": 111.2
+ "controle_le": "2026-11-28 15:01",
+ "duree_s": 93.3
 }
